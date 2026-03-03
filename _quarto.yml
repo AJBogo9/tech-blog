@@ -10,6 +10,7 @@ website:
       - icon: sun
         id: quarto-color-scheme-toggle
   search: true
+  open-graph: true
 
 format:
   html:
