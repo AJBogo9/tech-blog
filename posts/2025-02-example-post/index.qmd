@@ -5,8 +5,6 @@ categories: [example, template]
 description: "A template post showing the full range of formatting options available."
 ---
 
-<a href="../../index.html" class="back-link">← Back to all posts</a>
-
 ## Introduction
 
 This is a template post. Replace this content with whatever you're exploring.

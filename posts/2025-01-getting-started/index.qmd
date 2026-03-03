@@ -3,10 +3,7 @@ title: "Getting Started with This Blog"
 date: 2025-01-15
 categories: [meta, setup]
 description: "The first post — setting up the blog and how I plan to use it."
-image: ""
 ---
-
-<a href="../../index.html" class="back-link">← Back to all posts</a>
 
 ## Why I started this
 
