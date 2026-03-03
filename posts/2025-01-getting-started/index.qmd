@@ -1,0 +1,41 @@
+---
+title: "Getting Started with This Blog"
+date: 2025-01-15
+categories: [meta, setup]
+description: "The first post — setting up the blog and how I plan to use it."
+image: ""
+---
+
+<a href="../../index.html" class="back-link">← Back to all posts</a>
+
+## Why I started this
+
+This blog is a place to document my learning process as I work through challenging technical topics. Writing forces clarity, and having a record of what I've worked through is useful.
+
+## How this blog is structured
+
+Each post is a self-contained Quarto document. Posts are tagged by category and sorted by date on the landing page.
+
+## A quick code example
+
+Here's a simple Python snippet to confirm code blocks are working:
+
+```python
+def greet(name: str) -> str:
+    """A simple greeting function."""
+    return f"Hello, {name}!"
+
+print(greet("world"))
+```
+
+And some inline math to confirm KaTeX is working: $e^{i\pi} + 1 = 0$
+
+Display math:
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}
+$$
+
+## What's next
+
+Fill this with whatever you're learning. Good luck.

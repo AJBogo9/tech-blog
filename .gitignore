@@ -1,0 +1,17 @@
+# Quarto output
+_site/
+.quarto/
+*_cache/
+*_files/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Editor
+.DS_Store
+.vscode/
+*.swp
+
+/.quarto/

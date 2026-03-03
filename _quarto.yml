@@ -1,0 +1,35 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Tech Blog"
+  description: "Notes on challenging technical things"
+  navbar: false  # We use our custom landing page instead
+
+  search:
+    location: navbar
+    type: overlay
+
+format:
+  html:
+    theme:
+      light: [flatly, custom-light.scss]
+      dark: [darkly, custom-dark.scss]
+    highlight-style: github
+    code-fold: false
+    code-tools: true
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    number-sections: false
+    smooth-scroll: true
+    link-external-icon: true
+    link-external-newwindow: true
+    fig-responsive: true
+    html-math-method: katex
+
+execute:
+  freeze: auto
+  echo: true
+  warning: false
