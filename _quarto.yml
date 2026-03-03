@@ -5,8 +5,7 @@ project:
 website:
   title: "Tech Blog"
   description: "Notes on challenging technical things"
-  navbar: false  # We use our custom landing page instead
-
+  navbar: false
   search:
     location: navbar
     type: overlay
@@ -14,8 +13,8 @@ website:
 format:
   html:
     theme:
-      light: [flatly, custom-light.scss]
-      dark: [darkly, custom-dark.scss]
+      light: [flatly, custom.scss]
+      dark:  [darkly, custom.scss]
     highlight-style: github
     code-fold: false
     code-tools: true
