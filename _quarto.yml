@@ -5,10 +5,11 @@ project:
 website:
   title: "Tech Blog"
   description: "Notes on challenging technical things"
-  navbar: false
-  search:
-    location: navbar
-    type: overlay
+  navbar:
+    right:
+      - icon: sun
+        id: quarto-color-scheme-toggle
+  search: true
 
 format:
   html:
@@ -17,7 +18,7 @@ format:
       dark:  [darkly, custom.scss]
     highlight-style: github
     code-fold: false
-    code-tools: true
+    code-tools: false
     toc: true
     toc-depth: 3
     toc-title: "Contents"
