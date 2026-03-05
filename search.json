@@ -1,0 +1,93 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Tech Blog",
+    "section": "",
+    "text": "Example Post: A Technical Deep Dive\n\n\n\n\n\n\nexample\n\n\ntemplate\n\n\n\nA template post showing the full range of formatting options available.\n\n\n\n\n\nFeb 3, 2025\n\n\n\n\n\n\n\n\n\n\n\n\nGetting Started with This Blog\n\n\n\n\n\n\nmeta\n\n\nsetup\n\n\n\nThe first post — setting up the blog and how I plan to use it.\n\n\n\n\n\nJan 15, 2025\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "posts/2025-02-example-post/index.html",
+    "href": "posts/2025-02-example-post/index.html",
+    "title": "Example Post: A Technical Deep Dive",
+    "section": "",
+    "text": "This is a template post. Replace this content with whatever you’re exploring."
+  },
+  {
+    "objectID": "posts/2025-02-example-post/index.html#introduction",
+    "href": "posts/2025-02-example-post/index.html#introduction",
+    "title": "Example Post: A Technical Deep Dive",
+    "section": "",
+    "text": "This is a template post. Replace this content with whatever you’re exploring."
+  },
+  {
+    "objectID": "posts/2025-02-example-post/index.html#code-blocks",
+    "href": "posts/2025-02-example-post/index.html#code-blocks",
+    "title": "Example Post: A Technical Deep Dive",
+    "section": "Code blocks",
+    "text": "Code blocks\nMultiple languages are supported with syntax highlighting:\n# Shell commands\necho \"Hello from bash\"\nls -la | grep \".qmd\"\n# Python\nimport numpy as np\n\narr = np.linspace(0, 2 * np.pi, 100)\nprint(arr[:5])\n# R\nlibrary(ggplot2)\n\ndf &lt;- data.frame(x = 1:10, y = rnorm(10))\nggplot(df, aes(x, y)) + geom_line()"
+  },
+  {
+    "objectID": "posts/2025-02-example-post/index.html#callout-blocks",
+    "href": "posts/2025-02-example-post/index.html#callout-blocks",
+    "title": "Example Post: A Technical Deep Dive",
+    "section": "Callout blocks",
+    "text": "Callout blocks\n\n\n\n\n\n\nNote\n\n\n\nUse this for notes and supplementary information.\n\n\n\n\n\n\n\n\nWarning\n\n\n\nUse this for caveats or things to watch out for.\n\n\n\n\n\n\n\n\nTip\n\n\n\nUse this for useful tips and shortcuts."
+  },
+  {
+    "objectID": "posts/2025-02-example-post/index.html#tables",
+    "href": "posts/2025-02-example-post/index.html#tables",
+    "title": "Example Post: A Technical Deep Dive",
+    "section": "Tables",
+    "text": "Tables\n\n\n\nConcept\nDescription\nDifficulty\n\n\n\n\nTopic A\nBrief note\nMedium\n\n\nTopic B\nBrief note\nHard\n\n\nTopic C\nBrief note\nEasy"
+  },
+  {
+    "objectID": "posts/2025-02-example-post/index.html#math",
+    "href": "posts/2025-02-example-post/index.html#math",
+    "title": "Example Post: A Technical Deep Dive",
+    "section": "Math",
+    "text": "Math\nInline: f(x) = x^2 + 2x + 1\nBlock:\n\n\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\varepsilon_0}"
+  },
+  {
+    "objectID": "posts/2025-02-example-post/index.html#summary",
+    "href": "posts/2025-02-example-post/index.html#summary",
+    "title": "Example Post: A Technical Deep Dive",
+    "section": "Summary",
+    "text": "Summary\nSummarise what you learned here."
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html",
+    "href": "posts/2025-01-getting-started/index.html",
+    "title": "Getting Started with This Blog",
+    "section": "",
+    "text": "This blog is a place to document my learning process as I work through challenging technical topics. Writing forces clarity, and having a record of what I’ve worked through is useful."
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#why-i-started-this",
+    "href": "posts/2025-01-getting-started/index.html#why-i-started-this",
+    "title": "Getting Started with This Blog",
+    "section": "",
+    "text": "This blog is a place to document my learning process as I work through challenging technical topics. Writing forces clarity, and having a record of what I’ve worked through is useful."
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#how-this-blog-is-structured",
+    "href": "posts/2025-01-getting-started/index.html#how-this-blog-is-structured",
+    "title": "Getting Started with This Blog",
+    "section": "How this blog is structured",
+    "text": "How this blog is structured\nEach post is a self-contained Quarto document. Posts are tagged by category and sorted by date on the landing page."
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#a-quick-code-example",
+    "href": "posts/2025-01-getting-started/index.html#a-quick-code-example",
+    "title": "Getting Started with This Blog",
+    "section": "A quick code example",
+    "text": "A quick code example\nHere’s a simple Python snippet to confirm code blocks are working:\ndef greet(name: str) -&gt; str:\n    \"\"\"A simple greeting function.\"\"\"\n    return f\"Hello, {name}!\"\n\nprint(greet(\"world\"))\nAnd some inline math to confirm KaTeX is working: e^{i\\pi} + 1 = 0\nDisplay math:\n\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}"
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#whats-next",
+    "href": "posts/2025-01-getting-started/index.html#whats-next",
+    "title": "Getting Started with This Blog",
+    "section": "What’s next",
+    "text": "What’s next\nFill this with whatever you’re learning. Good luck."
+  }
+]
