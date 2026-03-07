@@ -2,8 +2,6 @@ project:
   type: website
   output-dir: _site
 
-license: "CC BY"
-
 website:
   title: "Tech Blog"
   description: "Notes on challenging technical things"
