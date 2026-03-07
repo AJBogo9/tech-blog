@@ -5,12 +5,26 @@ project:
 website:
   title: "Tech Blog"
   description: "Notes on challenging technical things"
-  navbar:
-    right:
-      - icon: sun
-        id: quarto-color-scheme-toggle
   search: true
   open-graph: true
+  navbar:
+    # left:
+    #   - text: "Posts"
+    #     href: posts/index.qmd
+    #   - text: "Tags"
+    #     href: tags/index.qmd
+    #   - text: "About"
+    #     href: about.qmd
+    right:
+      - icon: linkedin
+        href: https://www.linkedin.com/in/bogo9/
+        aria-label: LinkedIn
+      - icon: github
+        href: https://github.com/AJBogo9
+        aria-label: GitHub
+      - icon: sun
+        id: quarto-color-scheme-toggle  
+        aria-label: Toggle dark mode
 
 format:
   html:
