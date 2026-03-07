@@ -1,5 +1,6 @@
 # Quarto output
 _site/
+_freeze/
 .quarto/
 *_cache/
 *_files/
