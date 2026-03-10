@@ -1,45 +1,24 @@
 [
   {
-    "objectID": "posts/2025-01-getting-started/index.html",
-    "href": "posts/2025-01-getting-started/index.html",
-    "title": "Getting Started with This Blog",
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
     "section": "",
-    "text": "This blog is a place to document my learning process as I work through challenging technical topics. Writing forces clarity, and having a record of what I’ve worked through is useful."
+    "text": "DRAFT!! MODIFY THIS LATER!!\nHi, I’m Bogo — a developer with a passion for understanding the math and engineering behind machine learning systems.\nThis blog is where I document things I’ve worked hard to understand: probabilistic models, inference algorithms, system design, and whatever else is currently breaking my brain."
   },
   {
-    "objectID": "posts/2025-01-getting-started/index.html#why-i-started-this",
-    "href": "posts/2025-01-getting-started/index.html#why-i-started-this",
-    "title": "Getting Started with This Blog",
-    "section": "",
-    "text": "This blog is a place to document my learning process as I work through challenging technical topics. Writing forces clarity, and having a record of what I’ve worked through is useful."
+    "objectID": "about.html#what-youll-find-here",
+    "href": "about.html#what-youll-find-here",
+    "title": "About",
+    "section": "What you’ll find here",
+    "text": "What you’ll find here\nPosts tend to be technical and go into the weeds. I write them mostly for my own future reference, but I hope they’re useful to others too.\nTopics I return to often:\n\nBayesian inference & variational methods\nProbabilistic programming\nML systems & engineering\nStatistics done carefully"
   },
   {
-    "objectID": "posts/2025-01-getting-started/index.html#how-this-blog-is-structured",
-    "href": "posts/2025-01-getting-started/index.html#how-this-blog-is-structured",
-    "title": "Getting Started with This Blog",
-    "section": "How this blog is structured",
-    "text": "How this blog is structured\nEach post is a self-contained Quarto document. Posts are tagged by category and sorted by date on the landing page."
-  },
-  {
-    "objectID": "posts/2025-01-getting-started/index.html#a-quick-code-example",
-    "href": "posts/2025-01-getting-started/index.html#a-quick-code-example",
-    "title": "Getting Started with This Blog",
-    "section": "A quick code example",
-    "text": "A quick code example\nHere’s a simple Python snippet to confirm code blocks are working:\ndef greet(name: str) -&gt; str:\n    \"\"\"A simple greeting function.\"\"\"\n    return f\"Hello, {name}!\"\n\nprint(greet(\"world\"))\nAnd some inline math to confirm KaTeX is working: e^{i\\pi} + 1 = 0\nDisplay math:\n\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}"
-  },
-  {
-    "objectID": "posts/2025-01-getting-started/index.html#whats-next",
-    "href": "posts/2025-01-getting-started/index.html#whats-next",
-    "title": "Getting Started with This Blog",
-    "section": "What’s next",
-    "text": "What’s next\nFill this with whatever you’re learning. Good luck."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Tech Blog",
-    "section": "",
-    "text": "Example Post: A Technical Deep Dive\n\n\n\nexample\n\ntemplate\n\n\n\nA template post showing the full range of formatting options available.\n\n\n\n\n\nFeb 3, 2025\n\n\n\n\n\n\n\n\n\n\n\n\nGetting Started with This Blog\n\n\n\nmeta\n\nsetup\n\n\n\nThe first post — setting up the blog and how I plan to use it.\n\n\n\n\n\nJan 15, 2025\n\n\n\n\n\nNo matching items"
+    "objectID": "about.html#background",
+    "href": "about.html#background",
+    "title": "About",
+    "section": "Background",
+    "text": "Background\nI’m currently working on [what you do — update this]. Previously [prior role/project — update this].\nYou can find my code on GitHub and connect with me on LinkedIn."
   },
   {
     "objectID": "posts/2025-02-example-post/index.html",
@@ -89,5 +68,47 @@
     "title": "Example Post: A Technical Deep Dive",
     "section": "Summary",
     "text": "Summary\nSummarise what you learned here."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Tech Blog",
+    "section": "",
+    "text": "Example Post: A Technical Deep Dive\n\n\n\nexample\n\ntemplate\n\n\n\nA template post showing the full range of formatting options available.\n\n\n\n\n\nFeb 3, 2025\n\n\n\n\n\n\n\n\n\n\n\n\nGetting Started with This Blog\n\n\n\nmeta\n\nsetup\n\n\n\nThe first post — setting up the blog and how I plan to use it.\n\n\n\n\n\nJan 15, 2025\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html",
+    "href": "posts/2025-01-getting-started/index.html",
+    "title": "Getting Started with This Blog",
+    "section": "",
+    "text": "This blog is a place to document my learning process as I work through challenging technical topics. Writing forces clarity, and having a record of what I’ve worked through is useful."
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#why-i-started-this",
+    "href": "posts/2025-01-getting-started/index.html#why-i-started-this",
+    "title": "Getting Started with This Blog",
+    "section": "",
+    "text": "This blog is a place to document my learning process as I work through challenging technical topics. Writing forces clarity, and having a record of what I’ve worked through is useful."
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#how-this-blog-is-structured",
+    "href": "posts/2025-01-getting-started/index.html#how-this-blog-is-structured",
+    "title": "Getting Started with This Blog",
+    "section": "How this blog is structured",
+    "text": "How this blog is structured\nEach post is a self-contained Quarto document. Posts are tagged by category and sorted by date on the landing page."
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#a-quick-code-example",
+    "href": "posts/2025-01-getting-started/index.html#a-quick-code-example",
+    "title": "Getting Started with This Blog",
+    "section": "A quick code example",
+    "text": "A quick code example\nHere’s a simple Python snippet to confirm code blocks are working:\ndef greet(name: str) -&gt; str:\n    \"\"\"A simple greeting function.\"\"\"\n    return f\"Hello, {name}!\"\n\nprint(greet(\"world\"))\nAnd some inline math to confirm KaTeX is working: e^{i\\pi} + 1 = 0\nDisplay math:\n\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}"
+  },
+  {
+    "objectID": "posts/2025-01-getting-started/index.html#whats-next",
+    "href": "posts/2025-01-getting-started/index.html#whats-next",
+    "title": "Getting Started with This Blog",
+    "section": "What’s next",
+    "text": "What’s next\nFill this with whatever you’re learning. Good luck."
   }
 ]

@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://AJBogo9.github.io/tech-blog/posts/2025-01-getting-started/index.html</loc>
-    <lastmod>2026-03-07T15:13:15.410Z</lastmod>
-  </url>
-  <url>
-    <loc>https://AJBogo9.github.io/tech-blog/index.html</loc>
-    <lastmod>2026-03-07T15:13:15.409Z</lastmod>
+    <loc>https://AJBogo9.github.io/tech-blog/about.html</loc>
+    <lastmod>2026-03-10T18:54:37.936Z</lastmod>
   </url>
   <url>
     <loc>https://AJBogo9.github.io/tech-blog/posts/2025-02-example-post/index.html</loc>
-    <lastmod>2026-03-07T15:13:15.410Z</lastmod>
+    <lastmod>2026-03-10T18:54:37.937Z</lastmod>
+  </url>
+  <url>
+    <loc>https://AJBogo9.github.io/tech-blog/index.html</loc>
+    <lastmod>2026-03-10T18:54:37.936Z</lastmod>
+  </url>
+  <url>
+    <loc>https://AJBogo9.github.io/tech-blog/posts/2025-01-getting-started/index.html</loc>
+    <lastmod>2026-03-10T18:54:37.937Z</lastmod>
   </url>
 </urlset>
