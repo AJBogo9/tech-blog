@@ -22,11 +22,7 @@ website:
         id: quarto-color-scheme-toggle
         aria-label: Toggle dark mode
 
-jupyter:
-  kernelspec:
-    name: tech-blog
-    language: python
-    display_name: Tech Blog
+jupyter: tech-blog
 
 format:
   html:
