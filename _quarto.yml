@@ -11,10 +11,6 @@ website:
     left:
       - text: "About"
         href: about.qmd
-    #   - text: "Posts"
-    #     href: posts/index.qmd
-    #   - text: "Tags"
-    #     href: tags/index.qmd
     right:
       - icon: linkedin
         href: https://www.linkedin.com/in/bogo9/
@@ -23,8 +19,14 @@ website:
         href: https://github.com/AJBogo9
         aria-label: GitHub
       - icon: sun
-        id: quarto-color-scheme-toggle  
+        id: quarto-color-scheme-toggle
         aria-label: Toggle dark mode
+
+jupyter:
+  kernelspec:
+    name: tech-blog
+    language: python
+    display_name: Tech Blog
 
 format:
   html:
