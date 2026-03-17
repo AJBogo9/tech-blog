@@ -18,18 +18,13 @@ website:
       - icon: github
         href: https://github.com/AJBogo9
         aria-label: GitHub
-      - icon: sun
-        id: quarto-color-scheme-toggle
-        aria-label: Toggle dark mode
 
 jupyter: python3
 
 format:
   html:
-    theme:
-      light: flatly
-      dark: darkly
-    highlight-style: github
+    theme: darkly
+    highlight-style: github-dark
     code-fold: false
     code-tools: false
     toc: true
