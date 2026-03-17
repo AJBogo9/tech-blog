@@ -2,23 +2,16 @@
   {
     "objectID": "about.html",
     "href": "about.html",
-    "title": "About",
+    "title": "Tech Blog",
     "section": "",
-    "text": "DRAFT!! MODIFY THIS LATER!!\nHi, I’m Bogo — a developer with a passion for understanding the math and engineering behind machine learning systems.\nThis blog is where I document things I’ve worked hard to understand: probabilistic models, inference algorithms, system design, and whatever else is currently breaking my brain."
+    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations. By writing about things I don’t understand I achieve two things: the first benefit is that I understnad the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer sicence. I’ve always been interested in math and computer so machine learning felt like a natural intersection of the two topics."
   },
   {
-    "objectID": "about.html#what-youll-find-here",
-    "href": "about.html#what-youll-find-here",
-    "title": "About",
-    "section": "What you’ll find here",
-    "text": "What you’ll find here\nPosts tend to be technical and go into the weeds. I write them mostly for my own future reference, but I hope they’re useful to others too.\nTopics I return to often:\n\nBayesian inference & variational methods\nProbabilistic programming\nML systems & engineering\nStatistics done carefully"
-  },
-  {
-    "objectID": "about.html#background",
-    "href": "about.html#background",
-    "title": "About",
-    "section": "Background",
-    "text": "Background\nI’m currently working on [what you do — update this]. Previously [prior role/project — update this].\nYou can find my code on GitHub and connect with me on LinkedIn."
+    "objectID": "about.html#about-this-blog",
+    "href": "about.html#about-this-blog",
+    "title": "Tech Blog",
+    "section": "",
+    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations. By writing about things I don’t understand I achieve two things: the first benefit is that I understnad the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer sicence. I’ve always been interested in math and computer so machine learning felt like a natural intersection of the two topics."
   },
   {
     "objectID": "posts/2025-02-example-post/index.html",
