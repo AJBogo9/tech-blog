@@ -14,6 +14,41 @@
     "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations.\nBy writing about things I don’t understand I aim to achieve two things: the first benefit is that I understnad the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer sicence. I’ve always been interested in math and computer so machine learning felt like a natural intersection of the two topics."
   },
   {
+    "objectID": "posts/2026-03-KL-divergence/index.html",
+    "href": "posts/2026-03-KL-divergence/index.html",
+    "title": "KL Divergence",
+    "section": "",
+    "text": "When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF (Ziegler et al. 2019; Ouyang et al. 2022).\nLarge language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution Q of the most likely next words. For ensuring correct output, the distribution Q needs to be compared to the true distribuiton P. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are."
+  },
+  {
+    "objectID": "posts/2026-03-KL-divergence/index.html#theory",
+    "href": "posts/2026-03-KL-divergence/index.html#theory",
+    "title": "KL Divergence",
+    "section": "Theory",
+    "text": "Theory\nThe Kullback-Leibler divergence from Q to P is defined as:\n\nD_{KL}(P||Q) = \\sum_k \\operatorname{log}p_k\\frac{p_k}{q_k}\n\nwhere p_k = P(X = k) and q_k = Q(X = k) are the probabilities assigned by distributions P and Q to outcome k, and the sum is taken over all outcomes k in the support of P.\nKL divergence can be interpreted intuitively using the concept of entropy form information theory.\nThe entropy of P is\n\nH(P) = - \\sum_k p_k \\operatorname{log}p_k\n\nThis is the average number of bits needed to encode samples from P using an optimal code for P (Goodfellow, Bengio, and Courville 2016).\nIf instead if a code optimized for Q was used to encode samples that came form P, the average code length is the cross-entropy:\n\nH(P, Q) = - \\sum_k p_k \\operatorname{log}q_k\n\nNow combining entropy and cross entropy together, KL divergence is the extra cost you pay for using a code for Q to encode samples from P:\n\n\\begin{align*}\nD_{KL}(P||Q) &= H(P, Q) - H(P) \\\\\n&= - \\sum_k p_k \\operatorname{log}q_k - (- \\sum_k p_k \\operatorname{log}p_k) \\\\\n&= - \\sum_k p_k \\operatorname{log}q_k + \\sum_k p_k \\operatorname{log}p_k \\\\\n&= \\sum_k p_k \\operatorname{log}p_k - \\sum_k p_k \\operatorname{log}q_k  \\\\\n&= \\sum_k p_k (\\operatorname{log}p_k - \\operatorname{log}q_k)  \\\\\n&= \\sum_k p_k \\operatorname{log} \\frac{p_k}{q_k} \\\\\n\\end{align*}\n\n\nKey properties\n\nAsymmetric: D_{KL}(P \\| Q) \\neq D_{KL}(Q \\| P)\nAlways non-negative: D_{KL}(P \\| Q) \\geq 0\nEqual to zero only when the two distributions are identical. D_{KL}(P \\| Q) = 0 \\iff P = Q\n\nSo intuitively, the KL-divergence asks how supriced you would be about the current distribution of the model given you know what the training data looks like. The more suprised you would be, the further the model is from the truth and thus the KL-divergence would be bigger."
+  },
+  {
+    "objectID": "posts/2026-03-KL-divergence/index.html#code-demo",
+    "href": "posts/2026-03-KL-divergence/index.html#code-demo",
+    "title": "KL Divergence",
+    "section": "Code demo",
+    "text": "Code demo\nNow imagine a small vocabulary of five tokens: [\"cat\", \"sat\", \"on\", \"the\", \"mat\"]. We have an imaginary LLM that has a predicted distribution Q for the vocabulary and we also know the true distribution P from the training data for the vocabulary.\n\nimport numpy as np\n\nvocab = [\"cat\", \"sat\", \"on\", \"the\", \"mat\"]\n\n# True distribution (training data)\nP = np.array([0.4, 0.3, 0.1, 0.15, 0.05])\n\n# Model's predicted distribution\nQ = np.array([0.2, 0.25, 0.3, 0.15, 0.1])\n\nBy plotting P and Q the mismatch is immediately visible.\n\n\nShow code\nimport matplotlib.pyplot as plt\n\nx = np.arange(len(vocab))\nwidth = 0.35\n\nfig, ax = plt.subplots(figsize=(7, 4))\nax.bar(x - width/2, P, width, label=\"P (true)\", color=\"steelblue\")\nax.bar(x + width/2, Q, width, label=\"Q (model)\", color=\"tomato\")\n\nax.set_xticks(x)\nax.set_xticklabels(vocab)\nax.set_ylabel(\"Probability\")\nax.set_title(f\"P vs Q\")\nax.legend()\nplt.tight_layout()\nplt.show()\n\n\n\n\n\n\n\n\n\nDirectly applying the discrete formula D_{KL}(P \\| Q) = \\sum_k p_k \\log \\frac{p_k}{q_k}:\n\ndef kl_divergence(p, q):\n    return np.sum(p * np.log(p / q))\n\nkl_pq = kl_divergence(P, Q)\nprint(f\"D_KL(P || Q) = {kl_pq:.4f} nats\")\n\nD_KL(P || Q) = 0.1874 nats\n\n\nThe KL-divergence is non-zero so there is a difference between the true distribution P and the current distribution Q of our model. The difference between the true distribuiton P and the predicted distribution Q is obvious.\nThe order of the distributions is not trivial when computing KL-divergence. This can be shown shown numerically:\n\nkl_qp = kl_divergence(Q, P)\n\nprint(f\"D_KL(P || Q) = {kl_pq:.4f} nats\")\nprint(f\"D_KL(Q || P) = {kl_qp:.4f} nats\")\nprint(f\"Symmetric?   {np.isclose(kl_pq, kl_qp)}\")\n\nD_KL(P || Q) = 0.1874 nats\nD_KL(Q || P) = 0.2147 nats\nSymmetric?   False"
+  },
+  {
+    "objectID": "posts/2026-03-KL-divergence/index.html#summary-conclusion",
+    "href": "posts/2026-03-KL-divergence/index.html#summary-conclusion",
+    "title": "KL Divergence",
+    "section": "Summary / conclusion",
+    "text": "Summary / conclusion\nKL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribuiton is from the training data distribution. KL-divergence has a mathematical foundation in information theory."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Tech Blog",
+    "section": "",
+    "text": "KL Divergence\n\n\n\n\n\n\n\n\nMar 17, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\n\n\n\n\n\n\n\nExample Post: A Technical Deep Dive\n\n\n\nexample\n\ntemplate\n\n\n\nA template post showing the full range of formatting options available.\n\n\n\n\n\nFeb 3, 2025\n\n\n\n\n\n\n\n\n\n\n\n\nGetting Started with This Blog\n\n\n\nmeta\n\nsetup\n\n\n\nThe first post — setting up the blog and how I plan to use it.\n\n\n\n\n\nJan 15, 2025\n\n\n\n\n\nNo matching items"
+  },
+  {
     "objectID": "posts/2025-02-example-post/index.html",
     "href": "posts/2025-02-example-post/index.html",
     "title": "Example Post: A Technical Deep Dive",
@@ -61,13 +96,6 @@
     "title": "Example Post: A Technical Deep Dive",
     "section": "Summary",
     "text": "Summary\nSummarise what you learned here."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Tech Blog",
-    "section": "",
-    "text": "Example Post: A Technical Deep Dive\n\n\n\nexample\n\ntemplate\n\n\n\nA template post showing the full range of formatting options available.\n\n\n\n\n\nFeb 3, 2025\n\n\n\n\n\n\n\n\n\n\n\n\nGetting Started with This Blog\n\n\n\nmeta\n\nsetup\n\n\n\nThe first post — setting up the blog and how I plan to use it.\n\n\n\n\n\nJan 15, 2025\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "posts/2025-01-getting-started/index.html",

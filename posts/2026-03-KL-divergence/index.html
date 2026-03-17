@@ -6,8 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Andreas Bogossian">
+<meta name="dcterms.date" content="2026-03-17">
 
-<title>Tech Blog</title>
+<title>KL Divergence – Tech Blog</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,33 +22,86 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-34b52149d83304ea3444959263bcc0f3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-6f48047ca626798916f178771ba55597.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-34b52149d83304ea3444959263bcc0f3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-34b52149d83304ea3444959263bcc0f3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-6f48047ca626798916f178771ba55597.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-34b52149d83304ea3444959263bcc0f3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -74,35 +129,6 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 <style>html{ scroll-behavior: smooth; }</style>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
@@ -149,9 +175,23 @@ window.Quarto = {
 };
 </script>
 
-<meta property="og:title" content="Tech Blog">
+<meta property="og:title" content="KL Divergence – Tech Blog">
 <meta property="og:description" content="Notes on challenging technical things">
+<meta property="og:image" content="https://AJBogo9.github.io/tech-blog/posts/2026-03-KL-divergence/index_files/figure-html/cell-3-output-1.png">
 <meta property="og:site_name" content="Tech Blog">
+<meta property="og:image:height" content="748">
+<meta property="og:image:width" content="1324">
+<meta name="citation_title" content="KL Divergence">
+<meta name="citation_author" content="Andreas Bogossian">
+<meta name="citation_publication_date" content="2026-03-17">
+<meta name="citation_cover_date" content="2026-03-17">
+<meta name="citation_year" content="2026">
+<meta name="citation_online_date" content="2026-03-17">
+<meta name="citation_fulltext_html_url" content="https://AJBogo9.github.io/tech-blog/posts/2026-03-KL-divergence/">
+<meta name="citation_language" content="en">
+<meta name="citation_reference" content="citation_title=Fine-tuning language models from human preferences;,citation_author=Daniel M. Ziegler;,citation_author=Nisan Stiennon;,citation_author=Jeffrey Wu;,citation_author=Tom B. Brown;,citation_author=Alec Radford;,citation_author=Dario Amodei;,citation_author=Paul Christiano;,citation_author=Geoffrey Irving;,citation_publication_date=2019;,citation_cover_date=2019;,citation_year=2019;,citation_fulltext_html_url=https://arxiv.org/abs/1909.08593;,citation_journal_title=arXiv preprint arXiv:1909.08593;">
+<meta name="citation_reference" content="citation_title=Training language models to follow instructions with human feedback;,citation_author=Long Ouyang;,citation_author=Jeffrey Wu;,citation_author=Xu Jiang;,citation_author=Diogo Almeida;,citation_author=Carroll L. Wainwright;,citation_author=Pamela Mishkin;,citation_author=Chong Zhang;,citation_author=Sandhini Agarwal;,citation_author=Katarina Slama;,citation_author=Alex Ray;,citation_author=others;,citation_publication_date=2022;,citation_cover_date=2022;,citation_year=2022;,citation_fulltext_html_url=https://arxiv.org/abs/2203.02155;,citation_journal_title=arXiv preprint arXiv:2203.02155;">
+<meta name="citation_reference" content="citation_title=Deep learning;,citation_author=Ian Goodfellow;,citation_author=Yoshua Bengio;,citation_author=Aaron Courville;,citation_publication_date=2016;,citation_cover_date=2016;,citation_year=2016;,citation_fulltext_html_url=https://www.deeplearningbook.org;">
 </head>
 
 <body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -323,7 +363,7 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">Tech Blog</span>
     </a>
   </div>
@@ -334,7 +374,7 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="../../about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -358,27 +398,49 @@ window.Quarto = {
     </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(3)</span></div><div class="category" data-category="ZXhhbXBsZQ==">example <span class="quarto-category-count">(1)</span></div><div class="category" data-category="bWV0YQ==">meta <span class="quarto-category-count">(1)</span></div><div class="category" data-category="c2V0dXA=">setup <span class="quarto-category-count">(1)</span></div><div class="category" data-category="dGVtcGxhdGU=">template <span class="quarto-category-count">(1)</span></div></div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Contents</h2>
+   
+  <ul>
+  <li><a href="#theory" id="toc-theory" class="nav-link active" data-scroll-target="#theory">Theory</a>
+  <ul class="collapse">
+  <li><a href="#key-properties" id="toc-key-properties" class="nav-link" data-scroll-target="#key-properties">Key properties</a></li>
+  </ul></li>
+  <li><a href="#code-demo" id="toc-code-demo" class="nav-link" data-scroll-target="#code-demo">Code demo</a></li>
+  <li><a href="#summary-conclusion" id="toc-summary-conclusion" class="nav-link" data-scroll-target="#summary-conclusion">Summary / conclusion</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
-<main class="content column-page-left" id="quarto-document-content">
+<main class="content" id="quarto-document-content">
 
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Tech Blog</h1>
-<p class="subtitle lead">Notes on challenging technical things</p>
+<h1 class="title">KL Divergence</h1>
 </div>
 
 
 
-<div class="quarto-title-meta column-page-left">
+<div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Andreas Bogossian </p>
+          </div>
+  </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 17, 2026</p>
+    </div>
+  </div>
   
     
   </div>
@@ -388,98 +450,144 @@ window.Quarto = {
 </header>
 
 
-
-
-
-
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-date-sort="1773705600000" data-listing-file-modified-sort="1773749954282" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="670">
-<div class="thumbnail"><a href="./posts/2026-03-KL-divergence/index.html" class="no-external">
-
-<p class="card-img-top"><img src="posts/2026-03-KL-divergence/index_files/figure-html/cell-3-output-1.png"  class="thumbnail-image card-img"/></p>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/2026-03-KL-divergence/index.html" class="no-external">KL Divergence</a>
-</h3>
-<div class="delink listing-description"><a href="./posts/2026-03-KL-divergence/index.html" class="no-external">
-When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a…<span class="citation" data-cites="ziegler2019 ouyang2022"></span>
-</a></div>
+<p>When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF <span class="citation" data-cites="ziegler2019 ouyang2022">(<a href="#ref-ziegler2019" role="doc-biblioref">Ziegler et al. 2019</a>; <a href="#ref-ouyang2022" role="doc-biblioref">Ouyang et al. 2022</a>)</span>.</p>
+<p>Large language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution <span class="math inline">Q</span> of the most likely next words. For ensuring correct output, the distribution <span class="math inline">Q</span> needs to be compared to the true distribuiton <span class="math inline">P</span>. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are.</p>
+<section id="theory" class="level2">
+<h2 class="anchored" data-anchor-id="theory">Theory</h2>
+<p>The <strong>Kullback-Leibler divergence</strong> from Q to P is defined as:</p>
+<p><span class="math display">
+D_{KL}(P||Q) = \sum_k \operatorname{log}p_k\frac{p_k}{q_k}
+</span></p>
+<p>where <span class="math inline">p_k = P(X = k)</span> and <span class="math inline">q_k = Q(X = k)</span> are the probabilities assigned by distributions <span class="math inline">P</span> and <span class="math inline">Q</span> to outcome <span class="math inline">k</span>, and the sum is taken over all outcomes <span class="math inline">k</span> in the support of <span class="math inline">P</span>.</p>
+<p>KL divergence can be interpreted intuitively using the concept of entropy form information theory.</p>
+<p>The entropy of <span class="math inline">P</span> is</p>
+<p><span class="math display">
+H(P) = - \sum_k p_k \operatorname{log}p_k
+</span></p>
+<p>This is the average number of bits needed to encode samples from P using an optimal code for <span class="math inline">P</span> <span class="citation" data-cites="goodfellow2016">(<a href="#ref-goodfellow2016" role="doc-biblioref">Goodfellow, Bengio, and Courville 2016</a>)</span>.</p>
+<p>If instead if a code optimized for <span class="math inline">Q</span> was used to encode samples that came form <span class="math inline">P</span>, the average code length is the <strong>cross-entropy</strong>:</p>
+<p><span class="math display">
+H(P, Q) = - \sum_k p_k \operatorname{log}q_k
+</span></p>
+<p>Now combining entropy and cross entropy together, KL divergence is the extra cost you pay for using a code for <span class="math inline">Q</span> to encode samples from <span class="math inline">P</span>:</p>
+<p><span class="math display">
+\begin{align*}
+D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
+&amp;= - \sum_k p_k \operatorname{log}q_k - (- \sum_k p_k \operatorname{log}p_k) \\
+&amp;= - \sum_k p_k \operatorname{log}q_k + \sum_k p_k \operatorname{log}p_k \\
+&amp;= \sum_k p_k \operatorname{log}p_k - \sum_k p_k \operatorname{log}q_k  \\
+&amp;= \sum_k p_k (\operatorname{log}p_k - \operatorname{log}q_k)  \\
+&amp;= \sum_k p_k \operatorname{log} \frac{p_k}{q_k} \\
+\end{align*}
+</span></p>
+<section id="key-properties" class="level3">
+<h3 class="anchored" data-anchor-id="key-properties">Key properties</h3>
+<ul>
+<li><p>Asymmetric: <span class="math display">D_{KL}(P \| Q) \neq D_{KL}(Q \| P)</span></p></li>
+<li><p>Always non-negative: <span class="math display">D_{KL}(P \| Q) \geq 0</span></p></li>
+<li><p>Equal to zero only when the two distributions are identical. <span class="math display">D_{KL}(P \| Q) = 0 \iff P = Q</span></p></li>
+</ul>
+<p>So intuitively, the KL-divergence asks how supriced you would be about the current distribution of the model given you know what the training data looks like. The more suprised you would be, the further the model is from the truth and thus the KL-divergence would be bigger.</p>
+</section>
+</section>
+<section id="code-demo" class="level2">
+<h2 class="anchored" data-anchor-id="code-demo">Code demo</h2>
+<p>Now imagine a small vocabulary of five tokens: <code>["cat", "sat", "on", "the", "mat"]</code>. We have an imaginary LLM that has a predicted distribution <span class="math inline">Q</span> for the vocabulary and we also know the true distribution <span class="math inline">P</span> from the training data for the vocabulary.</p>
+<div id="239ddef1" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>vocab <span class="op">=</span> [<span class="st">"cat"</span>, <span class="st">"sat"</span>, <span class="st">"on"</span>, <span class="st">"the"</span>, <span class="st">"mat"</span>]</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># True distribution (training data)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>P <span class="op">=</span> np.array([<span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="fl">0.1</span>, <span class="fl">0.15</span>, <span class="fl">0.05</span>])</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Model's predicted distribution</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Q <span class="op">=</span> np.array([<span class="fl">0.2</span>, <span class="fl">0.25</span>, <span class="fl">0.3</span>, <span class="fl">0.15</span>, <span class="fl">0.1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="metadata">
-<a href="./posts/2026-03-KL-divergence/index.html" class="no-external">
-<div class="listing-date">
-Mar 17, 2026
-</div>
-<div class="listing-author">
-Andreas Bogossian
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-categories="ZXhhbXBsZSUyQ3RlbXBsYXRl" data-listing-date-sort="1738540800000" data-listing-file-modified-sort="1773749954282" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="144">
-<div class="thumbnail"><a href="./posts/2025-02-example-post/index.html" class="no-external">
-
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/2025-02-example-post/index.html" class="no-external">Example Post: A Technical Deep Dive</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('ZXhhbXBsZQ=='); return false;">example</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('dGVtcGxhdGU='); return false;">template</div>
-
-</div>
-<div class="delink listing-description"><a href="./posts/2025-02-example-post/index.html" class="no-external">
-<p>A template post showing the full range of formatting options available.</p>
-</a></div>
-</div>
-<div class="metadata">
-<a href="./posts/2025-02-example-post/index.html" class="no-external">
-<div class="listing-date">
-Feb 3, 2025
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="2" data-categories="bWV0YSUyQ3NldHVw" data-listing-date-sort="1736899200000" data-listing-file-modified-sort="1773749954282" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="114">
-<div class="thumbnail"><a href="./posts/2025-01-getting-started/index.html" class="no-external">
-
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-
-</a></div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/2025-01-getting-started/index.html" class="no-external">Getting Started with This Blog</a>
-</h3>
-<div class="listing-categories">
-
-<div class="listing-category" onclick="window.quartoListingCategory('bWV0YQ=='); return false;">meta</div>
-
-<div class="listing-category" onclick="window.quartoListingCategory('c2V0dXA='); return false;">setup</div>
-
-</div>
-<div class="delink listing-description"><a href="./posts/2025-01-getting-started/index.html" class="no-external">
-<p>The first post — setting up the blog and how I plan to use it.</p>
-</a></div>
-</div>
-<div class="metadata">
-<a href="./posts/2025-01-getting-started/index.html" class="no-external">
-<div class="listing-date">
-Jan 15, 2025
-</div>
-</a>
+<p>By plotting <span class="math inline">P</span> and <span class="math inline">Q</span> the mismatch is immediately visible.</p>
+<div id="bc8f363f" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(<span class="bu">len</span>(vocab))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>width <span class="op">=</span> <span class="fl">0.35</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">4</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>ax.bar(x <span class="op">-</span> width<span class="op">/</span><span class="dv">2</span>, P, width, label<span class="op">=</span><span class="st">"P (true)"</span>, color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>ax.bar(x <span class="op">+</span> width<span class="op">/</span><span class="dv">2</span>, Q, width, label<span class="op">=</span><span class="st">"Q (model)"</span>, color<span class="op">=</span><span class="st">"tomato"</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(x)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>ax.set_xticklabels(vocab)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Probability"</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="ss">f"P vs Q"</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/cell-3-output-1.png" width="662" height="374" class="figure-img"></p>
+</figure>
 </div>
 </div>
 </div>
-<div class="listing-no-matching d-none">No matching items</div>
-</div></main> <!-- /main -->
+<p>Directly applying the discrete formula <span class="math inline">D_{KL}(P \| Q) = \sum_k p_k \log \frac{p_k}{q_k}</span>:</p>
+<div id="f97aa6f5" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kl_divergence(p, q):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.<span class="bu">sum</span>(p <span class="op">*</span> np.log(p <span class="op">/</span> q))</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>kl_pq <span class="op">=</span> kl_divergence(P, Q)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"D_KL(P || Q) = </span><span class="sc">{</span>kl_pq<span class="sc">:.4f}</span><span class="ss"> nats"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>D_KL(P || Q) = 0.1874 nats</code></pre>
+</div>
+</div>
+<p>The KL-divergence is non-zero so there is a difference between the true distribution <span class="math inline">P</span> and the current distribution <span class="math inline">Q</span> of our model. The difference between the true distribuiton <span class="math inline">P</span> and the predicted distribution <span class="math inline">Q</span> is obvious.</p>
+<p>The order of the distributions is not trivial when computing KL-divergence. This can be shown shown numerically:</p>
+<div id="e2b23069" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>kl_qp <span class="op">=</span> kl_divergence(Q, P)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"D_KL(P || Q) = </span><span class="sc">{</span>kl_pq<span class="sc">:.4f}</span><span class="ss"> nats"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"D_KL(Q || P) = </span><span class="sc">{</span>kl_qp<span class="sc">:.4f}</span><span class="ss"> nats"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Symmetric?   </span><span class="sc">{</span>np<span class="sc">.</span>isclose(kl_pq, kl_qp)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>D_KL(P || Q) = 0.1874 nats
+D_KL(Q || P) = 0.2147 nats
+Symmetric?   False</code></pre>
+</div>
+</div>
+</section>
+<section id="summary-conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="summary-conclusion">Summary / conclusion</h2>
+<p>KL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribuiton is from the training data distribution. KL-divergence has a mathematical foundation in information theory.</p>
+
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-goodfellow2016" class="csl-entry" role="listitem">
+Goodfellow, Ian, Yoshua Bengio, and Aaron Courville. 2016. <em>Deep Learning</em>. MIT Press. <a href="https://www.deeplearningbook.org">https://www.deeplearningbook.org</a>.
+</div>
+<div id="ref-ouyang2022" class="csl-entry" role="listitem">
+Ouyang, Long, Jeffrey Wu, Xu Jiang, Diogo Almeida, Carroll L. Wainwright, Pamela Mishkin, Chong Zhang, et al. 2022. <span>“Training Language Models to Follow Instructions with Human Feedback.”</span> <em>arXiv Preprint arXiv:2203.02155</em>. <a href="https://arxiv.org/abs/2203.02155">https://arxiv.org/abs/2203.02155</a>.
+</div>
+<div id="ref-ziegler2019" class="csl-entry" role="listitem">
+Ziegler, Daniel M., Nisan Stiennon, Jeffrey Wu, Tom B. Brown, Alec Radford, Dario Amodei, Paul Christiano, and Geoffrey Irving. 2019. <span>“Fine-Tuning Language Models from Human Preferences.”</span> <em>arXiv Preprint arXiv:1909.08593</em>. <a href="https://arxiv.org/abs/1909.08593">https://arxiv.org/abs/1909.08593</a>.
+</div>
+</div></section><section class="quarto-appendix-contents" id="quarto-reuse"><h2 class="anchored quarto-appendix-heading">Reuse</h2><div class="quarto-appendix-contents"><div><a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></div></div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{bogossian2026,
+  author = {Bogossian, Andreas},
+  title = {KL {Divergence}},
+  date = {2026-03-17},
+  url = {https://AJBogo9.github.io/tech-blog/posts/2026-03-KL-divergence/},
+  langid = {en}
+}
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-bogossian2026" class="csl-entry quarto-appendix-citeas" role="listitem">
+Bogossian, Andreas. 2026. <span>“KL Divergence.”</span> March 17, 2026.
+<a href="https://AJBogo9.github.io/tech-blog/posts/2026-03-KL-divergence/">https://AJBogo9.github.io/tech-blog/posts/2026-03-KL-divergence/</a>.
+</div></div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     // Ensure there is a toggle, if there isn't float one in the top right
@@ -905,5 +1013,5 @@ Jan 15, 2025
 
 
 
-<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
 </body></html>
