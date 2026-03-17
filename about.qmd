@@ -1,5 +1,7 @@
 ## About This Blog
 
-This blog is a medium for public learning. My goal is to write about concepts that I don't understand and create structured explanations. By writing about things I don't understand I achieve two things: the first benefit is that I understnad the concept when I'm able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I'm working with. 
+This blog is a medium for public learning. My goal is to write about concepts that I don't understand and create structured explanations. 
+
+By writing about things I don't understand I aim to achieve two things: the first benefit is that I understnad the concept when I'm able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I'm working with. 
 
 On this blog you can expect to see posts about mathematics, machine learning and computer sicence. I've always been interested in math and computer so machine learning felt like a natural intersection of the two topics. 
