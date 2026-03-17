@@ -1,26 +1,5 @@
----
-title: "About"
----
+## About This Blog
 
-DRAFT!! MODIFY THIS LATER!!
+This blog is a medium for public learning. My goal is to write about concepts that I don't understand and create structured explanations. By writing about things I don't understand I achieve two things: the first benefit is that I understnad the concept when I'm able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I'm working with. 
 
-Hi, I'm **Bogo** — a developer with a passion for understanding the math and engineering behind machine learning systems.
-
-This blog is where I document things I've worked hard to understand: probabilistic models, inference algorithms, system design, and whatever else is currently breaking my brain.
-
-## What you'll find here
-
-Posts tend to be technical and go into the weeds. I write them mostly for my own future reference, but I hope they're useful to others too.
-
-Topics I return to often:
-
-- Bayesian inference & variational methods
-- Probabilistic programming
-- ML systems & engineering
-- Statistics done carefully
-
-## Background
-
-I'm currently working on [what you do — update this]. Previously [prior role/project — update this].
-
-You can find my code on [GitHub](https://github.com/AJBogo9) and connect with me on [LinkedIn](https://www.linkedin.com/in/bogo9/).
+On this blog you can expect to see posts about mathematics, machine learning and computer sicence. I've always been interested in math and computer so machine learning felt like a natural intersection of the two topics. 
