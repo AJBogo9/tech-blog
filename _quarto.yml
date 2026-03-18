@@ -8,6 +8,9 @@ website:
   search: true
   open-graph: true
   page-footer:
+    border: true
+    background: "dark"
+    foreground: "light"
     left: "© 2026 Andreas Bogossian"
     center: "Built with [Quarto](https://quarto.org)"
     right:
