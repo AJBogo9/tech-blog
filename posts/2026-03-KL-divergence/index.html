@@ -325,7 +325,7 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 <section id="code-demo" class="level2">
 <h2 class="anchored" data-anchor-id="code-demo">Code demo</h2>
 <p>Now imagine a small vocabulary of five tokens: <code>["cat", "sat", "on", "the", "mat"]</code>. We have an imaginary LLM that has a predicted distribution <span class="math inline">Q</span> for the vocabulary and we also know the true distribution <span class="math inline">P</span> from the training data for the vocabulary.</p>
-<div id="80fe922e" class="cell" data-execution_count="1">
+<div id="828e8216" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>vocab <span class="op">=</span> [<span class="st">"cat"</span>, <span class="st">"sat"</span>, <span class="st">"on"</span>, <span class="st">"the"</span>, <span class="st">"mat"</span>]</span>
@@ -337,7 +337,7 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Q <span class="op">=</span> np.array([<span class="fl">0.2</span>, <span class="fl">0.25</span>, <span class="fl">0.3</span>, <span class="fl">0.15</span>, <span class="fl">0.1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>By plotting <span class="math inline">P</span> and <span class="math inline">Q</span> the mismatch is immediately visible.</p>
-<div id="8073ab4b" class="cell" data-execution_count="2">
+<div id="998cb76c" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -366,7 +366,7 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 </div>
 </div>
 <p>Directly applying the discrete formula <span class="math inline">D_{KL}(P \| Q) = \sum_k p_k \log \frac{p_k}{q_k}</span>:</p>
-<div id="7655c918" class="cell" data-execution_count="3">
+<div id="5e957bf3" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kl_divergence(p, q):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.<span class="bu">sum</span>(p <span class="op">*</span> np.log(p <span class="op">/</span> q))</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -378,7 +378,7 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 </div>
 <p>The KL-divergence is non-zero so there is a difference between the true distribution <span class="math inline">P</span> and the current distribution <span class="math inline">Q</span> of our model. The difference between the true distribuiton <span class="math inline">P</span> and the predicted distribution <span class="math inline">Q</span> is obvious.</p>
 <p>The order of the distributions is not trivial when computing KL-divergence. This can be shown shown numerically:</p>
-<div id="3f74a3f2" class="cell" data-execution_count="4">
+<div id="db7cc2a9" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>kl_qp <span class="op">=</span> kl_divergence(Q, P)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"D_KL(P || Q) = </span><span class="sc">{</span>kl_pq<span class="sc">:.4f}</span><span class="ss"> nats"</span>)</span>
@@ -828,6 +828,32 @@ Bogossian, Andreas. 2026. <span>“KL Divergence.”</span> March 17, 2026.
   });
   </script>
 </div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2026 Andreas Bogossian</p>
+</div>   
+    <div class="nav-footer-center">
+<p>Built with <a href="https://quarto.org">Quarto</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/bogo9/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/AJBogo9">
+      <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
 
 
 
