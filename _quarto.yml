@@ -7,6 +7,16 @@ website:
   description: "Notes on challenging technical things"
   search: true
   open-graph: true
+  page-footer:
+    left: "© 2026 Andreas Bogossian"
+    center: "Built with [Quarto](https://quarto.org)"
+    right:
+      - icon: linkedin
+        href: https://www.linkedin.com/in/bogo9/
+        aria-label: LinkedIn
+      - icon: github
+        href: https://github.com/AJBogo9
+        aria-label: GitHub
   navbar:
     left:
       - text: "About"
