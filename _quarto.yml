@@ -3,8 +3,9 @@ project:
   output-dir: _site
 
 website:
-  title: "Tech Blog"
+  title: "Andreas Bogossian"
   description: "Notes on challenging technical things"
+  site-url: "https://andreasbogossian.com"
   search: true
   open-graph: true
   page-footer:
