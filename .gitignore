@@ -1,19 +1,15 @@
 # Quarto output
 _site/
-_freeze/
 .quarto/
 *_cache/
 *_files/
-
 # Python
 __pycache__/
 *.pyc
 .venv/
-
 # Editor
 .DS_Store
 .vscode/
 *.swp
-
 /.quarto/
 **/*.quarto_ipynb
