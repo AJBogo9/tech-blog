@@ -2,26 +2,18 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://andreasbogossian.com/about.html</loc>
-    <lastmod>2026-03-24T21:20:02.295Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/posts/2026-03-KL-divergence/index.html</loc>
-    <lastmod>2026-03-24T21:20:02.296Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/posts/2025-02-example-post/index.html</loc>
-    <lastmod>2026-03-24T21:20:02.296Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/index.html</loc>
-    <lastmod>2026-03-24T21:20:02.295Z</lastmod>
+    <lastmod>2026-03-24T22:44:49.653Z</lastmod>
   </url>
   <url>
     <loc>https://andreasbogossian.com/posts/a-star/index.html</loc>
-    <lastmod>2026-03-24T21:20:02.296Z</lastmod>
+    <lastmod>2026-03-24T22:44:49.654Z</lastmod>
   </url>
   <url>
-    <loc>https://andreasbogossian.com/posts/2025-01-getting-started/index.html</loc>
-    <lastmod>2026-03-24T21:20:02.296Z</lastmod>
+    <loc>https://andreasbogossian.com/index.html</loc>
+    <lastmod>2026-03-24T22:44:49.653Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/posts/2026-03-KL-divergence/index.html</loc>
+    <lastmod>2026-03-24T22:44:49.653Z</lastmod>
   </url>
 </urlset>
