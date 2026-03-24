@@ -41,267 +41,18 @@ format:
 ### Demo
 
 ```{ojs}
-// ── constants ────────────────────────────────────────────────────────────────
-app_constants = {
-  const COLS = 29, ROWS = 17, CELL = 28;
-  const W = COLS * CELL, H = ROWS * CELL;
-  const key = (r, c) => `${r},${c}`;
-
-  // Read colours from Bootstrap/Quarto CSS variables at call time,
-  // so the canvas always matches the active theme.
-  function getColors() {
-    const s = getComputedStyle(document.documentElement);
-    const v = name => s.getPropertyValue(name).trim();
-    return {
-      bg:      v("--bs-body-bg")              || "#212529",
-      grid:    v("--bs-border-color")         || "#495057",
-      empty:   v("--bs-body-bg")              || "#212529",
-      wall:    v("--bs-gray-700")             || "#495057",
-      start:   v("--bs-primary")              || "#375a7f",
-      end:     v("--bs-danger")               || "#e74c3c",
-      open:    v("--bs-info-bg-subtle")       || "#0d2a4a",
-      openBdr: v("--bs-info")                 || "#3498db",
-      closed:  v("--bs-success-bg-subtle")    || "#0a2318",
-      clsBdr:  v("--bs-success")              || "#00bc8c",
-      path:    "#f0e130",
-      pathBdr: "#f0e130",
-      text:    v("--bs-body-color")           || "#dee2e6",
-    };
-  }
-
-  return { COLS, ROWS, CELL, W, H, key, getColors };
-}
+import { W, H, CELL, ROWS, COLS } from "./astar-constants.js"
+import { appState }                from "./astar-state.js"
+import { initSearch, stepOnce, resetSearch, heuristicFn } from "./astar-search.js"
+import { generateMaze }            from "./astar-maze.js"
+import { draw }                    from "./astar-draw.js"
 ```
 
 ```{ojs}
-// ── heuristic ────────────────────────────────────────────────────────────────
-heuristicFn = (r1, c1, r2, c2, type) => {
-  const dr = Math.abs(r1 - r2), dc = Math.abs(c1 - c2);
-  if (type === "manhattan")       return dr + dc;
-  if (type === "euclidean")       return Math.sqrt(dr*dr + dc*dc);
-  if (type === "chebyshev")       return Math.max(dr, dc);
-  if (type === "zero (Dijkstra)") return 0;
-  return dr + dc;
-}
-```
-
-```{ojs}
-// ── state ────────────────────────────────────────────────────────────────────
-app_state = () => ({
-  walls:     Array.from({length: app_constants.ROWS}, () => new Array(app_constants.COLS).fill(false)),
-  start:     {r: 1, c: 1},
-  end:       {r: app_constants.ROWS - 2, c: app_constants.COLS - 2},
-  openSet:   [],
-  closedSet: new Set(),
-  cameFrom:  {}, gScore: {}, fScore: {},
-  path:      [],
-  running:   false, done: false, iter: 0, status: "idle",
-  heuristic: "manhattan", weight: 1,
-  animating: false, animTimer: null,
-})
-```
-
-```{ojs}
-// ── search ───────────────────────────────────────────────────────────────────
-app_search = {
-  const { ROWS, COLS, key } = app_constants;
-
-  function initSearch(s) {
-    const sk = key(s.start.r, s.start.c);
-    s.openSet   = [{r: s.start.r, c: s.start.c}];
-    s.closedSet = new Set();
-    s.cameFrom  = {};
-    s.gScore    = {[sk]: 0};
-    s.fScore    = {[sk]: heuristicFn(s.start.r, s.start.c, s.end.r, s.end.c, s.heuristic)};
-    s.path      = [];
-    s.running   = true;
-    s.done      = false;
-    s.iter      = 0;
-    s.status    = "searching…";
-  }
-
-  function stepOnce(s) {
-    if (!s.running || s.done) return;
-    if (s.openSet.length === 0) {
-      s.running = false; s.done = true; s.status = "no path found"; return;
-    }
-    let bestIdx = 0;
-    for (let i = 1; i < s.openSet.length; i++) {
-      const fi = s.fScore[key(s.openSet[i].r,       s.openSet[i].c)]       ?? Infinity;
-      const fb = s.fScore[key(s.openSet[bestIdx].r, s.openSet[bestIdx].c)] ?? Infinity;
-      if (fi < fb) bestIdx = i;
-    }
-    const cur = s.openSet.splice(bestIdx, 1)[0];
-    const ck  = key(cur.r, cur.c);
-
-    if (cur.r === s.end.r && cur.c === s.end.c) {
-      let k = ck;
-      while (s.cameFrom[k]) { s.path.push(k); k = s.cameFrom[k]; }
-      s.path.push(key(s.start.r, s.start.c));
-      s.running = false; s.done = true;
-      s.status  = `done — ${s.path.length - 1} steps`;
-      return;
-    }
-    s.closedSet.add(ck);
-    s.iter++;
-
-    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-    for (const [dr, dc] of dirs) {
-      const nr = cur.r + dr, nc = cur.c + dc;
-      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-      if (s.walls[nr][nc]) continue;
-      const nk = key(nr, nc);
-      if (s.closedSet.has(nk)) continue;
-      const tentG = (s.gScore[ck] ?? Infinity) + 1;
-      if (tentG < (s.gScore[nk] ?? Infinity)) {
-        s.cameFrom[nk] = ck;
-        s.gScore[nk]   = tentG;
-        const h        = heuristicFn(nr, nc, s.end.r, s.end.c, s.heuristic);
-        s.fScore[nk]   = tentG + s.weight * h;
-        if (!s.openSet.find(n => n.r === nr && n.c === nc))
-          s.openSet.push({r: nr, c: nc});
-      }
-    }
-  }
-
-  function resetSearch(s) {
-    s.openSet = []; s.closedSet = new Set(); s.cameFrom = {};
-    s.gScore  = {}; s.fScore   = {};
-    s.path    = []; s.running  = false; s.done = false; s.iter = 0; s.status = "idle";
-  }
-
-  return { initSearch, stepOnce, resetSearch };
-}
-```
-
-```{ojs}
-// ── maze ─────────────────────────────────────────────────────────────────────
-app_maze = {
-  const { ROWS, COLS } = app_constants;
-  const { resetSearch } = app_search;
-
-  function generateMaze(s) {
-    s.walls = Array.from({length: ROWS}, () => new Array(COLS).fill(true));
-    const inMaze    = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
-    const cardinals = [[0,2],[0,-2],[2,0],[-2,0]];
-
-    function neighbours(r, c) {
-      return cardinals
-        .map(([dr, dc]) => [r + dr, c + dc])
-        .filter(([nr, nc]) => nr >= 1 && nr < ROWS-1 && nc >= 1 && nc < COLS-1);
-    }
-
-    const originR = 1, originC = 1;
-    s.walls[originR][originC] = false;
-    inMaze[originR][originC]  = true;
-    let frontier = neighbours(originR, originC).map(([nr, nc]) => [nr, nc, originR, originC]);
-
-    while (frontier.length) {
-      const idx = Math.floor(Math.random() * frontier.length);
-      const [r, c, pr, pc] = frontier.splice(idx, 1)[0];
-      if (inMaze[r][c]) continue;
-      s.walls[r][c] = false;
-      s.walls[(r + pr) / 2][(c + pc) / 2] = false;
-      inMaze[r][c] = true;
-      for (const [nr, nc] of neighbours(r, c))
-        if (!inMaze[nr][nc]) frontier.push([nr, nc, r, c]);
-    }
-
-    // BFS from origin to find the furthest reachable cell
-    const bfsDirs = [[0,1],[0,-1],[1,0],[-1,0]];
-    const dist = Array.from({length: ROWS}, () => new Array(COLS).fill(-1));
-    const queue = [[originR, originC]];
-    dist[originR][originC] = 0;
-    let furthest = [originR, originC];
-    while (queue.length) {
-      const [r, c] = queue.shift();
-      for (const [dr, dc] of bfsDirs) {
-        const nr = r + dr, nc = c + dc;
-        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-        if (s.walls[nr][nc] || dist[nr][nc] !== -1) continue;
-        dist[nr][nc] = dist[r][c] + 1;
-        if (dist[nr][nc] > dist[furthest[0]][furthest[1]]) furthest = [nr, nc];
-        queue.push([nr, nc]);
-      }
-    }
-
-    s.start = { r: originR, c: originC };
-    s.end   = { r: furthest[0], c: furthest[1] };
-    resetSearch(s);
-  }
-
-  return { generateMaze };
-}
-```
-
-```{ojs}
-// ── draw ─────────────────────────────────────────────────────────────────────
-app_draw = {
-  const { COLS, ROWS, CELL, W, H, key, getColors } = app_constants;
-
-  function draw(s, ctx) {
-    const C = getColors();
-
-    ctx.fillStyle = C.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    const openKeys = new Set(s.openSet.map(n => key(n.r, n.c)));
-    const pathSet  = new Set(s.path);
-
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const x = c * CELL, y = r * CELL, k = key(r, c);
-        const isStart  = r === s.start.r && c === s.start.c;
-        const isEnd    = r === s.end.r   && c === s.end.c;
-        const isWall   = s.walls[r][c];
-        const isPath   = pathSet.has(k)     && !isStart && !isEnd;
-        const isOpen   = openKeys.has(k)    && !isStart && !isEnd;
-        const isClosed = s.closedSet.has(k) && !isStart && !isEnd;
-
-        if      (isWall)   ctx.fillStyle = C.wall;
-        else if (isStart)  ctx.fillStyle = C.start;
-        else if (isEnd)    ctx.fillStyle = C.end;
-        else if (isPath)   ctx.fillStyle = C.path;
-        else if (isOpen)   ctx.fillStyle = C.open;
-        else if (isClosed) ctx.fillStyle = C.closed;
-        else               ctx.fillStyle = C.empty;
-        ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
-
-        if (isOpen)   { ctx.strokeStyle = C.openBdr; ctx.lineWidth = 0.5; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
-        if (isClosed) { ctx.strokeStyle = C.clsBdr;  ctx.lineWidth = 0.5; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
-        if (isPath)   { ctx.strokeStyle = C.pathBdr; ctx.lineWidth = 1;   ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
-
-        if (isStart || isEnd) {
-          ctx.fillStyle = C.text;
-          ctx.font = `bold ${CELL * 0.38}px monospace`;
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(isStart ? "S" : "E", x + CELL / 2, y + CELL / 2);
-          ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-        }
-      }
-    }
-
-    ctx.strokeStyle = C.grid; ctx.lineWidth = 0.4;
-    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r*CELL); ctx.lineTo(W, r*CELL); ctx.stroke(); }
-    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c*CELL, 0); ctx.lineTo(c*CELL, H); ctx.stroke(); }
-  }
-
-  return { draw };
-}
-```
-
-```{ojs}
-// ── OJS inputs (themed automatically by Quarto) ───────────────────────────────
 viewof heuristic = Inputs.select(
   ["manhattan", "euclidean", "chebyshev", "zero (Dijkstra)"],
   { value: "manhattan", label: "Heuristic" }
 )
-```
-
-```{ojs}
-viewof weight = Inputs.range([0, 5], {
-  value: 1, step: 0.1, label: "Weight (w)"
-})
 ```
 
 ```{ojs}
@@ -310,37 +61,62 @@ app_persistent = ({ s: null })
 ```
 
 ```{ojs}
-// ── UI (demo) — reactive to heuristic and weight ──────────────────────────────
+// ── UI — reactive to heuristic ────────────────────────────────────────────────
 app = {
-  const { COLS, ROWS, CELL, W, H } = app_constants;
-  const { initSearch, stepOnce, resetSearch } = app_search;
-  const { generateMaze }                      = app_maze;
-  const { draw }                              = app_draw;
+  // initialise canvas, ctx, state and pointer listeners once
+  if (!app_persistent.s) {
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;
+    Object.assign(app_persistent, {
+      s:      appState(),
+      canvas: canvas,
+      ctx:    canvas.getContext("2d"),
+    });
 
-  // initialise state once; subsequent re-runs of this cell (triggered by
-  // viewof changes) reuse the existing state object stored on the canvas.
-  const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
-  canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;
-  const ctx = canvas.getContext("2d");
+    // pointer / paint — attached once, reads s via app_persistent
+    let painting = false, paintValue = true;
+    function cellAt(e) {
+      const rect = canvas.getBoundingClientRect(), scale = W / rect.width;
+      return {
+        r: Math.floor((e.clientY - rect.top)  * scale / CELL),
+        c: Math.floor((e.clientX - rect.left) * scale / CELL),
+      };
+    }
+    function applyEdit(r, c) {
+      const s = app_persistent.s;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+      if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+      if (s.walls[r][c] === paintValue) return;
+      s.walls[r][c] = paintValue;
+      resetSearch(s); app_persistent.redraw();
+    }
+    canvas.addEventListener("pointerdown", e => {
+      app_persistent.stopAnim();
+      painting = true; canvas.setPointerCapture(e.pointerId);
+      const {r, c} = cellAt(e);
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+      const s = app_persistent.s;
+      if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+      paintValue = !s.walls[r][c];
+      applyEdit(r, c);
+    });
+    canvas.addEventListener("pointermove", e => {
+      if (painting) { const {r, c} = cellAt(e); applyEdit(r, c); }
+    });
+    canvas.addEventListener("pointerup", () => { painting = false; });
+  }
 
-  // Persist state across OJS re-runs
-  if (!app_persistent.s) Object.assign(app_persistent, { s: app_state() });
-  const s = app_persistent.s;
+  const s      = app_persistent.s;
+  const canvas = app_persistent.canvas;
+  const ctx    = app_persistent.ctx;
 
-  // ── react to viewof inputs ─────────────────────────────────────────────────
+  // ── react to heuristic input ───────────────────────────────────────────────
   if (s.heuristic !== heuristic) {
     s.heuristic = heuristic;
     if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
     s.animating = false;
     resetSearch(s);
-  }
-  if (s.weight !== weight) {
-    s.weight = weight;
-    for (const k of Object.keys(s.gScore)) {
-      const [r, c] = k.split(",").map(Number);
-      s.fScore[k] = s.gScore[k] + s.weight * heuristicFn(r, c, s.end.r, s.end.c, s.heuristic);
-    }
   }
 
   // ── buttons ────────────────────────────────────────────────────────────────
@@ -348,13 +124,15 @@ app = {
   const btnReset   = document.createElement("button");
   const btnClear   = document.createElement("button");
   const btnMaze    = document.createElement("button");
+  const btnSave    = document.createElement("button");
   btnAnimate.textContent = "▶ Animate";
   btnReset.textContent   = "Reset";
   btnClear.textContent   = "Clear walls";
   btnMaze.textContent    = "Gen maze";
+  btnSave.textContent    = "Save image";
   const btnRow = document.createElement("div");
   btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px";
-  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
+  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze, btnSave);
 
   // ── iterations display ─────────────────────────────────────────────────────
   const iterDisplay = document.createElement("div");
@@ -376,6 +154,10 @@ app = {
     if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
     btnAnimate.textContent = "▶ Animate";
   }
+
+  // store on persistent so pointer listeners can call them
+  app_persistent.redraw   = redraw;
+  app_persistent.stopAnim = stopAnim;
 
   function animTick() {
     if (!s.animating) return;
@@ -401,36 +183,13 @@ app = {
     s.walls = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
     resetSearch(s); redraw();
   };
-  btnMaze.onclick = () => { stopAnim(); generateMaze(s); redraw(); };
-
-  // ── pointer / paint ────────────────────────────────────────────────────────
-  let painting = false, paintValue = true;
-  function cellAt(e) {
-    const rect = canvas.getBoundingClientRect(), scale = W / rect.width;
-    return {
-      r: Math.floor((e.clientY - rect.top)  * scale / CELL),
-      c: Math.floor((e.clientX - rect.left) * scale / CELL),
-    };
-  }
-  function applyEdit(r, c) {
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
-    if (s.walls[r][c] === paintValue) return;
-    s.walls[r][c] = paintValue;
-    resetSearch(s); redraw();
-  }
-  canvas.addEventListener("pointerdown", e => {
-    stopAnim(); painting = true; canvas.setPointerCapture(e.pointerId);
-    const {r, c} = cellAt(e);
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
-    paintValue = !s.walls[r][c];
-    applyEdit(r, c);
-  });
-  canvas.addEventListener("pointermove", e => {
-    if (painting) { const {r, c} = cellAt(e); applyEdit(r, c); }
-  });
-  canvas.addEventListener("pointerup", () => { painting = false; });
+  btnMaze.onclick  = () => { stopAnim(); generateMaze(s); redraw(); };
+  btnSave.onclick  = () => {
+    const link = document.createElement("a");
+    link.download = "astar.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
 
   redraw();
   return root;
