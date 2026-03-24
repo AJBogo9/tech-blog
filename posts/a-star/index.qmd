@@ -124,15 +124,13 @@ app = {
   const btnReset   = document.createElement("button");
   const btnClear   = document.createElement("button");
   const btnMaze    = document.createElement("button");
-  const btnSave    = document.createElement("button");
   btnAnimate.textContent = "▶ Animate";
   btnReset.textContent   = "Reset";
   btnClear.textContent   = "Clear walls";
   btnMaze.textContent    = "Gen maze";
-  btnSave.textContent    = "Save image";
   const btnRow = document.createElement("div");
   btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px";
-  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze, btnSave);
+  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
 
   // ── iterations display ─────────────────────────────────────────────────────
   const iterDisplay = document.createElement("div");
@@ -184,12 +182,6 @@ app = {
     resetSearch(s); redraw();
   };
   btnMaze.onclick  = () => { stopAnim(); generateMaze(s); redraw(); };
-  btnSave.onclick  = () => {
-    const link = document.createElement("a");
-    link.download = "astar.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  };
 
   redraw();
   return root;
