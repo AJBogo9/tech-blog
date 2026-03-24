@@ -3,11 +3,42 @@ title: "A* Pathfinding Algorithm"
 author: "Andreas Bogossian"
 date: "2026-03-19"
 description: "A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance. Use this interactive grid to animate the search, draw walls, generate mazes, and compare heuristics side by side."
+image: "astar.png"
 format:
   html:
     echo: false
     code-tools: false
 ---
+
+- Finding the shortest path between two points on a grid
+- Brute-force explores every possible path — complexity grows as $O(b^d)$ where $b$ is the branching factor and $d$ is the depth
+- Need a smarter way to prioritize which paths to explore
+
+### Cost Function
+
+- Every node $n$ is assigned a score: $f(n) = g(n) + h(n)$
+- $g(n)$ — exact cost of the path from start to $n$ (known)
+- $h(n)$ — estimated cost from $n$ to the goal (heuristic — not exact)
+- A\* always expands the node with the lowest $f(n)$ first
+- If $h(n) = 0$, A\* degenerates into Dijkstra's algorithm (explores in all directions equally)
+- If $h(n)$ never overestimates the true cost, it is called **admissible** and A\* is guaranteed to find the optimal path
+
+### Open and Closed Sets
+
+- **Open set** — nodes discovered but not yet fully evaluated (candidates for the next step)
+- **Closed set** — nodes already evaluated (won't be revisited)
+- At each step: pop the lowest $f(n)$ node from the open set, evaluate its neighbours, add them to the open set if not already visited
+
+### Heuristic
+
+- The heuristic $h(n)$ determines how "directed" the search is
+- **Manhattan distance** — $h(n) = |x_1 - x_2| + |y_1 - y_2|$ — best for 4-directional grids
+- **Euclidean distance** — $h(n) = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}$ — straight-line distance, can underestimate on grids
+- **Chebyshev distance** — $h(n) = \max(|x_1 - x_2|, |y_1 - y_2|)$ — best when diagonal moves are allowed
+- **Weighted A\*** — $f(n) = g(n) + w \cdot h(n)$ where $w > 1$ makes the search faster but potentially suboptimal
+- Stronger heuristics explore fewer nodes but require more assumptions about the search space
+
+### Demo
 
 ```{ojs}
 // ── constants ────────────────────────────────────────────────────────────────
