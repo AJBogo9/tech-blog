@@ -14,16 +14,31 @@ format:
 app_constants = {
   const COLS = 29, ROWS = 17, CELL = 28;
   const W = COLS * CELL, H = ROWS * CELL;
-  const C = {
-    bg:      "#0f1117", grid:    "#1e2130",
-    empty:   "#12151f", wall:    "#353a50",
-    start:   "#4a8fe8", end:     "#e85a4a",
-    open:    "#0d2a4a", openBdr: "#4a8fe8",
-    closed:  "#0a2318", clsBdr:  "#3a9e60",
-    path:    "#f5a623", pathBdr: "#f5a623",
-  };
   const key = (r, c) => `${r},${c}`;
-  return { COLS, ROWS, CELL, W, H, C, key };
+
+  // Read colours from Bootstrap/Quarto CSS variables at call time,
+  // so the canvas always matches the active theme.
+  function getColors() {
+    const s = getComputedStyle(document.documentElement);
+    const v = name => s.getPropertyValue(name).trim();
+    return {
+      bg:      v("--bs-body-bg")              || "#212529",
+      grid:    v("--bs-border-color")         || "#495057",
+      empty:   v("--bs-body-bg")              || "#212529",
+      wall:    v("--bs-gray-700")             || "#495057",
+      start:   v("--bs-primary")              || "#375a7f",
+      end:     v("--bs-danger")               || "#e74c3c",
+      open:    v("--bs-info-bg-subtle")       || "#0d2a4a",
+      openBdr: v("--bs-info")                 || "#3498db",
+      closed:  v("--bs-success-bg-subtle")    || "#0a2318",
+      clsBdr:  v("--bs-success")              || "#00bc8c",
+      path:    "#f0e130",
+      pathBdr: "#f0e130",
+      text:    v("--bs-body-color")           || "#dee2e6",
+    };
+  }
+
+  return { COLS, ROWS, CELL, W, H, key, getColors };
 }
 ```
 
@@ -41,16 +56,15 @@ heuristicFn = (r1, c1, r2, c2, type) => {
 
 ```{ojs}
 // ── state ────────────────────────────────────────────────────────────────────
-// Returns a fresh mutable state object. Re-call to reset.
 app_state = () => ({
-  walls:    Array.from({length: app_constants.ROWS}, () => new Array(app_constants.COLS).fill(false)),
-  start:    {r: 3,                        c: 3},
-  end:      {r: app_constants.ROWS - 4,   c: app_constants.COLS - 4},
-  openSet:  [],
+  walls:     Array.from({length: app_constants.ROWS}, () => new Array(app_constants.COLS).fill(false)),
+  start:     {r: 1, c: 1},
+  end:       {r: app_constants.ROWS - 2, c: app_constants.COLS - 2},
+  openSet:   [],
   closedSet: new Set(),
-  cameFrom: {}, gScore: {}, fScore: {},
-  path:     [],
-  running:  false, done: false, iter: 0, status: "idle",
+  cameFrom:  {}, gScore: {}, fScore: {},
+  path:      [],
+  running:   false, done: false, iter: 0, status: "idle",
   heuristic: "manhattan", weight: 1,
   animating: false, animTimer: null,
 })
@@ -101,15 +115,13 @@ app_search = {
     s.iter++;
 
     const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-
     for (const [dr, dc] of dirs) {
       const nr = cur.r + dr, nc = cur.c + dc;
       if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
       if (s.walls[nr][nc]) continue;
       const nk = key(nr, nc);
       if (s.closedSet.has(nk)) continue;
-      const moveCost = 1;
-      const tentG    = (s.gScore[ck] ?? Infinity) + moveCost;
+      const tentG = (s.gScore[ck] ?? Infinity) + 1;
       if (tentG < (s.gScore[nk] ?? Infinity)) {
         s.cameFrom[nk] = ck;
         s.gScore[nk]   = tentG;
@@ -121,18 +133,13 @@ app_search = {
     }
   }
 
-  function runToCompletion(s) {
-    if (!s.running && !s.done) initSearch(s);
-    while (s.running && !s.done) stepOnce(s);
-  }
-
   function resetSearch(s) {
     s.openSet = []; s.closedSet = new Set(); s.cameFrom = {};
     s.gScore  = {}; s.fScore   = {};
     s.path    = []; s.running  = false; s.done = false; s.iter = 0; s.status = "idle";
   }
 
-  return { initSearch, stepOnce, runToCompletion, resetSearch };
+  return { initSearch, stepOnce, resetSearch };
 }
 ```
 
@@ -144,7 +151,7 @@ app_maze = {
 
   function generateMaze(s) {
     s.walls = Array.from({length: ROWS}, () => new Array(COLS).fill(true));
-    const inMaze  = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
+    const inMaze    = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
     const cardinals = [[0,2],[0,-2],[2,0],[-2,0]];
 
     function neighbours(r, c) {
@@ -153,26 +160,20 @@ app_maze = {
         .filter(([nr, nc]) => nr >= 1 && nr < ROWS-1 && nc >= 1 && nc < COLS-1);
     }
 
-    // Prim's: start from origin, grow by randomly picking frontier cells
     const originR = 1, originC = 1;
     s.walls[originR][originC] = false;
     inMaze[originR][originC]  = true;
-
     let frontier = neighbours(originR, originC).map(([nr, nc]) => [nr, nc, originR, originC]);
 
     while (frontier.length) {
       const idx = Math.floor(Math.random() * frontier.length);
       const [r, c, pr, pc] = frontier.splice(idx, 1)[0];
       if (inMaze[r][c]) continue;
-
-      // Carve this cell and the passage from its parent
       s.walls[r][c] = false;
       s.walls[(r + pr) / 2][(c + pc) / 2] = false;
       inMaze[r][c] = true;
-
-      for (const [nr, nc] of neighbours(r, c)) {
+      for (const [nr, nc] of neighbours(r, c))
         if (!inMaze[nr][nc]) frontier.push([nr, nc, r, c]);
-      }
     }
 
     // BFS from origin to find the furthest reachable cell
@@ -195,7 +196,6 @@ app_maze = {
 
     s.start = { r: originR, c: originC };
     s.end   = { r: furthest[0], c: furthest[1] };
-
     resetSearch(s);
   }
 
@@ -206,9 +206,11 @@ app_maze = {
 ```{ojs}
 // ── draw ─────────────────────────────────────────────────────────────────────
 app_draw = {
-  const { COLS, ROWS, CELL, W, H, C, key } = app_constants;
+  const { COLS, ROWS, CELL, W, H, key, getColors } = app_constants;
 
   function draw(s, ctx) {
+    const C = getColors();
+
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, W, H);
 
@@ -221,8 +223,8 @@ app_draw = {
         const isStart  = r === s.start.r && c === s.start.c;
         const isEnd    = r === s.end.r   && c === s.end.c;
         const isWall   = s.walls[r][c];
-        const isPath   = pathSet.has(k)    && !isStart && !isEnd;
-        const isOpen   = openKeys.has(k)   && !isStart && !isEnd;
+        const isPath   = pathSet.has(k)     && !isStart && !isEnd;
+        const isOpen   = openKeys.has(k)    && !isStart && !isEnd;
         const isClosed = s.closedSet.has(k) && !isStart && !isEnd;
 
         if      (isWall)   ctx.fillStyle = C.wall;
@@ -239,7 +241,8 @@ app_draw = {
         if (isPath)   { ctx.strokeStyle = C.pathBdr; ctx.lineWidth = 1;   ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
 
         if (isStart || isEnd) {
-          ctx.fillStyle = "#fff"; ctx.font = `bold ${CELL * 0.38}px monospace`;
+          ctx.fillStyle = C.text;
+          ctx.font = `bold ${CELL * 0.38}px monospace`;
           ctx.textAlign = "center"; ctx.textBaseline = "middle";
           ctx.fillText(isStart ? "S" : "E", x + CELL / 2, y + CELL / 2);
           ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
@@ -250,7 +253,6 @@ app_draw = {
     ctx.strokeStyle = C.grid; ctx.lineWidth = 0.4;
     for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r*CELL); ctx.lineTo(W, r*CELL); ctx.stroke(); }
     for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c*CELL, 0); ctx.lineTo(c*CELL, H); ctx.stroke(); }
-
   }
 
   return { draw };
@@ -258,78 +260,79 @@ app_draw = {
 ```
 
 ```{ojs}
-// ── UI (demo) ────────────────────────────────────────────────────────────────
+// ── OJS inputs (themed automatically by Quarto) ───────────────────────────────
+viewof heuristic = Inputs.select(
+  ["manhattan", "euclidean", "chebyshev", "zero (Dijkstra)"],
+  { value: "manhattan", label: "Heuristic" }
+)
+```
+
+```{ojs}
+viewof weight = Inputs.range([0, 5], {
+  value: 1, step: 0.1, label: "Weight (w)"
+})
+```
+
+```{ojs}
+// ── persistent state container ───────────────────────────────────────────────
+app_persistent = ({ s: null })
+```
+
+```{ojs}
+// ── UI (demo) — reactive to heuristic and weight ──────────────────────────────
 app = {
-  const { COLS, ROWS, CELL, W, H, C, key } = app_constants;
-  const { initSearch, stepOnce, resetSearch }  = app_search;
-  const { generateMaze }                       = app_maze;
-  const { draw }                               = app_draw;
+  const { COLS, ROWS, CELL, W, H } = app_constants;
+  const { initSearch, stepOnce, resetSearch } = app_search;
+  const { generateMaze }                      = app_maze;
+  const { draw }                              = app_draw;
 
-  // initialise state
-  const s = app_state();
-
-  // ── DOM helpers ────────────────────────────────────────────────────────────
-  function mkBtn(label) {
-    const b = document.createElement("button");
-    b.textContent = label;
-    return b;
-  }
-  function mkLabel(text) {
-    const l = document.createElement("label");
-    l.textContent = text;
-    return l;
-  }
-  function mkSelect(options, val) {
-    const sel = document.createElement("select");
-    options.forEach(o => {
-      const op = document.createElement("option");
-      op.value = op.textContent = o;
-      if (o === val) op.selected = true;
-      sel.appendChild(op);
-    });
-    return sel;
-  }
-
-  // ── build DOM ──────────────────────────────────────────────────────────────
-  const root = document.createElement("div");
-
-  // buttons
-  const btnAnimate = mkBtn("▶ Animate");
-  const btnReset   = mkBtn("Reset");
-  const btnClear   = mkBtn("Clear walls");
-  const btnMaze    = mkBtn("Gen maze");
-  const btnRow     = document.createElement("div");
-  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px";
-  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
-
-  // controls
-  const selHeuristic = mkSelect(["manhattan","euclidean","chebyshev","zero (Dijkstra)"], "manhattan");
-  const weightSlider = Object.assign(document.createElement("input"),
-    {type:"range", min:0, max:5, step:0.1, value:1});
-  const weightVal = document.createElement("span");
-  weightVal.textContent = "1.0";
-
-  const optRow = document.createElement("div");
-  optRow.style.cssText = "display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:6px";
-  const hGroup = document.createElement("label");
-  hGroup.append("heuristic ", selHeuristic);
-  const wGroup = document.createElement("label");
-  wGroup.append("weight (w) ", weightSlider, " ", weightVal);
-  optRow.append(hGroup, wGroup);
-
-  // canvas
+  // initialise state once; subsequent re-runs of this cell (triggered by
+  // viewof changes) reuse the existing state object stored on the canvas.
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;
   const ctx = canvas.getContext("2d");
 
-  // iterations counter
+  // Persist state across OJS re-runs
+  if (!app_persistent.s) Object.assign(app_persistent, { s: app_state() });
+  const s = app_persistent.s;
+
+  // ── react to viewof inputs ─────────────────────────────────────────────────
+  if (s.heuristic !== heuristic) {
+    s.heuristic = heuristic;
+    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
+    s.animating = false;
+    resetSearch(s);
+  }
+  if (s.weight !== weight) {
+    s.weight = weight;
+    for (const k of Object.keys(s.gScore)) {
+      const [r, c] = k.split(",").map(Number);
+      s.fScore[k] = s.gScore[k] + s.weight * heuristicFn(r, c, s.end.r, s.end.c, s.heuristic);
+    }
+  }
+
+  // ── buttons ────────────────────────────────────────────────────────────────
+  const btnAnimate = document.createElement("button");
+  const btnReset   = document.createElement("button");
+  const btnClear   = document.createElement("button");
+  const btnMaze    = document.createElement("button");
+  btnAnimate.textContent = "▶ Animate";
+  btnReset.textContent   = "Reset";
+  btnClear.textContent   = "Clear walls";
+  btnMaze.textContent    = "Gen maze";
+  const btnRow = document.createElement("div");
+  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px";
+  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
+
+  // ── iterations display ─────────────────────────────────────────────────────
   const iterDisplay = document.createElement("div");
   iterDisplay.textContent = "iterations: —";
 
-  root.append(btnRow, optRow, canvas, iterDisplay);
+  const root = document.createElement("div");
+  root.append(btnRow, canvas, iterDisplay);
 
-  // ── animation helpers ──────────────────────────────────────────────────────
+  // ── helpers ────────────────────────────────────────────────────────────────
   function redraw() {
     draw(s, ctx);
     iterDisplay.textContent = s.done
@@ -348,11 +351,8 @@ app = {
     if (!s.running && !s.done) initSearch(s);
     stepOnce(s);
     redraw();
-    if (!s.done) {
-      s.animTimer = setTimeout(animTick, 50);
-    } else {
-      stopAnim();
-    }
+    if (!s.done) s.animTimer = setTimeout(animTick, 50);
+    else         stopAnim();
   }
 
   function startAnim() {
@@ -362,7 +362,7 @@ app = {
     animTick();
   }
 
-  // ── event handlers ─────────────────────────────────────────────────────────
+  // ── button handlers ────────────────────────────────────────────────────────
   btnAnimate.onclick = () => s.animating ? stopAnim() : startAnim();
   btnReset.onclick   = () => { stopAnim(); resetSearch(s); redraw(); };
   btnClear.onclick   = () => {
@@ -370,25 +370,12 @@ app = {
     s.walls = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
     resetSearch(s); redraw();
   };
-  btnMaze.onclick    = () => { stopAnim(); generateMaze(s); redraw(); };
-
-  selHeuristic.onchange = e => { s.heuristic = e.target.value; stopAnim(); resetSearch(s); redraw(); };
-  weightSlider.oninput  = e => {
-    s.weight = parseFloat(e.target.value);
-    weightVal.textContent = s.weight.toFixed(1);
-    // update fScores in place so the change takes effect mid-animation
-    for (const k of Object.keys(s.gScore)) {
-      const [r, c] = k.split(",").map(Number);
-      const h = heuristicFn(r, c, s.end.r, s.end.c, s.heuristic);
-      s.fScore[k] = s.gScore[k] + s.weight * h;
-    }
-  };
+  btnMaze.onclick = () => { stopAnim(); generateMaze(s); redraw(); };
 
   // ── pointer / paint ────────────────────────────────────────────────────────
   let painting = false, paintValue = true;
   function cellAt(e) {
-    const rect  = canvas.getBoundingClientRect();
-    const scale = W / rect.width;
+    const rect = canvas.getBoundingClientRect(), scale = W / rect.width;
     return {
       r: Math.floor((e.clientY - rect.top)  * scale / CELL),
       c: Math.floor((e.clientX - rect.left) * scale / CELL),
