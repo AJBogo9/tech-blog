@@ -54,7 +54,7 @@ app_state = () => ({
   cameFrom: {}, gScore: {}, fScore: {},
   path:     [],
   running:  false, done: false, iter: 0, status: "idle",
-  heuristic: "manhattan", weight: 1, diagonal: false,
+  heuristic: "manhattan", weight: 1,
   animating: false, animDelay: 50, animTimer: null,
 })
 ```
@@ -104,7 +104,6 @@ app_search = {
     s.iter++;
 
     const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-    if (s.diagonal) dirs.push(...[[1,1],[1,-1],[-1,1],[-1,-1]]);
 
     for (const [dr, dc] of dirs) {
       const nr = cur.r + dr, nc = cur.c + dc;
@@ -112,7 +111,7 @@ app_search = {
       if (s.walls[nr][nc]) continue;
       const nk = key(nr, nc);
       if (s.closedSet.has(nk)) continue;
-      const moveCost = (dr !== 0 && dc !== 0) ? Math.SQRT2 : 1;
+      const moveCost = 1;
       const tentG    = (s.gScore[ck] ?? Infinity) + moveCost;
       if (tentG < (s.gScore[nk] ?? Infinity)) {
         s.cameFrom[nk] = ck;
@@ -307,16 +306,12 @@ app = {
 
   // controls
   const selHeuristic  = mkSelect(["manhattan","euclidean","chebyshev","zero (Dijkstra)"], "manhattan");
-  const selMode       = mkSelect(["wall","erase","set start","set end"], "wall");
   const weightSlider  = Object.assign(document.createElement("input"),
     {type:"range", min:0, max:5, step:0.1, value:1});
   weightSlider.style.cssText = "width:80px;accent-color:#4a8fe8";
   const weightVal = document.createElement("span");
   weightVal.textContent = "1.0";
   weightVal.style.cssText = "font-size:12px;min-width:26px;color:#e2e4ef";
-
-  const diagCheck = Object.assign(document.createElement("input"), {type:"checkbox"});
-  diagCheck.style.cssText = "accent-color:#4a8fe8";
 
   const speedSlider = Object.assign(document.createElement("input"),
     {type:"range", min:0, max:4, step:1, value:2});
@@ -332,8 +327,6 @@ app = {
     mkGroup(mkLabel("heuristic"),  selHeuristic),
     mkGroup(mkLabel("weight (w)"), weightSlider, weightVal),
     mkGroup(mkLabel("speed"),      speedSlider,  speedVal),
-    mkGroup(mkLabel("diagonal"),   diagCheck),
-    mkGroup(mkLabel("edit mode"),  selMode),
   );
 
   // canvas
@@ -424,7 +417,6 @@ app = {
   btnMaze.onclick    = () => { stopAnim(); generateMaze(s); redraw(); };
 
   selHeuristic.onchange = e => { s.heuristic = e.target.value; stopAnim(); resetSearch(s); redraw(); };
-  selMode.onchange      = e => { s.editMode  = e.target.value; };
   weightSlider.oninput  = e => {
     s.weight = parseFloat(e.target.value);
     weightVal.textContent = s.weight.toFixed(1);
@@ -435,10 +427,9 @@ app = {
     s.animDelay = delayMap[idx];
     speedVal.textContent = speedLabels[idx];
   };
-  diagCheck.onchange = e => { s.diagonal = e.target.checked; stopAnim(); resetSearch(s); redraw(); };
 
   // ── pointer / paint ────────────────────────────────────────────────────────
-  let painting = false;
+  let painting = false, paintValue = true;
   function cellAt(e) {
     const rect  = canvas.getBoundingClientRect();
     const scale = W / rect.width;
@@ -449,24 +440,18 @@ app = {
   }
   function applyEdit(r, c) {
     if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-    const mode = s.editMode;
-    if (mode === "wall") {
-      if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
-      s.walls[r][c] = true;
-    } else if (mode === "erase") {
-      s.walls[r][c] = false;
-    } else if (mode === "set start") {
-      if (s.walls[r][c]) return;
-      s.start = {r, c};
-    } else if (mode === "set end") {
-      if (s.walls[r][c]) return;
-      s.end = {r, c};
-    }
+    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    if (s.walls[r][c] === paintValue) return;
+    s.walls[r][c] = paintValue;
     resetSearch(s); redraw();
   }
   canvas.addEventListener("pointerdown", e => {
     stopAnim(); painting = true; canvas.setPointerCapture(e.pointerId);
-    const {r, c} = cellAt(e); applyEdit(r, c);
+    const {r, c} = cellAt(e);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    paintValue = !s.walls[r][c];
+    applyEdit(r, c);
   });
   canvas.addEventListener("pointermove", e => {
     if (painting) { const {r, c} = cellAt(e); applyEdit(r, c); }
