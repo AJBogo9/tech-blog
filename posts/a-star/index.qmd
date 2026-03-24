@@ -21,9 +21,6 @@ app_constants = {
     open:    "#0d2a4a", openBdr: "#4a8fe8",
     closed:  "#0a2318", clsBdr:  "#3a9e60",
     path:    "#f5a623", pathBdr: "#f5a623",
-    gText:   "#3a9e60", fText:   "#f5a623",
-    text:    "#e2e4ef", muted:   "#6b7094",
-    surface: "#1a1d27", border:  "#2e3347",
   };
   const key = (r, c) => `${r},${c}`;
   return { COLS, ROWS, CELL, W, H, C, key };
@@ -55,7 +52,7 @@ app_state = () => ({
   path:     [],
   running:  false, done: false, iter: 0, status: "idle",
   heuristic: "manhattan", weight: 1,
-  animating: false, animDelay: 50, animTimer: null,
+  animating: false, animTimer: null,
 })
 ```
 
@@ -211,7 +208,7 @@ app_maze = {
 app_draw = {
   const { COLS, ROWS, CELL, W, H, C, key } = app_constants;
 
-  function draw(s, ctx, statEls) {
+  function draw(s, ctx) {
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, W, H);
 
@@ -241,17 +238,6 @@ app_draw = {
         if (isClosed) { ctx.strokeStyle = C.clsBdr;  ctx.lineWidth = 0.5; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
         if (isPath)   { ctx.strokeStyle = C.pathBdr; ctx.lineWidth = 1;   ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
 
-        if (!isWall && !isStart && !isEnd) {
-          const g = s.gScore[k], f = s.fScore[k];
-          if (g !== undefined) {
-            ctx.font = `${Math.max(7, CELL * 0.27)}px monospace`;
-            ctx.fillStyle = C.gText;
-            ctx.fillText("g:" + g.toFixed(1), x + 2, y + CELL * 0.42);
-            ctx.fillStyle = C.fText;
-            ctx.fillText("f:" + f.toFixed(1), x + 2, y + CELL * 0.78);
-          }
-        }
-
         if (isStart || isEnd) {
           ctx.fillStyle = "#fff"; ctx.font = `bold ${CELL * 0.38}px monospace`;
           ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -265,12 +251,6 @@ app_draw = {
     for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r*CELL); ctx.lineTo(W, r*CELL); ctx.stroke(); }
     for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c*CELL, 0); ctx.lineTo(c*CELL, H); ctx.stroke(); }
 
-    const { statOpen, statClosed, statPath, statIter, statStatus } = statEls;
-    statOpen.textContent   = s.openSet.length;
-    statClosed.textContent = s.closedSet.size;
-    statPath.textContent   = s.path.length > 0 ? s.path.length - 1 : "—";
-    statIter.textContent   = s.iter;
-    statStatus.textContent = s.status;
   }
 
   return { draw };
@@ -289,31 +269,18 @@ app = {
   const s = app_state();
 
   // ── DOM helpers ────────────────────────────────────────────────────────────
-  function mkBtn(label, primary = false) {
+  function mkBtn(label) {
     const b = document.createElement("button");
     b.textContent = label;
-    b.style.cssText = `font-size:12px;font-family:monospace;padding:5px 11px;
-      border:0.5px solid ${primary ? "#4a8fe8" : "#2e3347"};border-radius:6px;
-      background:#1a1d27;color:${primary ? "#4a8fe8" : "#e2e4ef"};cursor:pointer`;
-    b.onmouseenter = () => b.style.background = "#22263a";
-    b.onmouseleave = () => b.style.background = "#1a1d27";
     return b;
-  }
-  function mkGroup(...children) {
-    const g = document.createElement("div");
-    g.style.cssText = "display:flex;align-items:center;gap:7px;background:#1a1d27;border:0.5px solid #2e3347;border-radius:6px;padding:5px 10px";
-    children.forEach(c => g.appendChild(c));
-    return g;
   }
   function mkLabel(text) {
     const l = document.createElement("label");
     l.textContent = text;
-    l.style.cssText = "font-size:12px;color:#6b7094;white-space:nowrap";
     return l;
   }
   function mkSelect(options, val) {
     const sel = document.createElement("select");
-    sel.style.cssText = "font-size:12px;font-family:monospace;background:#1a1d27;color:#e2e4ef;border:none;outline:none";
     options.forEach(o => {
       const op = document.createElement("option");
       op.value = op.textContent = o;
@@ -325,96 +292,55 @@ app = {
 
   // ── build DOM ──────────────────────────────────────────────────────────────
   const root = document.createElement("div");
-  root.style.cssText = "font-family:monospace;display:flex;flex-direction:column;gap:10px;padding:0.5rem 0";
 
   // buttons
-  const btnAnimate = mkBtn("▶ Animate", true);
-  const btnStep    = mkBtn("Step →");
+  const btnAnimate = mkBtn("▶ Animate");
   const btnReset   = mkBtn("Reset");
   const btnClear   = mkBtn("Clear walls");
   const btnMaze    = mkBtn("Gen maze");
   const btnRow     = document.createElement("div");
-  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;align-items:center";
-  btnRow.append(btnAnimate, btnStep, btnReset, btnClear, btnMaze);
+  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px";
+  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
 
   // controls
-  const selHeuristic  = mkSelect(["manhattan","euclidean","chebyshev","zero (Dijkstra)"], "manhattan");
-  const weightSlider  = Object.assign(document.createElement("input"),
+  const selHeuristic = mkSelect(["manhattan","euclidean","chebyshev","zero (Dijkstra)"], "manhattan");
+  const weightSlider = Object.assign(document.createElement("input"),
     {type:"range", min:0, max:5, step:0.1, value:1});
-  weightSlider.style.cssText = "width:80px;accent-color:#4a8fe8";
   const weightVal = document.createElement("span");
   weightVal.textContent = "1.0";
-  weightVal.style.cssText = "font-size:12px;min-width:26px;color:#e2e4ef";
-
-  const speedSlider = Object.assign(document.createElement("input"),
-    {type:"range", min:0, max:4, step:1, value:2});
-  speedSlider.style.cssText = "width:70px;accent-color:#4a8fe8";
-  const speedLabels = ["0.5×","1×","2×","5×","20×"];
-  const speedVal = document.createElement("span");
-  speedVal.textContent = speedLabels[2];
-  speedVal.style.cssText = "font-size:12px;min-width:30px;color:#e2e4ef";
 
   const optRow = document.createElement("div");
-  optRow.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;align-items:center";
-  optRow.append(
-    mkGroup(mkLabel("heuristic"),  selHeuristic),
-    mkGroup(mkLabel("weight (w)"), weightSlider, weightVal),
-    mkGroup(mkLabel("speed"),      speedSlider,  speedVal),
-  );
+  optRow.style.cssText = "display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:6px";
+  const hGroup = document.createElement("label");
+  hGroup.append("heuristic ", selHeuristic);
+  const wGroup = document.createElement("label");
+  wGroup.append("weight (w) ", weightSlider, " ", weightVal);
+  optRow.append(hGroup, wGroup);
 
   // canvas
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
-  canvas.style.cssText = `display:block;width:100%;max-width:${W}px;border-radius:6px;cursor:crosshair;border:0.5px solid #2e3347`;
+  canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;
   const ctx = canvas.getContext("2d");
 
-  // stats
-  const statsRow = document.createElement("div");
-  statsRow.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
-  function mkStat(label) {
-    const d = document.createElement("div");
-    d.style.cssText = "background:#1a1d27;border:0.5px solid #2e3347;border-radius:6px;padding:5px 10px;font-size:12px;color:#6b7094";
-    const v = document.createElement("span");
-    v.style.cssText = "color:#e2e4ef;font-weight:500;margin-left:5px";
-    d.append(label, v); statsRow.appendChild(d); return v;
-  }
-  const statEls = {
-    statOpen:   mkStat("open set"),
-    statClosed: mkStat("closed set"),
-    statPath:   mkStat("path length"),
-    statIter:   mkStat("iterations"),
-    statStatus: mkStat("status"),
-  };
+  // iterations counter
+  const iterDisplay = document.createElement("div");
+  iterDisplay.textContent = "iterations: —";
 
-  // legend
-  const legend = document.createElement("div");
-  legend.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:#6b7094";
-  [["#4a8fe8","start (S)"],["#e85a4a","end (E)"],["#353a50","wall"],
-   ["#0d2a4a","open set"],["#0a2318","closed set"],["#f5a623","path"]]
-  .forEach(([bg, lbl]) => {
-    const d  = document.createElement("div");
-    d.style.cssText = "display:flex;align-items:center;gap:4px";
-    const sw = document.createElement("div");
-    sw.style.cssText = `width:12px;height:12px;border-radius:2px;background:${bg};flex-shrink:0`;
-    d.append(sw, lbl); legend.appendChild(d);
-  });
-  const note = document.createElement("span");
-  note.textContent = "· cells show g (cost so far) and f = g + w·h";
-  legend.appendChild(note);
-
-  root.append(btnRow, optRow, canvas, statsRow, legend);
+  root.append(btnRow, optRow, canvas, iterDisplay);
 
   // ── animation helpers ──────────────────────────────────────────────────────
-  const delayMap = [200, 100, 50, 20, 5];
-
-  function redraw() { draw(s, ctx, statEls); }
+  function redraw() {
+    draw(s, ctx);
+    iterDisplay.textContent = s.done
+      ? `iterations: ${s.iter} · ${s.status}`
+      : s.iter > 0 ? `iterations: ${s.iter}…` : "iterations: —";
+  }
 
   function stopAnim() {
     s.animating = false;
     if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
-    btnAnimate.textContent    = "▶ Animate";
-    btnAnimate.style.color    = "#4a8fe8";
-    btnAnimate.style.borderColor = "#4a8fe8";
+    btnAnimate.textContent = "▶ Animate";
   }
 
   function animTick() {
@@ -423,7 +349,7 @@ app = {
     stepOnce(s);
     redraw();
     if (!s.done) {
-      s.animTimer = setTimeout(animTick, s.animDelay);
+      s.animTimer = setTimeout(animTick, 50);
     } else {
       stopAnim();
     }
@@ -432,15 +358,12 @@ app = {
   function startAnim() {
     if (s.done) resetSearch(s);
     s.animating = true;
-    btnAnimate.textContent    = "⏸ Pause";
-    btnAnimate.style.color    = "#e8a84a";
-    btnAnimate.style.borderColor = "#e8a84a";
+    btnAnimate.textContent = "⏸ Pause";
     animTick();
   }
 
   // ── event handlers ─────────────────────────────────────────────────────────
   btnAnimate.onclick = () => s.animating ? stopAnim() : startAnim();
-  btnStep.onclick    = () => { stopAnim(); if (!s.running && !s.done) initSearch(s); stepOnce(s); redraw(); };
   btnReset.onclick   = () => { stopAnim(); resetSearch(s); redraw(); };
   btnClear.onclick   = () => {
     stopAnim();
@@ -453,12 +376,12 @@ app = {
   weightSlider.oninput  = e => {
     s.weight = parseFloat(e.target.value);
     weightVal.textContent = s.weight.toFixed(1);
-    stopAnim(); resetSearch(s); redraw();
-  };
-  speedSlider.oninput = e => {
-    const idx = parseInt(e.target.value);
-    s.animDelay = delayMap[idx];
-    speedVal.textContent = speedLabels[idx];
+    // update fScores in place so the change takes effect mid-animation
+    for (const k of Object.keys(s.gScore)) {
+      const [r, c] = k.split(",").map(Number);
+      const h = heuristicFn(r, c, s.end.r, s.end.c, s.heuristic);
+      s.fScore[k] = s.gScore[k] + s.weight * h;
+    }
   };
 
   // ── pointer / paint ────────────────────────────────────────────────────────
