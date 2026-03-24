@@ -12,7 +12,7 @@ format:
 ```{ojs}
 // ── constants ────────────────────────────────────────────────────────────────
 app_constants = {
-  const COLS = 30, ROWS = 18, CELL = 28;
+  const COLS = 29, ROWS = 17, CELL = 28;
   const W = COLS * CELL, H = ROWS * CELL;
   const C = {
     bg:      "#0f1117", grid:    "#1e2130",
@@ -146,26 +146,59 @@ app_maze = {
   const { resetSearch } = app_search;
 
   function generateMaze(s) {
-    s.walls = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
-    for (let r = 0; r < ROWS; r++) s.walls[r][0] = s.walls[r][COLS-1] = true;
-    for (let c = 0; c < COLS; c++) s.walls[0][c] = s.walls[ROWS-1][c] = true;
+    s.walls = Array.from({length: ROWS}, () => new Array(COLS).fill(true));
+    const inMaze  = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
+    const cardinals = [[0,2],[0,-2],[2,0],[-2,0]];
 
-    function divide(r1, c1, r2, c2) {
-      if (r2 - r1 < 2 || c2 - c1 < 2) return;
-      const horiz = (r2 - r1) > (c2 - c1);
-      if (horiz) {
-        const wr   = r1 + 1 + 2 * Math.floor(Math.random() * Math.floor((r2 - r1) / 2));
-        const hole = c1 + Math.floor(Math.random() * (c2 - c1 + 1));
-        for (let c = c1; c <= c2; c++) if (c !== hole && !(wr === s.start.r && c === s.start.c) && !(wr === s.end.r && c === s.end.c)) s.walls[wr][c] = true;
-        divide(r1, c1, wr - 1, c2); divide(wr + 1, c1, r2, c2);
-      } else {
-        const wc   = c1 + 1 + 2 * Math.floor(Math.random() * Math.floor((c2 - c1) / 2));
-        const hole = r1 + Math.floor(Math.random() * (r2 - r1 + 1));
-        for (let r = r1; r <= r2; r++) if (r !== hole && !(r === s.start.r && wc === s.start.c) && !(r === s.end.r && wc === s.end.c)) s.walls[r][wc] = true;
-        divide(r1, c1, r2, wc - 1); divide(r1, wc + 1, r2, c2);
+    function neighbours(r, c) {
+      return cardinals
+        .map(([dr, dc]) => [r + dr, c + dc])
+        .filter(([nr, nc]) => nr >= 1 && nr < ROWS-1 && nc >= 1 && nc < COLS-1);
+    }
+
+    // Prim's: start from origin, grow by randomly picking frontier cells
+    const originR = 1, originC = 1;
+    s.walls[originR][originC] = false;
+    inMaze[originR][originC]  = true;
+
+    let frontier = neighbours(originR, originC).map(([nr, nc]) => [nr, nc, originR, originC]);
+
+    while (frontier.length) {
+      const idx = Math.floor(Math.random() * frontier.length);
+      const [r, c, pr, pc] = frontier.splice(idx, 1)[0];
+      if (inMaze[r][c]) continue;
+
+      // Carve this cell and the passage from its parent
+      s.walls[r][c] = false;
+      s.walls[(r + pr) / 2][(c + pc) / 2] = false;
+      inMaze[r][c] = true;
+
+      for (const [nr, nc] of neighbours(r, c)) {
+        if (!inMaze[nr][nc]) frontier.push([nr, nc, r, c]);
       }
     }
-    divide(1, 1, ROWS - 2, COLS - 2);
+
+    // BFS from origin to find the furthest reachable cell
+    const bfsDirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    const dist = Array.from({length: ROWS}, () => new Array(COLS).fill(-1));
+    const queue = [[originR, originC]];
+    dist[originR][originC] = 0;
+    let furthest = [originR, originC];
+    while (queue.length) {
+      const [r, c] = queue.shift();
+      for (const [dr, dc] of bfsDirs) {
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+        if (s.walls[nr][nc] || dist[nr][nc] !== -1) continue;
+        dist[nr][nc] = dist[r][c] + 1;
+        if (dist[nr][nc] > dist[furthest[0]][furthest[1]]) furthest = [nr, nc];
+        queue.push([nr, nc]);
+      }
+    }
+
+    s.start = { r: originR, c: originC };
+    s.end   = { r: furthest[0], c: furthest[1] };
+
     resetSearch(s);
   }
 
