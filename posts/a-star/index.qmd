@@ -156,12 +156,12 @@ app_maze = {
       if (horiz) {
         const wr   = r1 + 1 + 2 * Math.floor(Math.random() * Math.floor((r2 - r1) / 2));
         const hole = c1 + Math.floor(Math.random() * (c2 - c1 + 1));
-        for (let c = c1; c <= c2; c++) if (c !== hole) s.walls[wr][c] = true;
+        for (let c = c1; c <= c2; c++) if (c !== hole && !(wr === s.start.r && c === s.start.c) && !(wr === s.end.r && c === s.end.c)) s.walls[wr][c] = true;
         divide(r1, c1, wr - 1, c2); divide(wr + 1, c1, r2, c2);
       } else {
         const wc   = c1 + 1 + 2 * Math.floor(Math.random() * Math.floor((c2 - c1) / 2));
         const hole = r1 + Math.floor(Math.random() * (r2 - r1 + 1));
-        for (let r = r1; r <= r2; r++) if (r !== hole) s.walls[r][wc] = true;
+        for (let r = r1; r <= r2; r++) if (r !== hole && !(r === s.start.r && wc === s.start.c) && !(r === s.end.r && wc === s.end.c)) s.walls[r][wc] = true;
         divide(r1, c1, r2, wc - 1); divide(r1, wc + 1, r2, c2);
       }
     }
