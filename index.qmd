@@ -2,7 +2,7 @@
 title: "Andreas Bogossian"
 about:
   template: jolla
-  image: image.png
+  image: profile.png
   links:
     - icon: github
       text: GitHub
