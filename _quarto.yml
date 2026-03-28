@@ -8,6 +8,7 @@ website:
   title: "Andreas Bogossian"
   description: "Notes on challenging technical things"
   site-url: "https://andreasbogossian.com"
+  favicon: bell-curve.svg
   search: true
   open-graph: true
   page-footer:
