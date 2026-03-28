@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://andreasbogossian.com/posts/a-star/index.html</loc>
-    <lastmod>2026-03-28T18:44:49.424Z</lastmod>
-  </url>
-  <url>
     <loc>https://andreasbogossian.com/blog.html</loc>
-    <lastmod>2026-03-28T18:44:49.423Z</lastmod>
+    <lastmod>2026-03-28T17:59:02.050Z</lastmod>
   </url>
   <url>
     <loc>https://andreasbogossian.com/cv.html</loc>
-    <lastmod>2026-03-28T18:44:49.423Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/index.html</loc>
-    <lastmod>2026-03-28T18:44:49.423Z</lastmod>
+    <lastmod>2026-03-28T18:18:23.366Z</lastmod>
   </url>
   <url>
     <loc>https://andreasbogossian.com/posts/2026-03-KL-divergence/index.html</loc>
-    <lastmod>2026-03-28T18:44:49.424Z</lastmod>
+    <lastmod>2026-03-17T12:05:18.392Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/posts/a-star/index.html</loc>
+    <lastmod>2026-03-28T19:35:43.028Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/index.html</loc>
+    <lastmod>2026-03-28T18:35:56.818Z</lastmod>
   </url>
 </urlset>

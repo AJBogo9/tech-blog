@@ -11,6 +11,7 @@ export function appState() {
     path:      [],
     running:   false, done: false, iter: 0, status: "idle",
     heuristic: "manhattan",
+    weight:    1,
     animating: false, animTimer: null,
   };
 }

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.36">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,9 +12,6 @@
 
 <title>A* Pathfinding Algorithm – Andreas Bogossian</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -74,14 +71,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../bell-curve.svg" rel="icon" type="image/svg+xml">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-dbc92dda8186f57fa2e333fbb71d6a9d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-b17c2e90a575238b12f0b8ca30899ecb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-770e4625c2fcf22a63f4abbe2fd7027b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -226,10 +224,17 @@ window.Quarto = {
     <h2 id="toc-title">Contents</h2>
    
   <ul>
-  <li><a href="#cost-function" id="toc-cost-function" class="nav-link active" data-scroll-target="#cost-function">Cost Function</a></li>
-  <li><a href="#open-and-closed-sets" id="toc-open-and-closed-sets" class="nav-link" data-scroll-target="#open-and-closed-sets">Open and Closed Sets</a></li>
-  <li><a href="#heuristic" id="toc-heuristic" class="nav-link" data-scroll-target="#heuristic">Heuristic</a></li>
+  <li><a href="#the-problem-with-brute-force" id="toc-the-problem-with-brute-force" class="nav-link active" data-scroll-target="#the-problem-with-brute-force">The problem with brute force</a></li>
+  <li><a href="#the-a-cost-function" id="toc-the-a-cost-function" class="nav-link" data-scroll-target="#the-a-cost-function">The A* cost function</a>
+  <ul class="collapse">
+  <li><a href="#admissibility-and-optimality" id="toc-admissibility-and-optimality" class="nav-link" data-scroll-target="#admissibility-and-optimality">Admissibility and optimality</a></li>
+  <li><a href="#choosing-a-heuristic" id="toc-choosing-a-heuristic" class="nav-link" data-scroll-target="#choosing-a-heuristic">Choosing a heuristic</a></li>
+  <li><a href="#weighted-a" id="toc-weighted-a" class="nav-link" data-scroll-target="#weighted-a">Weighted A*</a></li>
+  </ul></li>
+  <li><a href="#so-what-does-this-actually-mean" id="toc-so-what-does-this-actually-mean" class="nav-link" data-scroll-target="#so-what-does-this-actually-mean">So what does this actually mean?</a></li>
   <li><a href="#demo" id="toc-demo" class="nav-link" data-scroll-target="#demo">Demo</a></li>
+  <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion">Discussion</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul>
 </nav>
     </div>
@@ -272,237 +277,115 @@ window.Quarto = {
 </header>
 
 
-<ul>
-<li>Finding the shortest path between two points on a grid</li>
-<li>Brute-force explores every possible path — complexity grows as <span class="math inline">O(b^d)</span> where <span class="math inline">b</span> is the branching factor and <span class="math inline">d</span> is the depth</li>
-<li>Need a smarter way to prioritize which paths to explore</li>
-</ul>
-<section id="cost-function" class="level3">
-<h3 class="anchored" data-anchor-id="cost-function">Cost Function</h3>
-<ul>
-<li>Every node <span class="math inline">n</span> is assigned a score: <span class="math inline">f(n) = g(n) + h(n)</span></li>
-<li><span class="math inline">g(n)</span> — exact cost of the path from start to <span class="math inline">n</span> (known)</li>
-<li><span class="math inline">h(n)</span> — estimated cost from <span class="math inline">n</span> to the goal (heuristic — not exact)</li>
-<li>A* always expands the node with the lowest <span class="math inline">f(n)</span> first</li>
-<li>If <span class="math inline">h(n) = 0</span>, A* degenerates into Dijkstra’s algorithm (explores in all directions equally)</li>
-<li>If <span class="math inline">h(n)</span> never overestimates the true cost, it is called <strong>admissible</strong> and A* is guaranteed to find the optimal path</li>
-</ul>
+<p>How does Google Maps decide which route to show you — not just <em>a</em> route, but the <em>best</em> one — in under a second, across a road network with millions of edges?</p>
+<hr>
+<section id="the-problem-with-brute-force" class="level2">
+<h2 class="anchored" data-anchor-id="the-problem-with-brute-force">The problem with brute force</h2>
+<p>Imagine you’re standing at one corner of a city grid, trying to reach a destination on the opposite side. The naive approach is to explore every possible path until you find the shortest one. That works fine for a 5×5 grid. But the number of paths grows as <span class="math inline">O(b^d)</span>, where <span class="math inline">b</span> is the branching factor (how many directions you can move at each step) and <span class="math inline">d</span> is the depth (how many steps to the goal). On a real road network, this becomes completely intractable.</p>
+<p>Dijkstra’s algorithm improves on brute force by always expanding the cheapest node seen so far — but it still fans out in every direction equally, spending effort on roads that are taking you further from your destination.</p>
+<p>What you really want is an algorithm that <em>focuses its search toward the goal</em>. That’s the core idea behind A*.</p>
+<hr>
 </section>
-<section id="open-and-closed-sets" class="level3">
-<h3 class="anchored" data-anchor-id="open-and-closed-sets">Open and Closed Sets</h3>
+<section id="the-a-cost-function" class="level2">
+<h2 class="anchored" data-anchor-id="the-a-cost-function">The A* cost function</h2>
+<p>Every node <span class="math inline">n</span> in A* is assigned a score:</p>
+<p><span class="math display">f(n) = g(n) + h(n)</span></p>
 <ul>
-<li><strong>Open set</strong> — nodes discovered but not yet fully evaluated (candidates for the next step)</li>
-<li><strong>Closed set</strong> — nodes already evaluated (won’t be revisited)</li>
-<li>At each step: pop the lowest <span class="math inline">f(n)</span> node from the open set, evaluate its neighbours, add them to the open set if not already visited</li>
+<li><span class="math inline">g(n)</span> is the <strong>exact cost</strong> of the path from the start to <span class="math inline">n</span> — we’ve already walked this, so we know it precisely.</li>
+<li><span class="math inline">h(n)</span> is the <strong>estimated cost</strong> from <span class="math inline">n</span> to the goal — this is a heuristic, an educated guess.</li>
 </ul>
-</section>
-<section id="heuristic" class="level3">
-<h3 class="anchored" data-anchor-id="heuristic">Heuristic</h3>
+<p>At each step, A* pops the node with the <strong>lowest <span class="math inline">f(n)</span></strong> from a priority queue (the <em>open set</em>) and expands it. Once a node is fully evaluated, it moves to the <em>closed set</em> and won’t be revisited.</p>
+<p>The elegance is in the balance. <span class="math inline">g(n)</span> keeps the algorithm honest — it won’t ignore a cheap path it’s already found. <span class="math inline">h(n)</span> keeps the algorithm focused — it steers effort toward the goal instead of spreading uniformly outward.</p>
+<section id="admissibility-and-optimality" class="level3">
+<h3 class="anchored" data-anchor-id="admissibility-and-optimality">Admissibility and optimality</h3>
+<p>The guarantee that A* finds the <em>optimal</em> path rests on one condition: the heuristic must be <strong>admissible</strong>, meaning it never overestimates the true remaining cost.</p>
+<p><span class="math display">h(n) \leq h^*(n)</span></p>
+<p>where <span class="math inline">h^*(n)</span> is the true cost from <span class="math inline">n</span> to the goal. If this holds, A* is guaranteed to find the shortest path. Overestimate, and you risk the algorithm committing to a path that looks cheap but isn’t.</p>
+<p>Two special cases are worth internalising:</p>
 <ul>
-<li>The heuristic <span class="math inline">h(n)</span> determines how “directed” the search is</li>
-<li><strong>Manhattan distance</strong> — <span class="math inline">h(n) = |x_1 - x_2| + |y_1 - y_2|</span> — best for 4-directional grids</li>
-<li><strong>Euclidean distance</strong> — <span class="math inline">h(n) = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}</span> — straight-line distance, can underestimate on grids</li>
-<li><strong>Chebyshev distance</strong> — <span class="math inline">h(n) = \max(|x_1 - x_2|, |y_1 - y_2|)</span> — best when diagonal moves are allowed</li>
-<li><strong>Weighted A*</strong> — <span class="math inline">f(n) = g(n) + w \cdot h(n)</span> where <span class="math inline">w &gt; 1</span> makes the search faster but potentially suboptimal</li>
-<li>Stronger heuristics explore fewer nodes but require more assumptions about the search space</li>
+<li>When <span class="math inline">h(n) = 0</span> for all nodes, A* degenerates into <strong>Dijkstra’s algorithm</strong> — it explores uniformly in every direction, ignoring the goal entirely.</li>
+<li>When <span class="math inline">h(n)</span> exactly equals <span class="math inline">h^*(n)</span>, A* expands only nodes that lie on an optimal path — a theoretical ideal.</li>
 </ul>
+<p>In practice, a good heuristic sits somewhere in between: cheap to compute, never overestimates, and close enough to the truth to make the search directional.</p>
 </section>
-<section id="demo" class="level3">
-<h3 class="anchored" data-anchor-id="demo">Demo</h3>
+<section id="choosing-a-heuristic" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-a-heuristic">Choosing a heuristic</h3>
+<p>The right heuristic depends on the movement model of your problem:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Heuristic</th>
+<th>Formula</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Manhattan</td>
+<td><span class="math inline">\|x_1 - x_2\| + \|y_1 - y_2\|</span></td>
+<td>4-directional grids</td>
+</tr>
+<tr class="even">
+<td>Euclidean</td>
+<td><span class="math inline">\sqrt{(x_1-x_2)^2 + (y_1-y_2)^2}</span></td>
+<td>any-angle movement</td>
+</tr>
+<tr class="odd">
+<td>Chebyshev</td>
+<td><span class="math inline">\max(\|x_1-x_2\|, \|y_1-y_2\|)</span></td>
+<td>8-directional grids</td>
+</tr>
+</tbody>
+</table>
+<p>On a 4-directional grid like the demo below, Manhattan distance is exact — you <em>can’t</em> move diagonally, so it never overestimates. Euclidean distance will underestimate on such grids (straight-line distance is shorter than any grid path), so it’s admissible but less informed. Chebyshev distance assumes diagonal moves are free, which would overestimate on a 4-directional grid — inadmissible, so don’t use it here.</p>
+</section>
+<section id="weighted-a" class="level3">
+<h3 class="anchored" data-anchor-id="weighted-a">Weighted A*</h3>
+<p>A useful variant inflates the heuristic by a weight <span class="math inline">w &gt; 1</span>:</p>
+<p><span class="math display">f(n) = g(n) + w \cdot h(n)</span></p>
+<p>This makes the search greedier — it chases the goal more aggressively, exploring fewer nodes. The trade-off is that the optimality guarantee weakens: the path found is at most <span class="math inline">w</span> times longer than the optimal path. At <span class="math inline">w = 1</span> you get standard A*; as <span class="math inline">w</span> grows the algorithm approaches a pure greedy best-first search. Try the weight slider in the demo to see this effect directly.</p>
+<hr>
+</section>
+</section>
+<section id="so-what-does-this-actually-mean" class="level2">
+<h2 class="anchored" data-anchor-id="so-what-does-this-actually-mean">So what does this actually mean?</h2>
+<p>A* is essentially a guided Dijkstra. It adds a compass to the search — the heuristic — that tells it “the goal is roughly <em>that way</em>.” The open set is the frontier of what’s been discovered but not yet committed to. The closed set is what’s been fully explored. At each tick, the algorithm asks: of everything on the frontier, what has the best combination of <em>how far I’ve come</em> and <em>how far I still need to go</em>? That node goes next.</p>
+<p>The demo below makes this tangible. The <strong>blue-green cells</strong> are the open set (discovered, not yet expanded). The <strong>dark green cells</strong> are the closed set (expanded). The <strong>yellow path</strong> is the solution once the algorithm reaches the end node. Try switching heuristics and watch how the search shape changes — Dijkstra (<code>zero</code>) fans out evenly like a ripple, while Manhattan stays tightly focused. Then push the weight slider above 1 and watch the search narrow further at the cost of path optimality.</p>
+<hr>
+</section>
+<section id="demo" class="level2">
+<h2 class="anchored" data-anchor-id="demo">Demo</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb1" data-startfrom="44" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 43;"><span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { W<span class="op">,</span> H<span class="op">,</span> CELL<span class="op">,</span> ROWS<span class="op">,</span> COLS } <span class="im">from</span> <span class="st">"./astar-constants.js"</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { appState }                <span class="im">from</span> <span class="st">"./astar-state.js"</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { initSearch<span class="op">,</span> stepOnce<span class="op">,</span> resetSearch<span class="op">,</span> heuristicFn } <span class="im">from</span> <span class="st">"./astar-search.js"</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { generateMaze }            <span class="im">from</span> <span class="st">"./astar-maze.js"</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { draw }                    <span class="im">from</span> <span class="st">"./astar-draw.js"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb1" data-startfrom="87" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 86;"><span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { renderApp } <span class="im">from</span> <span class="st">"./astar-app.js"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
-<div>
-<div id="ojs-cell-1-1" data-nodetype="declaration">
+<div id="ojs-cell-1" data-nodetype="declaration">
 
-</div>
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-<div id="ojs-cell-1-2" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-<div id="ojs-cell-1-3" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-<div id="ojs-cell-1-4" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-<div id="ojs-cell-1-5" data-nodetype="declaration">
-
-</div>
 </div>
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="51" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 50;"><span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>viewof heuristic <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">select</span>(</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"manhattan"</span><span class="op">,</span> <span class="st">"euclidean"</span><span class="op">,</span> <span class="st">"chebyshev"</span><span class="op">,</span> <span class="st">"zero (Dijkstra)"</span>]<span class="op">,</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">value</span><span class="op">:</span> <span class="st">"manhattan"</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"Heuristic"</span> }</span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="91" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 90;"><span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> <span class="fu">renderApp</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div id="ojs-cell-2" data-nodetype="declaration">
 
 </div>
 </div>
 </div>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb3" data-startfrom="58" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 57;"><span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="co">// ── persistent state container ───────────────────────────────────────────────</span></span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>app_persistent <span class="op">=</span> ({ <span class="dt">s</span><span class="op">:</span> <span class="kw">null</span> })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display">
-<div id="ojs-cell-3" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb4" data-startfrom="63" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 62;"><span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="co">// ── UI — reactive to heuristic ────────────────────────────────────────────────</span></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> {</span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>  <span class="co">// initialise canvas, ctx, state and pointer listeners once</span></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="op">!</span>app_persistent<span class="op">.</span><span class="at">s</span>) {</span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> canvas <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"canvas"</span>)<span class="op">;</span></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>    canvas<span class="op">.</span><span class="at">width</span> <span class="op">=</span> W<span class="op">;</span> canvas<span class="op">.</span><span class="at">height</span> <span class="op">=</span> H<span class="op">;</span></span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>    canvas<span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">cssText</span> <span class="op">=</span> <span class="vs">`display:block;width:100%;max-width:</span><span class="sc">${</span>W<span class="sc">}</span><span class="vs">px;cursor:crosshair`</span><span class="op">;</span></span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>    <span class="bu">Object</span><span class="op">.</span><span class="fu">assign</span>(app_persistent<span class="op">,</span> {</span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>      <span class="dt">s</span><span class="op">:</span>      <span class="fu">appState</span>()<span class="op">,</span></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>      <span class="dt">canvas</span><span class="op">:</span> canvas<span class="op">,</span></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>      <span class="dt">ctx</span><span class="op">:</span>    canvas<span class="op">.</span><span class="fu">getContext</span>(<span class="st">"2d"</span>)<span class="op">,</span></span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>    <span class="co">// pointer / paint — attached once, reads s via app_persistent</span></span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> painting <span class="op">=</span> <span class="kw">false</span><span class="op">,</span> paintValue <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">cellAt</span>(e) {</span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> rect <span class="op">=</span> canvas<span class="op">.</span><span class="fu">getBoundingClientRect</span>()<span class="op">,</span> scale <span class="op">=</span> W <span class="op">/</span> rect<span class="op">.</span><span class="at">width</span><span class="op">;</span></span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> {</span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>        <span class="dt">r</span><span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">floor</span>((e<span class="op">.</span><span class="at">clientY</span> <span class="op">-</span> rect<span class="op">.</span><span class="at">top</span>)  <span class="op">*</span> scale <span class="op">/</span> CELL)<span class="op">,</span></span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>        <span class="dt">c</span><span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">floor</span>((e<span class="op">.</span><span class="at">clientX</span> <span class="op">-</span> rect<span class="op">.</span><span class="at">left</span>) <span class="op">*</span> scale <span class="op">/</span> CELL)<span class="op">,</span></span>
-<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>      }<span class="op">;</span></span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">applyEdit</span>(r<span class="op">,</span> c) {</span>
-<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> s <span class="op">=</span> app_persistent<span class="op">.</span><span class="at">s</span><span class="op">;</span></span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (r <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> r <span class="op">&gt;=</span> ROWS <span class="op">||</span> c <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> c <span class="op">&gt;=</span> COLS) <span class="cf">return</span><span class="op">;</span></span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> ((r <span class="op">===</span> s<span class="op">.</span><span class="at">start</span><span class="op">.</span><span class="at">r</span> <span class="op">&amp;&amp;</span> c <span class="op">===</span> s<span class="op">.</span><span class="at">start</span><span class="op">.</span><span class="at">c</span>) <span class="op">||</span> (r <span class="op">===</span> s<span class="op">.</span><span class="at">end</span><span class="op">.</span><span class="at">r</span> <span class="op">&amp;&amp;</span> c <span class="op">===</span> s<span class="op">.</span><span class="at">end</span><span class="op">.</span><span class="at">c</span>)) <span class="cf">return</span><span class="op">;</span></span>
-<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (s<span class="op">.</span><span class="at">walls</span>[r][c] <span class="op">===</span> paintValue) <span class="cf">return</span><span class="op">;</span></span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>      s<span class="op">.</span><span class="at">walls</span>[r][c] <span class="op">=</span> paintValue<span class="op">;</span></span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>      <span class="fu">resetSearch</span>(s)<span class="op">;</span> app_persistent<span class="op">.</span><span class="fu">redraw</span>()<span class="op">;</span></span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>    canvas<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">"pointerdown"</span><span class="op">,</span> e <span class="kw">=&gt;</span> {</span>
-<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>      app_persistent<span class="op">.</span><span class="fu">stopAnim</span>()<span class="op">;</span></span>
-<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>      painting <span class="op">=</span> <span class="kw">true</span><span class="op">;</span> canvas<span class="op">.</span><span class="fu">setPointerCapture</span>(e<span class="op">.</span><span class="at">pointerId</span>)<span class="op">;</span></span>
-<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> {r<span class="op">,</span> c} <span class="op">=</span> <span class="fu">cellAt</span>(e)<span class="op">;</span></span>
-<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (r <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> r <span class="op">&gt;=</span> ROWS <span class="op">||</span> c <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> c <span class="op">&gt;=</span> COLS) <span class="cf">return</span><span class="op">;</span></span>
-<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> s <span class="op">=</span> app_persistent<span class="op">.</span><span class="at">s</span><span class="op">;</span></span>
-<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> ((r <span class="op">===</span> s<span class="op">.</span><span class="at">start</span><span class="op">.</span><span class="at">r</span> <span class="op">&amp;&amp;</span> c <span class="op">===</span> s<span class="op">.</span><span class="at">start</span><span class="op">.</span><span class="at">c</span>) <span class="op">||</span> (r <span class="op">===</span> s<span class="op">.</span><span class="at">end</span><span class="op">.</span><span class="at">r</span> <span class="op">&amp;&amp;</span> c <span class="op">===</span> s<span class="op">.</span><span class="at">end</span><span class="op">.</span><span class="at">c</span>)) <span class="cf">return</span><span class="op">;</span></span>
-<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>      paintValue <span class="op">=</span> <span class="op">!</span>s<span class="op">.</span><span class="at">walls</span>[r][c]<span class="op">;</span></span>
-<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>      <span class="fu">applyEdit</span>(r<span class="op">,</span> c)<span class="op">;</span></span>
-<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>    canvas<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">"pointermove"</span><span class="op">,</span> e <span class="kw">=&gt;</span> {</span>
-<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (painting) { <span class="kw">const</span> {r<span class="op">,</span> c} <span class="op">=</span> <span class="fu">cellAt</span>(e)<span class="op">;</span> <span class="fu">applyEdit</span>(r<span class="op">,</span> c)<span class="op">;</span> }</span>
-<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
-<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>    canvas<span class="op">.</span><span class="fu">addEventListener</span>(<span class="st">"pointerup"</span><span class="op">,</span> () <span class="kw">=&gt;</span> { painting <span class="op">=</span> <span class="kw">false</span><span class="op">;</span> })<span class="op">;</span></span>
-<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> s      <span class="op">=</span> app_persistent<span class="op">.</span><span class="at">s</span><span class="op">;</span></span>
-<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> canvas <span class="op">=</span> app_persistent<span class="op">.</span><span class="at">canvas</span><span class="op">;</span></span>
-<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> ctx    <span class="op">=</span> app_persistent<span class="op">.</span><span class="at">ctx</span><span class="op">;</span></span>
-<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ── react to heuristic input ───────────────────────────────────────────────</span></span>
-<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (s<span class="op">.</span><span class="at">heuristic</span> <span class="op">!==</span> heuristic) {</span>
-<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span><span class="at">heuristic</span> <span class="op">=</span> heuristic<span class="op">;</span></span>
-<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (s<span class="op">.</span><span class="at">animTimer</span>) { <span class="pp">clearTimeout</span>(s<span class="op">.</span><span class="at">animTimer</span>)<span class="op">;</span> s<span class="op">.</span><span class="at">animTimer</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span> }</span>
-<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span><span class="at">animating</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a>    <span class="fu">resetSearch</span>(s)<span class="op">;</span></span>
-<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ── buttons ────────────────────────────────────────────────────────────────</span></span>
-<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> btnAnimate <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"button"</span>)<span class="op">;</span></span>
-<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> btnReset   <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"button"</span>)<span class="op">;</span></span>
-<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> btnClear   <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"button"</span>)<span class="op">;</span></span>
-<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> btnMaze    <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"button"</span>)<span class="op">;</span></span>
-<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a>  btnAnimate<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> <span class="st">"▶ Animate"</span><span class="op">;</span></span>
-<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a>  btnReset<span class="op">.</span><span class="at">textContent</span>   <span class="op">=</span> <span class="st">"Reset"</span><span class="op">;</span></span>
-<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a>  btnClear<span class="op">.</span><span class="at">textContent</span>   <span class="op">=</span> <span class="st">"Clear walls"</span><span class="op">;</span></span>
-<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a>  btnMaze<span class="op">.</span><span class="at">textContent</span>    <span class="op">=</span> <span class="st">"Gen maze"</span><span class="op">;</span></span>
-<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> btnRow <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"div"</span>)<span class="op">;</span></span>
-<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a>  btnRow<span class="op">.</span><span class="at">style</span><span class="op">.</span><span class="at">cssText</span> <span class="op">=</span> <span class="st">"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"</span><span class="op">;</span></span>
-<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a>  btnRow<span class="op">.</span><span class="fu">append</span>(btnAnimate<span class="op">,</span> btnReset<span class="op">,</span> btnClear<span class="op">,</span> btnMaze)<span class="op">;</span></span>
-<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ── iterations display ─────────────────────────────────────────────────────</span></span>
-<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> iterDisplay <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"div"</span>)<span class="op">;</span></span>
-<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a>  iterDisplay<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> <span class="st">"iterations: —"</span><span class="op">;</span></span>
-<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> <span class="bu">root</span> <span class="op">=</span> <span class="bu">document</span><span class="op">.</span><span class="fu">createElement</span>(<span class="st">"div"</span>)<span class="op">;</span></span>
-<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a>  <span class="bu">root</span><span class="op">.</span><span class="fu">append</span>(btnRow<span class="op">,</span> canvas<span class="op">,</span> iterDisplay)<span class="op">;</span></span>
-<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ── helpers ────────────────────────────────────────────────────────────────</span></span>
-<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> <span class="fu">redraw</span>() {</span>
-<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a>    <span class="fu">draw</span>(s<span class="op">,</span> ctx)<span class="op">;</span></span>
-<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a>    iterDisplay<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> s<span class="op">.</span><span class="at">done</span></span>
-<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a>      <span class="op">?</span> <span class="vs">`iterations: </span><span class="sc">${</span>s<span class="op">.</span><span class="at">iter</span><span class="sc">}</span><span class="vs"> · </span><span class="sc">${</span>s<span class="op">.</span><span class="at">status</span><span class="sc">}</span><span class="vs">`</span></span>
-<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a>      <span class="op">:</span> s<span class="op">.</span><span class="at">iter</span> <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="vs">`iterations: </span><span class="sc">${</span>s<span class="op">.</span><span class="at">iter</span><span class="sc">}</span><span class="vs">…`</span> <span class="op">:</span> <span class="st">"iterations: —"</span><span class="op">;</span></span>
-<span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> <span class="fu">stopAnim</span>() {</span>
-<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span><span class="at">animating</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
-<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (s<span class="op">.</span><span class="at">animTimer</span>) { <span class="pp">clearTimeout</span>(s<span class="op">.</span><span class="at">animTimer</span>)<span class="op">;</span> s<span class="op">.</span><span class="at">animTimer</span> <span class="op">=</span> <span class="kw">null</span><span class="op">;</span> }</span>
-<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a>    btnAnimate<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> <span class="st">"▶ Animate"</span><span class="op">;</span></span>
-<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a>  <span class="co">// store on persistent so pointer listeners can call them</span></span>
-<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a>  app_persistent<span class="op">.</span><span class="at">redraw</span>   <span class="op">=</span> redraw<span class="op">;</span></span>
-<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a>  app_persistent<span class="op">.</span><span class="at">stopAnim</span> <span class="op">=</span> stopAnim<span class="op">;</span></span>
-<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> <span class="fu">animTick</span>() {</span>
-<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="op">!</span>s<span class="op">.</span><span class="at">animating</span>) <span class="cf">return</span><span class="op">;</span></span>
-<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="op">!</span>s<span class="op">.</span><span class="at">running</span> <span class="op">&amp;&amp;</span> <span class="op">!</span>s<span class="op">.</span><span class="at">done</span>) <span class="fu">initSearch</span>(s)<span class="op">;</span></span>
-<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stepOnce</span>(s)<span class="op">;</span></span>
-<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a>    <span class="fu">redraw</span>()<span class="op">;</span></span>
-<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="op">!</span>s<span class="op">.</span><span class="at">done</span>) s<span class="op">.</span><span class="at">animTimer</span> <span class="op">=</span> <span class="pp">setTimeout</span>(animTick<span class="op">,</span> <span class="dv">50</span>)<span class="op">;</span></span>
-<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>         <span class="fu">stopAnim</span>()<span class="op">;</span></span>
-<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> <span class="fu">startAnim</span>() {</span>
-<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (s<span class="op">.</span><span class="at">done</span>) <span class="fu">resetSearch</span>(s)<span class="op">;</span></span>
-<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span><span class="at">animating</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
-<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a>    btnAnimate<span class="op">.</span><span class="at">textContent</span> <span class="op">=</span> <span class="st">"⏸ Pause"</span><span class="op">;</span></span>
-<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a>    <span class="fu">animTick</span>()<span class="op">;</span></span>
-<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ── button handlers ────────────────────────────────────────────────────────</span></span>
-<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a>  btnAnimate<span class="op">.</span><span class="at">onclick</span> <span class="op">=</span> () <span class="kw">=&gt;</span> s<span class="op">.</span><span class="at">animating</span> <span class="op">?</span> <span class="fu">stopAnim</span>() <span class="op">:</span> <span class="fu">startAnim</span>()<span class="op">;</span></span>
-<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a>  btnReset<span class="op">.</span><span class="at">onclick</span>   <span class="op">=</span> () <span class="kw">=&gt;</span> { <span class="fu">stopAnim</span>()<span class="op">;</span> <span class="fu">resetSearch</span>(s)<span class="op">;</span> <span class="fu">redraw</span>()<span class="op">;</span> }<span class="op">;</span></span>
-<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a>  btnClear<span class="op">.</span><span class="at">onclick</span>   <span class="op">=</span> () <span class="kw">=&gt;</span> {</span>
-<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stopAnim</span>()<span class="op">;</span></span>
-<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span><span class="at">walls</span> <span class="op">=</span> <span class="bu">Array</span><span class="op">.</span><span class="fu">from</span>({<span class="dt">length</span><span class="op">:</span> ROWS}<span class="op">,</span> () <span class="kw">=&gt;</span> <span class="kw">new</span> <span class="bu">Array</span>(COLS)<span class="op">.</span><span class="fu">fill</span>(<span class="kw">false</span>))<span class="op">;</span></span>
-<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a>    <span class="fu">resetSearch</span>(s)<span class="op">;</span> <span class="fu">redraw</span>()<span class="op">;</span></span>
-<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a>  }<span class="op">;</span></span>
-<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a>  btnMaze<span class="op">.</span><span class="at">onclick</span>  <span class="op">=</span> () <span class="kw">=&gt;</span> { <span class="fu">stopAnim</span>()<span class="op">;</span> <span class="fu">generateMaze</span>(s)<span class="op">;</span> <span class="fu">redraw</span>()<span class="op">;</span> }<span class="op">;</span></span>
-<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a>  <span class="fu">redraw</span>()<span class="op">;</span></span>
-<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="bu">root</span><span class="op">;</span></span>
-<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display">
-<div id="ojs-cell-4" data-nodetype="declaration">
-
-</div>
-</div>
-</div>
+<hr>
+</section>
+<section id="discussion" class="level2">
+<h2 class="anchored" data-anchor-id="discussion">Discussion</h2>
+<p>A* is impressively general. The same framework that navigates a 2D grid also powers route planning in GPS systems, NPC pathfinding in video games, puzzle solvers (the 15-puzzle, Rubik’s cube with appropriate state representations), and network routing. Anywhere you can define a cost function and an admissible heuristic, A* applies.</p>
+<p>That said, it has real limitations. The open set is held in memory, and in the worst case it can grow to hold every reachable node — a problem on very large graphs. On a grid with <span class="math inline">10^6</span> cells and a bad heuristic, memory becomes the bottleneck before time does. Variants like <strong>IDA*</strong> (iterative deepening A*) trade the memory guarantee for a depth-first search pattern, keeping memory usage linear at the cost of re-expanding nodes.</p>
+<p>The other limitation is more subtle: A* is only as good as its heuristic. A weak heuristic (like zero) wastes time exploring irrelevant nodes. A heuristic that inadvertently overestimates silently discards optimal paths. Designing a good heuristic for a novel problem is often the real work — the algorithm itself is just infrastructure.</p>
+<p>One other thing to notice in the demo: on a maze with many dead ends, even Manhattan distance explores a surprisingly large fraction of the grid. The heuristic can’t see through walls. This is a fundamental constraint — the algorithm has no map of the maze structure, only a straight-line estimate of remaining distance. Algorithms that precompute structure (like JPS, Jump Point Search, or hierarchical pathfinders) can do significantly better on structured environments.</p>
+<hr>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>A* solves the shortest path problem by combining two pieces of information at every step: the exact cost of how you got here (<span class="math inline">g</span>), and a heuristic estimate of how far you still have to go (<span class="math inline">h</span>). This sum, <span class="math inline">f = g + h</span>, serves as a priority score. By always expanding the node with the lowest <span class="math inline">f</span>, the algorithm balances completeness (it won’t miss the optimal path, provided the heuristic is admissible) with focus (it avoids wasting effort on nodes that are clearly far from good).</p>
+<p>The insight is simple: if you want to search smarter, not harder, give the algorithm a compass. The heuristic is that compass — and the quality of your heuristic determines how straight the algorithm walks toward the goal.</p>
+<p>If this sparked your interest, a natural next step is <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra’s algorithm</a> (A* without the compass) or <a href="https://harabor.net/data/papers/harabor-grastien-aaai11.pdf">Jump Point Search</a>, which exploits grid symmetry to skip large swathes of the search space entirely.</p>
 
 
 </section>
@@ -516,10 +399,10 @@ window.Quarto = {
 }
 </code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-bogossian2026" class="csl-entry quarto-appendix-citeas" role="listitem">
 Bogossian, Andreas. 2026. <span>“A* Pathfinding Algorithm.”</span> March
-19. <a href="https://andreasbogossian.com/posts/a-star/">https://andreasbogossian.com/posts/a-star/</a>.
+19, 2026. <a href="https://andreasbogossian.com/posts/a-star/">https://andreasbogossian.com/posts/a-star/</a>.
 </div></div></section></div></main> <!-- /main -->
 <script type="ojs-module-contents">
-eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6ImltcG9ydCB7IFcsIEgsIENFTEwsIFJPV1MsIENPTFMgfSBmcm9tIFwiLi9hc3Rhci1jb25zdGFudHMuanNcIlxuaW1wb3J0IHsgYXBwU3RhdGUgfSAgICAgICAgICAgICAgICBmcm9tIFwiLi9hc3Rhci1zdGF0ZS5qc1wiXG5pbXBvcnQgeyBpbml0U2VhcmNoLCBzdGVwT25jZSwgcmVzZXRTZWFyY2gsIGhldXJpc3RpY0ZuIH0gZnJvbSBcIi4vYXN0YXItc2VhcmNoLmpzXCJcbmltcG9ydCB7IGdlbmVyYXRlTWF6ZSB9ICAgICAgICAgICAgZnJvbSBcIi4vYXN0YXItbWF6ZS5qc1wiXG5pbXBvcnQgeyBkcmF3IH0gICAgICAgICAgICAgICAgICAgIGZyb20gXCIuL2FzdGFyLWRyYXcuanNcIlxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0yIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoidmlld29mIGhldXJpc3RpYyA9IElucHV0cy5zZWxlY3QoXG4gIFtcIm1hbmhhdHRhblwiLCBcImV1Y2xpZGVhblwiLCBcImNoZWJ5c2hldlwiLCBcInplcm8gKERpamtzdHJhKVwiXSxcbiAgeyB2YWx1ZTogXCJtYW5oYXR0YW5cIiwgbGFiZWw6IFwiSGV1cmlzdGljXCIgfVxuKVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0zIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiLy8g4pSA4pSAIHBlcnNpc3RlbnQgc3RhdGUgY29udGFpbmVyIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgFxuYXBwX3BlcnNpc3RlbnQgPSAoeyBzOiBudWxsIH0pXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTQiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiIvLyDilIDilIAgVUkg4oCUIHJlYWN0aXZlIHRvIGhldXJpc3RpYyDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIBcbmFwcCA9IHtcbiAgLy8gaW5pdGlhbGlzZSBjYW52YXMsIGN0eCwgc3RhdGUgYW5kIHBvaW50ZXIgbGlzdGVuZXJzIG9uY2VcbiAgaWYgKCFhcHBfcGVyc2lzdGVudC5zKSB7XG4gICAgY29uc3QgY2FudmFzID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudChcImNhbnZhc1wiKTtcbiAgICBjYW52YXMud2lkdGggPSBXOyBjYW52YXMuaGVpZ2h0ID0gSDtcbiAgICBjYW52YXMuc3R5bGUuY3NzVGV4dCA9IGBkaXNwbGF5OmJsb2NrO3dpZHRoOjEwMCU7bWF4LXdpZHRoOiR7V31weDtjdXJzb3I6Y3Jvc3NoYWlyYDtcbiAgICBPYmplY3QuYXNzaWduKGFwcF9wZXJzaXN0ZW50LCB7XG4gICAgICBzOiAgICAgIGFwcFN0YXRlKCksXG4gICAgICBjYW52YXM6IGNhbnZhcyxcbiAgICAgIGN0eDogICAgY2FudmFzLmdldENvbnRleHQoXCIyZFwiKSxcbiAgICB9KTtcblxuICAgIC8vIHBvaW50ZXIgLyBwYWludCDigJQgYXR0YWNoZWQgb25jZSwgcmVhZHMgcyB2aWEgYXBwX3BlcnNpc3RlbnRcbiAgICBsZXQgcGFpbnRpbmcgPSBmYWxzZSwgcGFpbnRWYWx1ZSA9IHRydWU7XG4gICAgZnVuY3Rpb24gY2VsbEF0KGUpIHtcbiAgICAgIGNvbnN0IHJlY3QgPSBjYW52YXMuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCksIHNjYWxlID0gVyAvIHJlY3Qud2lkdGg7XG4gICAgICByZXR1cm4ge1xuICAgICAgICByOiBNYXRoLmZsb29yKChlLmNsaWVudFkgLSByZWN0LnRvcCkgICogc2NhbGUgLyBDRUxMKSxcbiAgICAgICAgYzogTWF0aC5mbG9vcigoZS5jbGllbnRYIC0gcmVjdC5sZWZ0KSAqIHNjYWxlIC8gQ0VMTCksXG4gICAgICB9O1xuICAgIH1cbiAgICBmdW5jdGlvbiBhcHBseUVkaXQociwgYykge1xuICAgICAgY29uc3QgcyA9IGFwcF9wZXJzaXN0ZW50LnM7XG4gICAgICBpZiAociA8IDAgfHwgciA+PSBST1dTIHx8IGMgPCAwIHx8IGMgPj0gQ09MUykgcmV0dXJuO1xuICAgICAgaWYgKChyID09PSBzLnN0YXJ0LnIgJiYgYyA9PT0gcy5zdGFydC5jKSB8fCAociA9PT0gcy5lbmQuciAmJiBjID09PSBzLmVuZC5jKSkgcmV0dXJuO1xuICAgICAgaWYgKHMud2FsbHNbcl1bY10gPT09IHBhaW50VmFsdWUpIHJldHVybjtcbiAgICAgIHMud2FsbHNbcl1bY10gPSBwYWludFZhbHVlO1xuICAgICAgcmVzZXRTZWFyY2gocyk7IGFwcF9wZXJzaXN0ZW50LnJlZHJhdygpO1xuICAgIH1cbiAgICBjYW52YXMuYWRkRXZlbnRMaXN0ZW5lcihcInBvaW50ZXJkb3duXCIsIGUgPT4ge1xuICAgICAgYXBwX3BlcnNpc3RlbnQuc3RvcEFuaW0oKTtcbiAgICAgIHBhaW50aW5nID0gdHJ1ZTsgY2FudmFzLnNldFBvaW50ZXJDYXB0dXJlKGUucG9pbnRlcklkKTtcbiAgICAgIGNvbnN0IHtyLCBjfSA9IGNlbGxBdChlKTtcbiAgICAgIGlmIChyIDwgMCB8fCByID49IFJPV1MgfHwgYyA8IDAgfHwgYyA+PSBDT0xTKSByZXR1cm47XG4gICAgICBjb25zdCBzID0gYXBwX3BlcnNpc3RlbnQucztcbiAgICAgIGlmICgociA9PT0gcy5zdGFydC5yICYmIGMgPT09IHMuc3RhcnQuYykgfHwgKHIgPT09IHMuZW5kLnIgJiYgYyA9PT0gcy5lbmQuYykpIHJldHVybjtcbiAgICAgIHBhaW50VmFsdWUgPSAhcy53YWxsc1tyXVtjXTtcbiAgICAgIGFwcGx5RWRpdChyLCBjKTtcbiAgICB9KTtcbiAgICBjYW52YXMuYWRkRXZlbnRMaXN0ZW5lcihcInBvaW50ZXJtb3ZlXCIsIGUgPT4ge1xuICAgICAgaWYgKHBhaW50aW5nKSB7IGNvbnN0IHtyLCBjfSA9IGNlbGxBdChlKTsgYXBwbHlFZGl0KHIsIGMpOyB9XG4gICAgfSk7XG4gICAgY2FudmFzLmFkZEV2ZW50TGlzdGVuZXIoXCJwb2ludGVydXBcIiwgKCkgPT4geyBwYWludGluZyA9IGZhbHNlOyB9KTtcbiAgfVxuXG4gIGNvbnN0IHMgICAgICA9IGFwcF9wZXJzaXN0ZW50LnM7XG4gIGNvbnN0IGNhbnZhcyA9IGFwcF9wZXJzaXN0ZW50LmNhbnZhcztcbiAgY29uc3QgY3R4ICAgID0gYXBwX3BlcnNpc3RlbnQuY3R4O1xuXG4gIC8vIOKUgOKUgCByZWFjdCB0byBoZXVyaXN0aWMgaW5wdXQg4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAXG4gIGlmIChzLmhldXJpc3RpYyAhPT0gaGV1cmlzdGljKSB7XG4gICAgcy5oZXVyaXN0aWMgPSBoZXVyaXN0aWM7XG4gICAgaWYgKHMuYW5pbVRpbWVyKSB7IGNsZWFyVGltZW91dChzLmFuaW1UaW1lcik7IHMuYW5pbVRpbWVyID0gbnVsbDsgfVxuICAgIHMuYW5pbWF0aW5nID0gZmFsc2U7XG4gICAgcmVzZXRTZWFyY2gocyk7XG4gIH1cblxuICAvLyDilIDilIAgYnV0dG9ucyDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIBcbiAgY29uc3QgYnRuQW5pbWF0ZSA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJidXR0b25cIik7XG4gIGNvbnN0IGJ0blJlc2V0ICAgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwiYnV0dG9uXCIpO1xuICBjb25zdCBidG5DbGVhciAgID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudChcImJ1dHRvblwiKTtcbiAgY29uc3QgYnRuTWF6ZSAgICA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJidXR0b25cIik7XG4gIGJ0bkFuaW1hdGUudGV4dENvbnRlbnQgPSBcIuKWtiBBbmltYXRlXCI7XG4gIGJ0blJlc2V0LnRleHRDb250ZW50ICAgPSBcIlJlc2V0XCI7XG4gIGJ0bkNsZWFyLnRleHRDb250ZW50ICAgPSBcIkNsZWFyIHdhbGxzXCI7XG4gIGJ0bk1hemUudGV4dENvbnRlbnQgICAgPSBcIkdlbiBtYXplXCI7XG4gIGNvbnN0IGJ0blJvdyA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG4gIGJ0blJvdy5zdHlsZS5jc3NUZXh0ID0gXCJkaXNwbGF5OmZsZXg7ZmxleC13cmFwOndyYXA7Z2FwOjZweDttYXJnaW4tYm90dG9tOjhweFwiO1xuICBidG5Sb3cuYXBwZW5kKGJ0bkFuaW1hdGUsIGJ0blJlc2V0LCBidG5DbGVhciwgYnRuTWF6ZSk7XG5cbiAgLy8g4pSA4pSAIGl0ZXJhdGlvbnMgZGlzcGxheSDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIBcbiAgY29uc3QgaXRlckRpc3BsYXkgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwiZGl2XCIpO1xuICBpdGVyRGlzcGxheS50ZXh0Q29udGVudCA9IFwiaXRlcmF0aW9uczog4oCUXCI7XG5cbiAgY29uc3Qgcm9vdCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIik7XG4gIHJvb3QuYXBwZW5kKGJ0blJvdywgY2FudmFzLCBpdGVyRGlzcGxheSk7XG5cbiAgLy8g4pSA4pSAIGhlbHBlcnMg4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAXG4gIGZ1bmN0aW9uIHJlZHJhdygpIHtcbiAgICBkcmF3KHMsIGN0eCk7XG4gICAgaXRlckRpc3BsYXkudGV4dENvbnRlbnQgPSBzLmRvbmVcbiAgICAgID8gYGl0ZXJhdGlvbnM6ICR7cy5pdGVyfSDCtyAke3Muc3RhdHVzfWBcbiAgICAgIDogcy5pdGVyID4gMCA/IGBpdGVyYXRpb25zOiAke3MuaXRlcn3igKZgIDogXCJpdGVyYXRpb25zOiDigJRcIjtcbiAgfVxuXG4gIGZ1bmN0aW9uIHN0b3BBbmltKCkge1xuICAgIHMuYW5pbWF0aW5nID0gZmFsc2U7XG4gICAgaWYgKHMuYW5pbVRpbWVyKSB7IGNsZWFyVGltZW91dChzLmFuaW1UaW1lcik7IHMuYW5pbVRpbWVyID0gbnVsbDsgfVxuICAgIGJ0bkFuaW1hdGUudGV4dENvbnRlbnQgPSBcIuKWtiBBbmltYXRlXCI7XG4gIH1cblxuICAvLyBzdG9yZSBvbiBwZXJzaXN0ZW50IHNvIHBvaW50ZXIgbGlzdGVuZXJzIGNhbiBjYWxsIHRoZW1cbiAgYXBwX3BlcnNpc3RlbnQucmVkcmF3ICAgPSByZWRyYXc7XG4gIGFwcF9wZXJzaXN0ZW50LnN0b3BBbmltID0gc3RvcEFuaW07XG5cbiAgZnVuY3Rpb24gYW5pbVRpY2soKSB7XG4gICAgaWYgKCFzLmFuaW1hdGluZykgcmV0dXJuO1xuICAgIGlmICghcy5ydW5uaW5nICYmICFzLmRvbmUpIGluaXRTZWFyY2gocyk7XG4gICAgc3RlcE9uY2Uocyk7XG4gICAgcmVkcmF3KCk7XG4gICAgaWYgKCFzLmRvbmUpIHMuYW5pbVRpbWVyID0gc2V0VGltZW91dChhbmltVGljaywgNTApO1xuICAgIGVsc2UgICAgICAgICBzdG9wQW5pbSgpO1xuICB9XG5cbiAgZnVuY3Rpb24gc3RhcnRBbmltKCkge1xuICAgIGlmIChzLmRvbmUpIHJlc2V0U2VhcmNoKHMpO1xuICAgIHMuYW5pbWF0aW5nID0gdHJ1ZTtcbiAgICBidG5BbmltYXRlLnRleHRDb250ZW50ID0gXCLij7ggUGF1c2VcIjtcbiAgICBhbmltVGljaygpO1xuICB9XG5cbiAgLy8g4pSA4pSAIGJ1dHRvbiBoYW5kbGVycyDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIBcbiAgYnRuQW5pbWF0ZS5vbmNsaWNrID0gKCkgPT4gcy5hbmltYXRpbmcgPyBzdG9wQW5pbSgpIDogc3RhcnRBbmltKCk7XG4gIGJ0blJlc2V0Lm9uY2xpY2sgICA9ICgpID0+IHsgc3RvcEFuaW0oKTsgcmVzZXRTZWFyY2gocyk7IHJlZHJhdygpOyB9O1xuICBidG5DbGVhci5vbmNsaWNrICAgPSAoKSA9PiB7XG4gICAgc3RvcEFuaW0oKTtcbiAgICBzLndhbGxzID0gQXJyYXkuZnJvbSh7bGVuZ3RoOiBST1dTfSwgKCkgPT4gbmV3IEFycmF5KENPTFMpLmZpbGwoZmFsc2UpKTtcbiAgICByZXNldFNlYXJjaChzKTsgcmVkcmF3KCk7XG4gIH07XG4gIGJ0bk1hemUub25jbGljayAgPSAoKSA9PiB7IHN0b3BBbmltKCk7IGdlbmVyYXRlTWF6ZShzKTsgcmVkcmF3KCk7IH07XG5cbiAgcmVkcmF3KCk7XG4gIHJldHVybiByb290O1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdoZXVyaXN0aWMnKSJ9XX0=
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6ImltcG9ydCB7IHJlbmRlckFwcCB9IGZyb20gXCIuL2FzdGFyLWFwcC5qc1wiXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJhcHAgPSByZW5kZXJBcHAoKVxuIn1dfQ==
 </script>
 <script type="module">
 if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
