@@ -10,7 +10,7 @@ export function appState() {
     cameFrom:  {}, gScore: {}, fScore: {},
     path:      [],
     running:   false, done: false, iter: 0, status: "idle",
-    heuristic: "manhattan",
+    heuristic: "zero (Dijkstra)",
     weight:    1,
     animating: false, animTimer: null,
   };

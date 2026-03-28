@@ -74,7 +74,7 @@ export function renderApp() {
   btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
 
   // ── heuristic select ──────────────────────────────────────────────────────
-  const heuristicOptions = ["manhattan", "euclidean", "chebyshev", "zero (Dijkstra)"];
+  const heuristicOptions = ["zero (Dijkstra)", "manhattan"];
   const heuristicLabel = document.createElement("label");
   const heuristicSelect = document.createElement("select");
   heuristicOptions.forEach(opt => {

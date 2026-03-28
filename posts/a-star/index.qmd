@@ -8,81 +8,69 @@ format:
   html:
     echo: false
     code-tools: false
+bibliography: references.bib
 ---
 
-How does Google Maps decide which route to show you — not just *a* route, but the *best* one — in under a second, across a road network with millions of edges?
-
----
+How does Google Maps find the *best* route in under a second, across millions of roads?
 
 ## The problem with brute force
 
-Imagine you're standing at one corner of a city grid, trying to reach a destination on the opposite side. The naive approach is to explore every possible path until you find the shortest one. That works fine for a 5×5 grid. But the number of paths grows as $O(b^d)$, where $b$ is the branching factor (how many directions you can move at each step) and $d$ is the depth (how many steps to the goal). On a real road network, this becomes completely intractable.
-
-Dijkstra's algorithm improves on brute force by always expanding the cheapest node seen so far — but it still fans out in every direction equally, spending effort on roads that are taking you further from your destination.
-
-What you really want is an algorithm that *focuses its search toward the goal*. That's the core idea behind A\*.
+- You're navigating a city. You need the shortest path, not just *a* path.
+- Brute force: try every possible route. The number of paths grows as $O(b^d)$, where $b$ is the branching factor and $d$ is the depth. Hopeless at scale.
+- Dijkstra improves this: always expand the cheapest node seen so far — but it fans out in *every* direction, including roads leading away from your destination.
+- The frustration: Dijkstra doesn't know where the goal is. It wastes effort.
+- The question this raises: what if the algorithm had a *sense of direction*?
 
 ---
 
 ## The A\* cost function
 
-Every node $n$ in A\* is assigned a score:
-
-$$f(n) = g(n) + h(n)$$
-
-- $g(n)$ is the **exact cost** of the path from the start to $n$ — we've already walked this, so we know it precisely.
-- $h(n)$ is the **estimated cost** from $n$ to the goal — this is a heuristic, an educated guess.
-
-At each step, A\* pops the node with the **lowest $f(n)$** from a priority queue (the *open set*) and expands it. Once a node is fully evaluated, it moves to the *closed set* and won't be revisited.
-
-The elegance is in the balance. $g(n)$ keeps the algorithm honest — it won't ignore a cheap path it's already found. $h(n)$ keeps the algorithm focused — it steers effort toward the goal instead of spreading uniformly outward.
+- A\* assigns every node a single score: $f(n) = g(n) + h(n)$
+- $g(n)$: the exact cost from start to $n$ — known, certain.
+- $h(n)$: the estimated cost from $n$ to the goal — a heuristic, an educated guess.
+- The algorithm always expands the node with the lowest $f(n)$ from the **open set** (the frontier). When expanded, a node moves to the **closed set** and won't be revisited.
+- The balance is the insight: $g$ keeps it honest (won't ignore cheap paths already found), $h$ keeps it focused (steers toward the goal).
 
 ### Admissibility and optimality
 
-The guarantee that A\* finds the *optimal* path rests on one condition: the heuristic must be **admissible**, meaning it never overestimates the true remaining cost.
+- For A\* to guarantee the *optimal* path, $h$ must never overestimate the true remaining cost: $h(n) \leq h^*(n)$
+- Overestimate, and you risk committing to a path that only *looks* cheap.
+- Two extremes worth internalising:
+  - $h = 0$ everywhere → degenerates into Dijkstra. No direction, just uniform expansion.
+  - $h = h^*$ exactly → expands only nodes on the optimal path. A theoretical ideal.
 
-$$h(n) \leq h^*(n)$$
+### Heuristic for this grid
 
-where $h^*(n)$ is the true cost from $n$ to the goal. If this holds, A\* is guaranteed to find the shortest path. Overestimate, and you risk the algorithm committing to a path that looks cheap but isn't.
-
-Two special cases are worth internalising:
-
-- When $h(n) = 0$ for all nodes, A\* degenerates into **Dijkstra's algorithm** — it explores uniformly in every direction, ignoring the goal entirely.
-- When $h(n)$ exactly equals $h^*(n)$, A\* expands only nodes that lie on an optimal path — a theoretical ideal.
-
-In practice, a good heuristic sits somewhere in between: cheap to compute, never overestimates, and close enough to the truth to make the search directional.
-
-### Choosing a heuristic
-
-The right heuristic depends on the movement model of your problem:
-
-| Heuristic | Formula | Best for |
-|-----------|---------|----------|
-| Manhattan | $\|x_1 - x_2\| + \|y_1 - y_2\|$ | 4-directional grids |
-| Euclidean | $\sqrt{(x_1-x_2)^2 + (y_1-y_2)^2}$ | any-angle movement |
-| Chebyshev | $\max(\|x_1-x_2\|, \|y_1-y_2\|)$ | 8-directional grids |
-
-On a 4-directional grid like the demo below, Manhattan distance is exact — you *can't* move diagonally, so it never overestimates. Euclidean distance will underestimate on such grids (straight-line distance is shorter than any grid path), so it's admissible but less informed. Chebyshev distance assumes diagonal moves are free, which would overestimate on a 4-directional grid — inadmissible, so don't use it here.
+- On a 4-directional grid (like the demo below), **Manhattan distance** $|x_1 - x_2| + |y_1 - y_2|$ is the natural heuristic — you can't move diagonally, so it never overestimates, and it's as tight as it can be.
 
 ### Weighted A\*
 
-A useful variant inflates the heuristic by a weight $w > 1$:
+- A useful variant inflates the heuristic by a weight $w > 1$: $f(n) = g(n) + w \cdot h(n)$
+- Greedier search, fewer nodes expanded, faster in practice.
+- Trade-off: the path found is at most $w$ times longer than optimal.
+- $w = 1$ is standard A\*; as $w$ grows the algorithm approaches pure greedy best-first search.
 
-$$f(n) = g(n) + w \cdot h(n)$$
-
-This makes the search greedier — it chases the goal more aggressively, exploring fewer nodes. The trade-off is that the optimality guarantee weakens: the path found is at most $w$ times longer than the optimal path. At $w = 1$ you get standard A\*; as $w$ grows the algorithm approaches a pure greedy best-first search. Try the weight slider in the demo to see this effect directly.
+For a thorough treatment of A\* and admissibility, see @russell2022artificial.
 
 ---
 
 ## So what does this actually mean?
 
-A\* is essentially a guided Dijkstra. It adds a compass to the search — the heuristic — that tells it "the goal is roughly *that way*." The open set is the frontier of what's been discovered but not yet committed to. The closed set is what's been fully explored. At each tick, the algorithm asks: of everything on the frontier, what has the best combination of *how far I've come* and *how far I still need to go*? That node goes next.
-
-The demo below makes this tangible. The **blue-green cells** are the open set (discovered, not yet expanded). The **dark green cells** are the closed set (expanded). The **yellow path** is the solution once the algorithm reaches the end node. Try switching heuristics and watch how the search shape changes — Dijkstra (`zero`) fans out evenly like a ripple, while Manhattan stays tightly focused. Then push the weight slider above 1 and watch the search narrow further at the cost of path optimality.
+- Think of A\* as Dijkstra with a compass.
+- The open set is everything discovered but not yet committed to; the closed set is everything fully explored.
+- At each step the algorithm asks: of all the frontier nodes, which has the best combination of *how far I've come* and *how far I still need to go*?
+- That node goes next — and the heuristic is what makes "how far I still need to go" a cheap, useful estimate rather than a blind guess.
+- The demo makes this concrete: Dijkstra ripples outward evenly in all directions; Manhattan stays tightly focused toward the goal.
 
 ---
 
 ## Demo
+
+Start with Dijkstra and watch it flood the maze. Then switch to Manhattan and notice how much less of the grid gets explored. Finally, nudge the weight slider above 1 and watch the search narrow further — and observe whether the path changes.
+
+- **Blue-green cells** — open set: discovered, not yet expanded.
+- **Dark green cells** — closed set: fully expanded.
+- **Yellow path** — the solution once the algorithm reaches the end node.
 
 ```{ojs}
 import { renderApp } from "./astar-app.js"
@@ -96,20 +84,19 @@ app = renderApp()
 
 ## Discussion
 
-A\* is impressively general. The same framework that navigates a 2D grid also powers route planning in GPS systems, NPC pathfinding in video games, puzzle solvers (the 15-puzzle, Rubik's cube with appropriate state representations), and network routing. Anywhere you can define a cost function and an admissible heuristic, A\* applies.
-
-That said, it has real limitations. The open set is held in memory, and in the worst case it can grow to hold every reachable node — a problem on very large graphs. On a grid with $10^6$ cells and a bad heuristic, memory becomes the bottleneck before time does. Variants like **IDA\*** (iterative deepening A\*) trade the memory guarantee for a depth-first search pattern, keeping memory usage linear at the cost of re-expanding nodes.
-
-The other limitation is more subtle: A\* is only as good as its heuristic. A weak heuristic (like zero) wastes time exploring irrelevant nodes. A heuristic that inadvertently overestimates silently discards optimal paths. Designing a good heuristic for a novel problem is often the real work — the algorithm itself is just infrastructure.
-
-One other thing to notice in the demo: on a maze with many dead ends, even Manhattan distance explores a surprisingly large fraction of the grid. The heuristic can't see through walls. This is a fundamental constraint — the algorithm has no map of the maze structure, only a straight-line estimate of remaining distance. Algorithms that precompute structure (like JPS, Jump Point Search, or hierarchical pathfinders) can do significantly better on structured environments.
+- **Where A\* shines**: GPS routing, NPC pathfinding in games, puzzle solvers (the 15-puzzle, Rubik's cube with appropriate state representations), network routing — anywhere you can define a cost function and an admissible heuristic.
+- **Memory**: the open set can grow to hold every reachable node. On huge graphs, memory becomes the bottleneck before time does. IDA\* (iterative deepening A\*) solves this by going depth-first — linear memory, but re-expands nodes.
+- **The heuristic is the real work**: A\* is just infrastructure. A weak heuristic wastes effort; one that inadvertently overestimates silently discards optimal paths. Designing a good heuristic for a novel domain is often the hard problem.
+- **Walls are invisible to the heuristic**: on a maze with many dead ends, even Manhattan explores a surprisingly large fraction of the grid — it can't see through walls, only estimate straight-line distance. Algorithms like Jump Point Search (JPS) precompute maze structure to do significantly better.
 
 ---
 
 ## Summary
 
-A\* solves the shortest path problem by combining two pieces of information at every step: the exact cost of how you got here ($g$), and a heuristic estimate of how far you still have to go ($h$). This sum, $f = g + h$, serves as a priority score. By always expanding the node with the lowest $f$, the algorithm balances completeness (it won't miss the optimal path, provided the heuristic is admissible) with focus (it avoids wasting effort on nodes that are clearly far from good).
+- The journey: brute force fails → Dijkstra improves but lacks direction → A\* adds a compass ($h$) and balances it against known cost ($g$).
+- The core insight: if you want to search smarter, not harder, give the algorithm a sense of direction — and the quality of that direction determines how efficiently it finds the answer.
+- Natural next steps: [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) (A\* without the compass) or [Jump Point Search](https://harabor.net/data/papers/harabor-grastien-aaai11.pdf), which exploits grid symmetry to skip entire regions of the search space.
 
-The insight is simple: if you want to search smarter, not harder, give the algorithm a compass. The heuristic is that compass — and the quality of your heuristic determines how straight the algorithm walks toward the goal.
+---
 
-If this sparked your interest, a natural next step is [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) (A\* without the compass) or [Jump Point Search](https://harabor.net/data/papers/harabor-grastien-aaai11.pdf), which exploits grid symmetry to skip large swathes of the search space entirely.
+## References
