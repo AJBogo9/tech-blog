@@ -1,19 +1,5 @@
 [
   {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "Andreas Bogossian",
-    "section": "",
-    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations.\nBy writing about things I don’t understand I aim to achieve two things: the first benefit is that I understnad the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer sicence. I’ve always been interested in math and computer so machine learning felt like a natural intersection of the two topics."
-  },
-  {
-    "objectID": "about.html#about-this-blog",
-    "href": "about.html#about-this-blog",
-    "title": "Andreas Bogossian",
-    "section": "",
-    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations.\nBy writing about things I don’t understand I aim to achieve two things: the first benefit is that I understnad the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer sicence. I’ve always been interested in math and computer so machine learning felt like a natural intersection of the two topics."
-  },
-  {
     "objectID": "posts/a-star/index.html",
     "href": "posts/a-star/index.html",
     "title": "A* Pathfinding Algorithm",
@@ -21,11 +7,88 @@
     "text": "Finding the shortest path between two points on a grid\nBrute-force explores every possible path — complexity grows as O(b^d) where b is the branching factor and d is the depth\nNeed a smarter way to prioritize which paths to explore\n\n\nCost Function\n\nEvery node n is assigned a score: f(n) = g(n) + h(n)\ng(n) — exact cost of the path from start to n (known)\nh(n) — estimated cost from n to the goal (heuristic — not exact)\nA* always expands the node with the lowest f(n) first\nIf h(n) = 0, A* degenerates into Dijkstra’s algorithm (explores in all directions equally)\nIf h(n) never overestimates the true cost, it is called admissible and A* is guaranteed to find the optimal path\n\n\n\nOpen and Closed Sets\n\nOpen set — nodes discovered but not yet fully evaluated (candidates for the next step)\nClosed set — nodes already evaluated (won’t be revisited)\nAt each step: pop the lowest f(n) node from the open set, evaluate its neighbours, add them to the open set if not already visited\n\n\n\nHeuristic\n\nThe heuristic h(n) determines how “directed” the search is\nManhattan distance — h(n) = |x_1 - x_2| + |y_1 - y_2| — best for 4-directional grids\nEuclidean distance — h(n) = \\sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2} — straight-line distance, can underestimate on grids\nChebyshev distance — h(n) = \\max(|x_1 - x_2|, |y_1 - y_2|) — best when diagonal moves are allowed\nWeighted A* — f(n) = g(n) + w \\cdot h(n) where w &gt; 1 makes the search faster but potentially suboptimal\nStronger heuristics explore fewer nodes but require more assumptions about the search space\n\n\n\nDemo\n\nimport { W, H, CELL, ROWS, COLS } from \"./astar-constants.js\"\nimport { appState }                from \"./astar-state.js\"\nimport { initSearch, stepOnce, resetSearch, heuristicFn } from \"./astar-search.js\"\nimport { generateMaze }            from \"./astar-maze.js\"\nimport { draw }                    from \"./astar-draw.js\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nviewof heuristic = Inputs.select(\n  [\"manhattan\", \"euclidean\", \"chebyshev\", \"zero (Dijkstra)\"],\n  { value: \"manhattan\", label: \"Heuristic\" }\n)\n\n\n\n\n\n\n\n// ── persistent state container ───────────────────────────────────────────────\napp_persistent = ({ s: null })\n\n\n\n\n\n\n\n// ── UI — reactive to heuristic ────────────────────────────────────────────────\napp = {\n  // initialise canvas, ctx, state and pointer listeners once\n  if (!app_persistent.s) {\n    const canvas = document.createElement(\"canvas\");\n    canvas.width = W; canvas.height = H;\n    canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;\n    Object.assign(app_persistent, {\n      s:      appState(),\n      canvas: canvas,\n      ctx:    canvas.getContext(\"2d\"),\n    });\n\n    // pointer / paint — attached once, reads s via app_persistent\n    let painting = false, paintValue = true;\n    function cellAt(e) {\n      const rect = canvas.getBoundingClientRect(), scale = W / rect.width;\n      return {\n        r: Math.floor((e.clientY - rect.top)  * scale / CELL),\n        c: Math.floor((e.clientX - rect.left) * scale / CELL),\n      };\n    }\n    function applyEdit(r, c) {\n      const s = app_persistent.s;\n      if (r &lt; 0 || r &gt;= ROWS || c &lt; 0 || c &gt;= COLS) return;\n      if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;\n      if (s.walls[r][c] === paintValue) return;\n      s.walls[r][c] = paintValue;\n      resetSearch(s); app_persistent.redraw();\n    }\n    canvas.addEventListener(\"pointerdown\", e =&gt; {\n      app_persistent.stopAnim();\n      painting = true; canvas.setPointerCapture(e.pointerId);\n      const {r, c} = cellAt(e);\n      if (r &lt; 0 || r &gt;= ROWS || c &lt; 0 || c &gt;= COLS) return;\n      const s = app_persistent.s;\n      if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;\n      paintValue = !s.walls[r][c];\n      applyEdit(r, c);\n    });\n    canvas.addEventListener(\"pointermove\", e =&gt; {\n      if (painting) { const {r, c} = cellAt(e); applyEdit(r, c); }\n    });\n    canvas.addEventListener(\"pointerup\", () =&gt; { painting = false; });\n  }\n\n  const s      = app_persistent.s;\n  const canvas = app_persistent.canvas;\n  const ctx    = app_persistent.ctx;\n\n  // ── react to heuristic input ───────────────────────────────────────────────\n  if (s.heuristic !== heuristic) {\n    s.heuristic = heuristic;\n    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }\n    s.animating = false;\n    resetSearch(s);\n  }\n\n  // ── buttons ────────────────────────────────────────────────────────────────\n  const btnAnimate = document.createElement(\"button\");\n  const btnReset   = document.createElement(\"button\");\n  const btnClear   = document.createElement(\"button\");\n  const btnMaze    = document.createElement(\"button\");\n  btnAnimate.textContent = \"▶ Animate\";\n  btnReset.textContent   = \"Reset\";\n  btnClear.textContent   = \"Clear walls\";\n  btnMaze.textContent    = \"Gen maze\";\n  const btnRow = document.createElement(\"div\");\n  btnRow.style.cssText = \"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px\";\n  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);\n\n  // ── iterations display ─────────────────────────────────────────────────────\n  const iterDisplay = document.createElement(\"div\");\n  iterDisplay.textContent = \"iterations: —\";\n\n  const root = document.createElement(\"div\");\n  root.append(btnRow, canvas, iterDisplay);\n\n  // ── helpers ────────────────────────────────────────────────────────────────\n  function redraw() {\n    draw(s, ctx);\n    iterDisplay.textContent = s.done\n      ? `iterations: ${s.iter} · ${s.status}`\n      : s.iter &gt; 0 ? `iterations: ${s.iter}…` : \"iterations: —\";\n  }\n\n  function stopAnim() {\n    s.animating = false;\n    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }\n    btnAnimate.textContent = \"▶ Animate\";\n  }\n\n  // store on persistent so pointer listeners can call them\n  app_persistent.redraw   = redraw;\n  app_persistent.stopAnim = stopAnim;\n\n  function animTick() {\n    if (!s.animating) return;\n    if (!s.running && !s.done) initSearch(s);\n    stepOnce(s);\n    redraw();\n    if (!s.done) s.animTimer = setTimeout(animTick, 50);\n    else         stopAnim();\n  }\n\n  function startAnim() {\n    if (s.done) resetSearch(s);\n    s.animating = true;\n    btnAnimate.textContent = \"⏸ Pause\";\n    animTick();\n  }\n\n  // ── button handlers ────────────────────────────────────────────────────────\n  btnAnimate.onclick = () =&gt; s.animating ? stopAnim() : startAnim();\n  btnReset.onclick   = () =&gt; { stopAnim(); resetSearch(s); redraw(); };\n  btnClear.onclick   = () =&gt; {\n    stopAnim();\n    s.walls = Array.from({length: ROWS}, () =&gt; new Array(COLS).fill(false));\n    resetSearch(s); redraw();\n  };\n  btnMaze.onclick  = () =&gt; { stopAnim(); generateMaze(s); redraw(); };\n\n  redraw();\n  return root;\n}\n\n\n\n\n\n\n\n\n\n\nReuseCC BY 4.0CitationBibTeX citation:@online{bogossian2026,\n  author = {Bogossian, Andreas},\n  title = {A* {Pathfinding} {Algorithm}},\n  date = {2026-03-19},\n  url = {https://andreasbogossian.com/posts/a-star/},\n  langid = {en}\n}\nFor attribution, please cite this work as:\nBogossian, Andreas. 2026. “A* Pathfinding Algorithm.” March\n19. https://andreasbogossian.com/posts/a-star/."
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Tech Blog",
+    "objectID": "blog.html",
+    "href": "blog.html",
+    "title": "Blog",
     "section": "",
     "text": "A* Pathfinding Algorithm\n\n\nA* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.\n\n\n\n\n\nMar 19, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\n\n\n\n\n\n\n\nKL Divergence\n\n\n\n\n\n\n\n\nMar 17, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "cv.html",
+    "href": "cv.html",
+    "title": "Andreas Bogossian",
+    "section": "",
+    "text": "Master of Science — Machine Learning, Data Science and Artificial Intelligence Aalto University · 2025–2027 Minor in Operations Research\nBachelor of Science — Computer Science Aalto University · Sep 2023–Jan 2026 Minor in Mathematics"
+  },
+  {
+    "objectID": "cv.html#education",
+    "href": "cv.html#education",
+    "title": "Andreas Bogossian",
+    "section": "",
+    "text": "Master of Science — Machine Learning, Data Science and Artificial Intelligence Aalto University · 2025–2027 Minor in Operations Research\nBachelor of Science — Computer Science Aalto University · Sep 2023–Jan 2026 Minor in Mathematics"
+  },
+  {
+    "objectID": "cv.html#experience",
+    "href": "cv.html#experience",
+    "title": "Andreas Bogossian",
+    "section": "Experience",
+    "text": "Experience\nFull Stack Developer · Droppe (Internship, part-time) Sep 2024–May 2025 · Helsinki, Finland\n\nOptimized data pipeline with caching, reducing query costs by 37×\nDesigned a customized analytics schema to surface relevant data for developers\nBuilt a no-code filtering tool for data visualization\nPresented final product to ~80 course staff and students\n\nLogistics Assistant · Viking Line (Seasonal) Jun 2024–Aug 2024 · Finland\n\nServed customers across three ships in English, Swedish and Finnish"
+  },
+  {
+    "objectID": "cv.html#publications",
+    "href": "cv.html#publications",
+    "title": "Andreas Bogossian",
+    "section": "Publications",
+    "text": "Publications\nKnowledge Graph Enhanced Recommender Systems Aaltodoc · Sep 2025 View publication"
+  },
+  {
+    "objectID": "cv.html#projects",
+    "href": "cv.html#projects",
+    "title": "Andreas Bogossian",
+    "section": "Projects",
+    "text": "Projects\nBachelor’s Thesis — Knowledge Graph Enhanced Recommender Systems Jul–Aug 2025 · Grade: 5/5 GitHub\nActivity Challenge Telegram Bot Dec 2025–Jan 2026 A Telegram bot tracking activity competition scores among Aalto university guilds. GitHub"
+  },
+  {
+    "objectID": "cv.html#honors-awards",
+    "href": "cv.html#honors-awards",
+    "title": "Andreas Bogossian",
+    "section": "Honors & Awards",
+    "text": "Honors & Awards\nAccenture Software Quality Award — Finalist Accenture · May 2025 Top 3 of 19 teams, awarded for software implementation quality. Associated with Aalto University."
+  },
+  {
+    "objectID": "cv.html#volunteering",
+    "href": "cv.html#volunteering",
+    "title": "Andreas Bogossian",
+    "section": "Volunteering",
+    "text": "Volunteering\nBoard Member · Aalto Triathlon Club · Sep 2024–Present\nSports Committee Board Member · Tietokilta · Jan 2025–Present"
+  },
+  {
+    "objectID": "cv.html#languages",
+    "href": "cv.html#languages",
+    "title": "Andreas Bogossian",
+    "section": "Languages",
+    "text": "Languages\nEnglish · Native or bilingual proficiency\nChinese (Mandarin) · Elementary proficiency"
+  },
+  {
+    "objectID": "cv.html#links",
+    "href": "cv.html#links",
+    "title": "Andreas Bogossian",
+    "section": "Links",
+    "text": "Links\nGitHub · LinkedIn · andreasbogossian.com"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Andreas Bogossian",
+    "section": "",
+    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations.\nBy writing about things I don’t understand I aim to achieve two things: the first benefit is that I understand the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer science. I’ve always been interested in math and computer science, so machine learning felt like a natural intersection of the two topics."
+  },
+  {
+    "objectID": "index.html#about",
+    "href": "index.html#about",
+    "title": "Andreas Bogossian",
+    "section": "",
+    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations.\nBy writing about things I don’t understand I aim to achieve two things: the first benefit is that I understand the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer science. I’ve always been interested in math and computer science, so machine learning felt like a natural intersection of the two topics."
   },
   {
     "objectID": "posts/2026-03-KL-divergence/index.html",
