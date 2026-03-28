@@ -3,11 +3,12 @@ title: "KL Divergence"
 author: "Andreas Bogossian"
 date: "2026-03-17"
 bibliography: references.bib
+description: "KL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF."
 ---
 
 When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF [@ziegler2019; @ouyang2022].
 
-Large language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution $Q$ of the most likely next words. For ensuring correct output, the distribution $Q$ needs to be compared to the true distribuiton $P$. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are.
+Large language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution $Q$ of the most likely next words. For ensuring correct output, the distribution $Q$ needs to be compared to the true distribution $P$. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are.
 
 ## Theory
 
@@ -113,7 +114,7 @@ kl_pq = kl_divergence(P, Q)
 print(f"D_KL(P || Q) = {kl_pq:.4f} nats")
 ```
 
-The KL-divergence is non-zero so there is a difference between the true distribution $P$ and the current distribution $Q$ of our model. The difference between the true distribuiton $P$ and the predicted distribution $Q$ is obvious.
+The KL-divergence is non-zero so there is a difference between the true distribution $P$ and the current distribution $Q$ of our model. The difference between the true distribution $P$ and the predicted distribution $Q$ is obvious.
 
 The order of the distributions is not trivial when computing KL-divergence. This can be shown shown numerically:
 
@@ -127,4 +128,4 @@ print(f"Symmetric?   {np.isclose(kl_pq, kl_qp)}")
 
 ## Summary
 
-KL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribuiton is from the training data distribution. KL-divergence has a mathematical foundation in information theory.
+KL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribution is from the training data distribution. KL-divergence has a mathematical foundation in information theory.
