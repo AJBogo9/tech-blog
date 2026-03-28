@@ -125,6 +125,6 @@ print(f"D_KL(Q || P) = {kl_qp:.4f} nats")
 print(f"Symmetric?   {np.isclose(kl_pq, kl_qp)}")
 ```
 
-## Summary / conclusion
+## Summary
 
 KL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribuiton is from the training data distribution. KL-divergence has a mathematical foundation in information theory.
