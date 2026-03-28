@@ -1,0 +1,88 @@
+---
+title: "Andreas Bogossian"
+subtitle: "Machine Learning · Statistics · Operations Research"
+page-layout: article
+title-block-banner: false
+toc: false
+format:
+  html: default
+  pdf: default
+---
+
+## Education
+
+**Master of Science — Machine Learning, Data Science and Artificial Intelligence**
+Aalto University · 2025–2027
+Minor in Operations Research
+
+**Bachelor of Science — Computer Science**
+Aalto University · Sep 2023–Jan 2026
+Minor in Mathematics
+
+---
+
+## Experience
+
+**Full Stack Developer** · Droppe *(Internship, part-time)*
+Sep 2024–May 2025 · Helsinki, Finland
+
+- Optimized data pipeline with caching, reducing query costs by 37×
+- Designed a customized analytics schema to surface relevant data for developers
+- Built a no-code filtering tool for data visualization
+- Presented final product to ~80 course staff and students
+
+**Logistics Assistant** · Viking Line *(Seasonal)*
+Jun 2024–Aug 2024 · Finland
+
+- Served customers across three ships in English, Swedish and Finnish
+
+---
+
+## Publications
+
+**Knowledge Graph Enhanced Recommender Systems**
+Aaltodoc · Sep 2025
+[View publication](https://aaltodoc.aalto.fi/server/api/core/bitstreams/d141fd14-5b38-475d-a149-429aa3f8812b/content)
+
+---
+
+## Projects
+
+**Bachelor's Thesis — Knowledge Graph Enhanced Recommender Systems**
+Jul–Aug 2025 · Grade: 5/5
+[GitHub](https://github.com/AJBogo9/Bachelor-s-thesis-recommender-systems-)
+
+**Activity Challenge Telegram Bot**
+Dec 2025–Jan 2026
+A Telegram bot tracking activity competition scores among Aalto university guilds.
+[GitHub](https://github.com/AJBogo9/activity-challenge-bot)
+
+---
+
+## Honors & Awards
+
+**Accenture Software Quality Award — Finalist**
+Accenture · May 2025
+Top 3 of 19 teams, awarded for software implementation quality. Associated with Aalto University.
+
+---
+
+## Volunteering
+
+**Board Member** · Aalto Triathlon Club · Sep 2024–Present
+
+**Sports Committee Board Member** · Tietokilta · Jan 2025–Present
+
+---
+
+## Languages
+
+English · Native or bilingual proficiency
+
+Chinese (Mandarin) · Elementary proficiency
+
+---
+
+## Links
+
+[GitHub](https://github.com/AJBogo9) · [LinkedIn](https://www.linkedin.com/in/bogo9/) · [andreasbogossian.com](https://andreasbogossian.com)

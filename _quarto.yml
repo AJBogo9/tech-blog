@@ -27,6 +27,8 @@ website:
     left:
       - text: "Blog"
         href: blog.qmd
+      - text: "CV"
+        href: cv.qmd
     right:
       - icon: linkedin
         href: https://www.linkedin.com/in/bogo9/
