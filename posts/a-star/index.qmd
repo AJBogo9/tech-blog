@@ -10,180 +10,106 @@ format:
     code-tools: false
 ---
 
-- Finding the shortest path between two points on a grid
-- Brute-force explores every possible path — complexity grows as $O(b^d)$ where $b$ is the branching factor and $d$ is the depth
-- Need a smarter way to prioritize which paths to explore
+How does Google Maps decide which route to show you — not just *a* route, but the *best* one — in under a second, across a road network with millions of edges?
 
-### Cost Function
+---
 
-- Every node $n$ is assigned a score: $f(n) = g(n) + h(n)$
-- $g(n)$ — exact cost of the path from start to $n$ (known)
-- $h(n)$ — estimated cost from $n$ to the goal (heuristic — not exact)
-- A\* always expands the node with the lowest $f(n)$ first
-- If $h(n) = 0$, A\* degenerates into Dijkstra's algorithm (explores in all directions equally)
-- If $h(n)$ never overestimates the true cost, it is called **admissible** and A\* is guaranteed to find the optimal path
+## The problem with brute force
 
-### Open and Closed Sets
+Imagine you're standing at one corner of a city grid, trying to reach a destination on the opposite side. The naive approach is to explore every possible path until you find the shortest one. That works fine for a 5×5 grid. But the number of paths grows as $O(b^d)$, where $b$ is the branching factor (how many directions you can move at each step) and $d$ is the depth (how many steps to the goal). On a real road network, this becomes completely intractable.
 
-- **Open set** — nodes discovered but not yet fully evaluated (candidates for the next step)
-- **Closed set** — nodes already evaluated (won't be revisited)
-- At each step: pop the lowest $f(n)$ node from the open set, evaluate its neighbours, add them to the open set if not already visited
+Dijkstra's algorithm improves on brute force by always expanding the cheapest node seen so far — but it still fans out in every direction equally, spending effort on roads that are taking you further from your destination.
 
-### Heuristic
+What you really want is an algorithm that *focuses its search toward the goal*. That's the core idea behind A\*.
 
-- The heuristic $h(n)$ determines how "directed" the search is
-- **Manhattan distance** — $h(n) = |x_1 - x_2| + |y_1 - y_2|$ — best for 4-directional grids
-- **Euclidean distance** — $h(n) = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}$ — straight-line distance, can underestimate on grids
-- **Chebyshev distance** — $h(n) = \max(|x_1 - x_2|, |y_1 - y_2|)$ — best when diagonal moves are allowed
-- **Weighted A\*** — $f(n) = g(n) + w \cdot h(n)$ where $w > 1$ makes the search faster but potentially suboptimal
-- Stronger heuristics explore fewer nodes but require more assumptions about the search space
+---
 
-### Demo
+## The A\* cost function
+
+Every node $n$ in A\* is assigned a score:
+
+$$f(n) = g(n) + h(n)$$
+
+- $g(n)$ is the **exact cost** of the path from the start to $n$ — we've already walked this, so we know it precisely.
+- $h(n)$ is the **estimated cost** from $n$ to the goal — this is a heuristic, an educated guess.
+
+At each step, A\* pops the node with the **lowest $f(n)$** from a priority queue (the *open set*) and expands it. Once a node is fully evaluated, it moves to the *closed set* and won't be revisited.
+
+The elegance is in the balance. $g(n)$ keeps the algorithm honest — it won't ignore a cheap path it's already found. $h(n)$ keeps the algorithm focused — it steers effort toward the goal instead of spreading uniformly outward.
+
+### Admissibility and optimality
+
+The guarantee that A\* finds the *optimal* path rests on one condition: the heuristic must be **admissible**, meaning it never overestimates the true remaining cost.
+
+$$h(n) \leq h^*(n)$$
+
+where $h^*(n)$ is the true cost from $n$ to the goal. If this holds, A\* is guaranteed to find the shortest path. Overestimate, and you risk the algorithm committing to a path that looks cheap but isn't.
+
+Two special cases are worth internalising:
+
+- When $h(n) = 0$ for all nodes, A\* degenerates into **Dijkstra's algorithm** — it explores uniformly in every direction, ignoring the goal entirely.
+- When $h(n)$ exactly equals $h^*(n)$, A\* expands only nodes that lie on an optimal path — a theoretical ideal.
+
+In practice, a good heuristic sits somewhere in between: cheap to compute, never overestimates, and close enough to the truth to make the search directional.
+
+### Choosing a heuristic
+
+The right heuristic depends on the movement model of your problem:
+
+| Heuristic | Formula | Best for |
+|-----------|---------|----------|
+| Manhattan | $\|x_1 - x_2\| + \|y_1 - y_2\|$ | 4-directional grids |
+| Euclidean | $\sqrt{(x_1-x_2)^2 + (y_1-y_2)^2}$ | any-angle movement |
+| Chebyshev | $\max(\|x_1-x_2\|, \|y_1-y_2\|)$ | 8-directional grids |
+
+On a 4-directional grid like the demo below, Manhattan distance is exact — you *can't* move diagonally, so it never overestimates. Euclidean distance will underestimate on such grids (straight-line distance is shorter than any grid path), so it's admissible but less informed. Chebyshev distance assumes diagonal moves are free, which would overestimate on a 4-directional grid — inadmissible, so don't use it here.
+
+### Weighted A\*
+
+A useful variant inflates the heuristic by a weight $w > 1$:
+
+$$f(n) = g(n) + w \cdot h(n)$$
+
+This makes the search greedier — it chases the goal more aggressively, exploring fewer nodes. The trade-off is that the optimality guarantee weakens: the path found is at most $w$ times longer than the optimal path. At $w = 1$ you get standard A\*; as $w$ grows the algorithm approaches a pure greedy best-first search. Try the weight slider in the demo to see this effect directly.
+
+---
+
+## So what does this actually mean?
+
+A\* is essentially a guided Dijkstra. It adds a compass to the search — the heuristic — that tells it "the goal is roughly *that way*." The open set is the frontier of what's been discovered but not yet committed to. The closed set is what's been fully explored. At each tick, the algorithm asks: of everything on the frontier, what has the best combination of *how far I've come* and *how far I still need to go*? That node goes next.
+
+The demo below makes this tangible. The **blue-green cells** are the open set (discovered, not yet expanded). The **dark green cells** are the closed set (expanded). The **yellow path** is the solution once the algorithm reaches the end node. Try switching heuristics and watch how the search shape changes — Dijkstra (`zero`) fans out evenly like a ripple, while Manhattan stays tightly focused. Then push the weight slider above 1 and watch the search narrow further at the cost of path optimality.
+
+---
+
+## Demo
 
 ```{ojs}
-import { W, H, CELL, ROWS, COLS } from "./astar-constants.js"
-import { appState }                from "./astar-state.js"
-import { initSearch, stepOnce, resetSearch, heuristicFn } from "./astar-search.js"
-import { generateMaze }            from "./astar-maze.js"
-import { draw }                    from "./astar-draw.js"
+import { renderApp } from "./astar-app.js"
 ```
 
 ```{ojs}
-viewof heuristic = Inputs.select(
-  ["manhattan", "euclidean", "chebyshev", "zero (Dijkstra)"],
-  { value: "manhattan", label: "Heuristic" }
-)
+app = renderApp()
 ```
 
-```{ojs}
-// ── persistent state container ───────────────────────────────────────────────
-app_persistent = ({ s: null })
-```
+---
 
-```{ojs}
-// ── UI — reactive to heuristic ────────────────────────────────────────────────
-app = {
-  // initialise canvas, ctx, state and pointer listeners once
-  if (!app_persistent.s) {
-    const canvas = document.createElement("canvas");
-    canvas.width = W; canvas.height = H;
-    canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;
-    Object.assign(app_persistent, {
-      s:      appState(),
-      canvas: canvas,
-      ctx:    canvas.getContext("2d"),
-    });
+## Discussion
 
-    // pointer / paint — attached once, reads s via app_persistent
-    let painting = false, paintValue = true;
-    function cellAt(e) {
-      const rect = canvas.getBoundingClientRect(), scale = W / rect.width;
-      return {
-        r: Math.floor((e.clientY - rect.top)  * scale / CELL),
-        c: Math.floor((e.clientX - rect.left) * scale / CELL),
-      };
-    }
-    function applyEdit(r, c) {
-      const s = app_persistent.s;
-      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-      if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
-      if (s.walls[r][c] === paintValue) return;
-      s.walls[r][c] = paintValue;
-      resetSearch(s); app_persistent.redraw();
-    }
-    canvas.addEventListener("pointerdown", e => {
-      app_persistent.stopAnim();
-      painting = true; canvas.setPointerCapture(e.pointerId);
-      const {r, c} = cellAt(e);
-      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-      const s = app_persistent.s;
-      if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
-      paintValue = !s.walls[r][c];
-      applyEdit(r, c);
-    });
-    canvas.addEventListener("pointermove", e => {
-      if (painting) { const {r, c} = cellAt(e); applyEdit(r, c); }
-    });
-    canvas.addEventListener("pointerup", () => { painting = false; });
-  }
+A\* is impressively general. The same framework that navigates a 2D grid also powers route planning in GPS systems, NPC pathfinding in video games, puzzle solvers (the 15-puzzle, Rubik's cube with appropriate state representations), and network routing. Anywhere you can define a cost function and an admissible heuristic, A\* applies.
 
-  const s      = app_persistent.s;
-  const canvas = app_persistent.canvas;
-  const ctx    = app_persistent.ctx;
+That said, it has real limitations. The open set is held in memory, and in the worst case it can grow to hold every reachable node — a problem on very large graphs. On a grid with $10^6$ cells and a bad heuristic, memory becomes the bottleneck before time does. Variants like **IDA\*** (iterative deepening A\*) trade the memory guarantee for a depth-first search pattern, keeping memory usage linear at the cost of re-expanding nodes.
 
-  // ── react to heuristic input ───────────────────────────────────────────────
-  if (s.heuristic !== heuristic) {
-    s.heuristic = heuristic;
-    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
-    s.animating = false;
-    resetSearch(s);
-  }
+The other limitation is more subtle: A\* is only as good as its heuristic. A weak heuristic (like zero) wastes time exploring irrelevant nodes. A heuristic that inadvertently overestimates silently discards optimal paths. Designing a good heuristic for a novel problem is often the real work — the algorithm itself is just infrastructure.
 
-  // ── buttons ────────────────────────────────────────────────────────────────
-  const btnAnimate = document.createElement("button");
-  const btnReset   = document.createElement("button");
-  const btnClear   = document.createElement("button");
-  const btnMaze    = document.createElement("button");
-  btnAnimate.textContent = "▶ Animate";
-  btnReset.textContent   = "Reset";
-  btnClear.textContent   = "Clear walls";
-  btnMaze.textContent    = "Gen maze";
-  const btnRow = document.createElement("div");
-  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px";
-  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
+One other thing to notice in the demo: on a maze with many dead ends, even Manhattan distance explores a surprisingly large fraction of the grid. The heuristic can't see through walls. This is a fundamental constraint — the algorithm has no map of the maze structure, only a straight-line estimate of remaining distance. Algorithms that precompute structure (like JPS, Jump Point Search, or hierarchical pathfinders) can do significantly better on structured environments.
 
-  // ── iterations display ─────────────────────────────────────────────────────
-  const iterDisplay = document.createElement("div");
-  iterDisplay.textContent = "iterations: —";
+---
 
-  const root = document.createElement("div");
-  root.append(btnRow, canvas, iterDisplay);
+## Summary
 
-  // ── helpers ────────────────────────────────────────────────────────────────
-  function redraw() {
-    draw(s, ctx);
-    iterDisplay.textContent = s.done
-      ? `iterations: ${s.iter} · ${s.status}`
-      : s.iter > 0 ? `iterations: ${s.iter}…` : "iterations: —";
-  }
+A\* solves the shortest path problem by combining two pieces of information at every step: the exact cost of how you got here ($g$), and a heuristic estimate of how far you still have to go ($h$). This sum, $f = g + h$, serves as a priority score. By always expanding the node with the lowest $f$, the algorithm balances completeness (it won't miss the optimal path, provided the heuristic is admissible) with focus (it avoids wasting effort on nodes that are clearly far from good).
 
-  function stopAnim() {
-    s.animating = false;
-    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
-    btnAnimate.textContent = "▶ Animate";
-  }
+The insight is simple: if you want to search smarter, not harder, give the algorithm a compass. The heuristic is that compass — and the quality of your heuristic determines how straight the algorithm walks toward the goal.
 
-  // store on persistent so pointer listeners can call them
-  app_persistent.redraw   = redraw;
-  app_persistent.stopAnim = stopAnim;
-
-  function animTick() {
-    if (!s.animating) return;
-    if (!s.running && !s.done) initSearch(s);
-    stepOnce(s);
-    redraw();
-    if (!s.done) s.animTimer = setTimeout(animTick, 50);
-    else         stopAnim();
-  }
-
-  function startAnim() {
-    if (s.done) resetSearch(s);
-    s.animating = true;
-    btnAnimate.textContent = "⏸ Pause";
-    animTick();
-  }
-
-  // ── button handlers ────────────────────────────────────────────────────────
-  btnAnimate.onclick = () => s.animating ? stopAnim() : startAnim();
-  btnReset.onclick   = () => { stopAnim(); resetSearch(s); redraw(); };
-  btnClear.onclick   = () => {
-    stopAnim();
-    s.walls = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
-    resetSearch(s); redraw();
-  };
-  btnMaze.onclick  = () => { stopAnim(); generateMaze(s); redraw(); };
-
-  redraw();
-  return root;
-}
-```
+If this sparked your interest, a natural next step is [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) (A\* without the compass) or [Jump Point Search](https://harabor.net/data/papers/harabor-grastien-aaai11.pdf), which exploits grid symmetry to skip large swathes of the search space entirely.

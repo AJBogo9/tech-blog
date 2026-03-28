@@ -15,7 +15,7 @@ export function initSearch(s) {
   s.closedSet = new Set();
   s.cameFrom  = {};
   s.gScore    = {[sk]: 0};
-  s.fScore    = {[sk]: heuristicFn(s.start.r, s.start.c, s.end.r, s.end.c, s.heuristic)};
+  s.fScore    = {[sk]: (s.weight ?? 1) * heuristicFn(s.start.r, s.start.c, s.end.r, s.end.c, s.heuristic)};
   s.path      = [];
   s.running   = true;
   s.done      = false;
@@ -60,7 +60,7 @@ export function stepOnce(s) {
       s.cameFrom[nk] = ck;
       s.gScore[nk]   = tentG;
       const h        = heuristicFn(nr, nc, s.end.r, s.end.c, s.heuristic);
-      s.fScore[nk]   = tentG + h;
+      s.fScore[nk]   = tentG + (s.weight ?? 1) * h;
       if (!s.openSet.find(n => n.r === nr && n.c === nc))
         s.openSet.push({r: nr, c: nc});
     }
