@@ -81,14 +81,7 @@
     "href": "index.html",
     "title": "Andreas Bogossian",
     "section": "",
-    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations.\nBy writing about things I don’t understand I aim to achieve two things: the first benefit is that I understand the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer science. I’ve always been interested in math and computer science, so machine learning felt like a natural intersection of the two topics."
-  },
-  {
-    "objectID": "index.html#about",
-    "href": "index.html#about",
-    "title": "Andreas Bogossian",
-    "section": "",
-    "text": "This blog is a medium for public learning. My goal is to write about concepts that I don’t understand and create structured explanations.\nBy writing about things I don’t understand I aim to achieve two things: the first benefit is that I understand the concept when I’m able to finish a post about it. The second benefit is that the blog functions as a portfolio to showcase concepts that I’m working with.\nOn this blog you can expect to see posts about mathematics, machine learning and computer science. I’ve always been interested in math and computer science, so machine learning felt like a natural intersection of the two topics."
+    "text": "MSc student in Machine Learning, Data Science and Artificial Intelligence at Aalto University, with a minor in Operations Research. Previously completed a BSc in Computer Science with a minor in Mathematics.\nMy research interests lie at the intersection of machine learning and mathematics. I write about technical concepts in ML, statistics and algorithms — with the goal of building rigorous understanding through structured explanation."
   },
   {
     "objectID": "posts/2026-03-KL-divergence/index.html",
