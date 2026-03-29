@@ -58,7 +58,27 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
@@ -169,6 +189,7 @@ window.Quarto = {
 <meta name="citation_online_date" content="2026-03-19">
 <meta name="citation_fulltext_html_url" content="https://andreasbogossian.com/posts/a-star/">
 <meta name="citation_language" content="en">
+<meta name="citation_reference" content="citation_title=Artificial intelligence: A modern approach;,citation_author=Stuart Russell;,citation_author=Peter Norvig;,citation_publication_date=2022;,citation_cover_date=2022;,citation_year=2022;,citation_isbn=978-1-292-40113-3;">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -224,17 +245,18 @@ window.Quarto = {
     <h2 id="toc-title">Contents</h2>
    
   <ul>
-  <li><a href="#the-problem-with-brute-force" id="toc-the-problem-with-brute-force" class="nav-link active" data-scroll-target="#the-problem-with-brute-force">The problem with brute force</a></li>
-  <li><a href="#the-a-cost-function" id="toc-the-a-cost-function" class="nav-link" data-scroll-target="#the-a-cost-function">The A* cost function</a>
+  <li><a href="#the-idea-behind-the-a-algorithm" id="toc-the-idea-behind-the-a-algorithm" class="nav-link active" data-scroll-target="#the-idea-behind-the-a-algorithm">The idea behind the A* algorithm</a></li>
+  <li><a href="#implementation" id="toc-implementation" class="nav-link" data-scroll-target="#implementation">Implementation</a>
   <ul class="collapse">
-  <li><a href="#admissibility-and-optimality" id="toc-admissibility-and-optimality" class="nav-link" data-scroll-target="#admissibility-and-optimality">Admissibility and optimality</a></li>
-  <li><a href="#choosing-a-heuristic" id="toc-choosing-a-heuristic" class="nav-link" data-scroll-target="#choosing-a-heuristic">Choosing a heuristic</a></li>
-  <li><a href="#weighted-a" id="toc-weighted-a" class="nav-link" data-scroll-target="#weighted-a">Weighted A*</a></li>
+  <li><a href="#heuristic" id="toc-heuristic" class="nav-link" data-scroll-target="#heuristic">Heuristic</a></li>
+  <li><a href="#main-loop" id="toc-main-loop" class="nav-link" data-scroll-target="#main-loop">Main loop</a></li>
+  <li><a href="#path-reconstruction" id="toc-path-reconstruction" class="nav-link" data-scroll-target="#path-reconstruction">Path reconstruction</a></li>
+  <li><a href="#running-the-algorithm-on-a-2d-grid" id="toc-running-the-algorithm-on-a-2d-grid" class="nav-link" data-scroll-target="#running-the-algorithm-on-a-2d-grid">Running the algorithm on a 2D grid</a></li>
   </ul></li>
-  <li><a href="#so-what-does-this-actually-mean" id="toc-so-what-does-this-actually-mean" class="nav-link" data-scroll-target="#so-what-does-this-actually-mean">So what does this actually mean?</a></li>
+  <li><a href="#weighted-a" id="toc-weighted-a" class="nav-link" data-scroll-target="#weighted-a">Weighted A*</a></li>
   <li><a href="#demo" id="toc-demo" class="nav-link" data-scroll-target="#demo">Demo</a></li>
   <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion">Discussion</a></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 </nav>
     </div>
@@ -277,86 +299,139 @@ window.Quarto = {
 </header>
 
 
-<p>How does Google Maps decide which route to show you — not just <em>a</em> route, but the <em>best</em> one — in under a second, across a road network with millions of edges?</p>
-<hr>
-<section id="the-problem-with-brute-force" class="level2">
-<h2 class="anchored" data-anchor-id="the-problem-with-brute-force">The problem with brute force</h2>
-<p>Imagine you’re standing at one corner of a city grid, trying to reach a destination on the opposite side. The naive approach is to explore every possible path until you find the shortest one. That works fine for a 5×5 grid. But the number of paths grows as <span class="math inline">O(b^d)</span>, where <span class="math inline">b</span> is the branching factor (how many directions you can move at each step) and <span class="math inline">d</span> is the depth (how many steps to the goal). On a real road network, this becomes completely intractable.</p>
-<p>Dijkstra’s algorithm improves on brute force by always expanding the cheapest node seen so far — but it still fans out in every direction equally, spending effort on roads that are taking you further from your destination.</p>
-<p>What you really want is an algorithm that <em>focuses its search toward the goal</em>. That’s the core idea behind A*.</p>
-<hr>
-</section>
-<section id="the-a-cost-function" class="level2">
-<h2 class="anchored" data-anchor-id="the-a-cost-function">The A* cost function</h2>
-<p>Every node <span class="math inline">n</span> in A* is assigned a score:</p>
-<p><span class="math display">f(n) = g(n) + h(n)</span></p>
+<p>How does Google Maps find the <em>best</em> route in under a second, across millions of roads? Stripping this question into its basic elements, the question becomes, how to find the shortest path in a graph from the start position to the end position. If one was to approach this problem by trying every single path, the number of paths grow as <span class="math inline">\mathcal{O}(b^d)</span>, where <span class="math inline">b</span> is the branching factor (average number of branches from each node) and <span class="math inline">d</span> is the depth. The brute force method scales extremely poorly so another solution must be used.</p>
+<p>Dijkstra’s algorithm improves on the brute force method slightly. Dijkstra always expands the cheapest node so far. The problem with Dijkstra is that it expands the search in every direction including roads that lead away from the destination. Dijkstra can be beaten with algorithms with sense of direction.</p>
+<section id="the-idea-behind-the-a-algorithm" class="level2">
+<h2 class="anchored" data-anchor-id="the-idea-behind-the-a-algorithm">The idea behind the A* algorithm</h2>
+<p>A* assigns every node a single score:</p>
+<p><span class="math display">
+f(n) = g(n) + h(n)
+</span></p>
+<p>where</p>
 <ul>
-<li><span class="math inline">g(n)</span> is the <strong>exact cost</strong> of the path from the start to <span class="math inline">n</span> — we’ve already walked this, so we know it precisely.</li>
-<li><span class="math inline">h(n)</span> is the <strong>estimated cost</strong> from <span class="math inline">n</span> to the goal — this is a heuristic, an educated guess.</li>
+<li><span class="math inline">g(n)</span>: the exact cost from start to the current node <span class="math inline">n</span>. This is known.</li>
+<li><span class="math inline">h(n)</span>: the estimated cost from the current node <span class="math inline">n</span> to the goal. This is a heuristic (educated guess).</li>
 </ul>
-<p>At each step, A* pops the node with the <strong>lowest <span class="math inline">f(n)</span></strong> from a priority queue (the <em>open set</em>) and expands it. Once a node is fully evaluated, it moves to the <em>closed set</em> and won’t be revisited.</p>
-<p>The elegance is in the balance. <span class="math inline">g(n)</span> keeps the algorithm honest — it won’t ignore a cheap path it’s already found. <span class="math inline">h(n)</span> keeps the algorithm focused — it steers effort toward the goal instead of spreading uniformly outward.</p>
-<section id="admissibility-and-optimality" class="level3">
-<h3 class="anchored" data-anchor-id="admissibility-and-optimality">Admissibility and optimality</h3>
-<p>The guarantee that A* finds the <em>optimal</em> path rests on one condition: the heuristic must be <strong>admissible</strong>, meaning it never overestimates the true remaining cost.</p>
-<p><span class="math display">h(n) \leq h^*(n)</span></p>
-<p>where <span class="math inline">h^*(n)</span> is the true cost from <span class="math inline">n</span> to the goal. If this holds, A* is guaranteed to find the shortest path. Overestimate, and you risk the algorithm committing to a path that looks cheap but isn’t.</p>
-<p>Two special cases are worth internalising:</p>
-<ul>
-<li>When <span class="math inline">h(n) = 0</span> for all nodes, A* degenerates into <strong>Dijkstra’s algorithm</strong> — it explores uniformly in every direction, ignoring the goal entirely.</li>
-<li>When <span class="math inline">h(n)</span> exactly equals <span class="math inline">h^*(n)</span>, A* expands only nodes that lie on an optimal path — a theoretical ideal.</li>
-</ul>
-<p>In practice, a good heuristic sits somewhere in between: cheap to compute, never overestimates, and close enough to the truth to make the search directional.</p>
+<p>After A* computes the score of each frontier node, the algorithm will always expand the node with the lowest <span class="math inline">f(n)</span>. Minimizing both the cost of getting to the current node <span class="math inline">g(n)</span> and the estimate of arriving at the goal <span class="math inline">h(n)</span> makes the algorithm seek the shortest path from start point to the end point.</p>
+<p>For a more thorough study of A*, please refer to <span class="citation" data-cites="russell2022artificial">Russell and Norvig (<a href="#ref-russell2022artificial" role="doc-biblioref">2022</a>)</span>.</p>
 </section>
-<section id="choosing-a-heuristic" class="level3">
-<h3 class="anchored" data-anchor-id="choosing-a-heuristic">Choosing a heuristic</h3>
-<p>The right heuristic depends on the movement model of your problem:</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Heuristic</th>
-<th>Formula</th>
-<th>Best for</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Manhattan</td>
-<td><span class="math inline">\|x_1 - x_2\| + \|y_1 - y_2\|</span></td>
-<td>4-directional grids</td>
-</tr>
-<tr class="even">
-<td>Euclidean</td>
-<td><span class="math inline">\sqrt{(x_1-x_2)^2 + (y_1-y_2)^2}</span></td>
-<td>any-angle movement</td>
-</tr>
-<tr class="odd">
-<td>Chebyshev</td>
-<td><span class="math inline">\max(\|x_1-x_2\|, \|y_1-y_2\|)</span></td>
-<td>8-directional grids</td>
-</tr>
-</tbody>
-</table>
-<p>On a 4-directional grid like the demo below, Manhattan distance is exact — you <em>can’t</em> move diagonally, so it never overestimates. Euclidean distance will underestimate on such grids (straight-line distance is shorter than any grid path), so it’s admissible but less informed. Chebyshev distance assumes diagonal moves are free, which would overestimate on a 4-directional grid — inadmissible, so don’t use it here.</p>
+<section id="implementation" class="level2">
+<h2 class="anchored" data-anchor-id="implementation">Implementation</h2>
+<section id="heuristic" class="level3">
+<h3 class="anchored" data-anchor-id="heuristic">Heuristic</h3>
+<p>A common heuristic is the Manhattan distance:</p>
+<p><span class="math display">
+h(n) = |x_1 - x_2| + |y_1 - y_2|
+</span></p>
+<p>The geometric interpretation of this is amount of grid cells that need to be navigated to go from one point to another without moving diagonally.</p>
+<div id="52477d3b" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> heuristic(a: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], b: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]) <span class="op">-&gt;</span> <span class="bu">int</span>:</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">abs</span>(a[<span class="dv">0</span>] <span class="op">-</span> b[<span class="dv">0</span>]) <span class="op">+</span> <span class="bu">abs</span>(a[<span class="dv">1</span>] <span class="op">-</span> b[<span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 </section>
-<section id="weighted-a" class="level3">
-<h3 class="anchored" data-anchor-id="weighted-a">Weighted A*</h3>
-<p>A useful variant inflates the heuristic by a weight <span class="math inline">w &gt; 1</span>:</p>
-<p><span class="math display">f(n) = g(n) + w \cdot h(n)</span></p>
-<p>This makes the search greedier — it chases the goal more aggressively, exploring fewer nodes. The trade-off is that the optimality guarantee weakens: the path found is at most <span class="math inline">w</span> times longer than the optimal path. At <span class="math inline">w = 1</span> you get standard A*; as <span class="math inline">w</span> grows the algorithm approaches a pure greedy best-first search. Try the weight slider in the demo to see this effect directly.</p>
-<hr>
+<section id="main-loop" class="level3">
+<h3 class="anchored" data-anchor-id="main-loop">Main loop</h3>
+<p>The open set is a min-heap keyed on <span class="math inline">f(n)</span>. At each iteration the node with the lowest <span class="math inline">f</span> is popped. Then check if the goal has been reached. Then the third step is to expand the neighbours:</p>
+<div id="31c7521a" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> heapq</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> astar(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    grid: <span class="bu">list</span>[<span class="bu">list</span>[<span class="bu">int</span>]],</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    start: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>],</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    goal: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> <span class="bu">dict</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]]:</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    rows, cols <span class="op">=</span> <span class="bu">len</span>(grid), <span class="bu">len</span>(grid[<span class="dv">0</span>])</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    open_set: <span class="bu">list</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]]] <span class="op">=</span> []</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    heapq.heappush(open_set, (<span class="dv">0</span>, start))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    came_from: <span class="bu">dict</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]] <span class="op">=</span> {}</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    g_score: <span class="bu">dict</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], <span class="bu">int</span>] <span class="op">=</span> {start: <span class="dv">0</span>}</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> open_set:</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        _, current <span class="op">=</span> heapq.heappop(open_set)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> current <span class="op">==</span> goal:</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        r, c <span class="op">=</span> current</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> dr, dc <span class="kw">in</span> [(<span class="op">-</span><span class="dv">1</span>,<span class="dv">0</span>),(<span class="dv">1</span>,<span class="dv">0</span>),(<span class="dv">0</span>,<span class="op">-</span><span class="dv">1</span>),(<span class="dv">0</span>,<span class="dv">1</span>)]:</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>            neighbour: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>] <span class="op">=</span> (r <span class="op">+</span> dr, c <span class="op">+</span> dc)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>            nr, nc <span class="op">=</span> neighbour</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> (<span class="dv">0</span> <span class="op">&lt;=</span> nr <span class="op">&lt;</span> rows <span class="kw">and</span> <span class="dv">0</span> <span class="op">&lt;=</span> nc <span class="op">&lt;</span> cols):</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> grid[nr][nc] <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>            tentative_g <span class="op">=</span> g_score[current] <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> tentative_g <span class="op">&lt;</span> g_score.get(neighbour, <span class="bu">float</span>(<span class="st">'inf'</span>)):</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>                came_from[neighbour] <span class="op">=</span> current</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>                g_score[neighbour] <span class="op">=</span> tentative_g</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>                f <span class="op">=</span> tentative_g <span class="op">+</span> heuristic(neighbour, goal)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>                heapq.heappush(open_set, (f, neighbour))</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> came_from</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="path-reconstruction" class="level3">
+<h3 class="anchored" data-anchor-id="path-reconstruction">Path reconstruction</h3>
+<div id="9a2a8d08" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reconstruct_path(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    came_from: <span class="bu">dict</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]],</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    start: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>],</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    goal: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]]:</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    path: <span class="bu">list</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]] <span class="op">=</span> []</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    node <span class="op">=</span> goal</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> node <span class="op">!=</span> start:</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        path.append(node)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        node <span class="op">=</span> came_from[node]</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    path.append(start)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    path.reverse()</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> path</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="running-the-algorithm-on-a-2d-grid" class="level3">
+<h3 class="anchored" data-anchor-id="running-the-algorithm-on-a-2d-grid">Running the algorithm on a 2D grid</h3>
+<div id="92172e1a" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> [</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>],</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>],</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>],</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>],</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>],</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>start, goal <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">0</span>), (<span class="dv">4</span>, <span class="dv">4</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>came_from <span class="op">=</span> astar(grid, start, goal)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> reconstruct_path(came_from, start, goal)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4)]</code></pre>
+</div>
+</div>
 </section>
 </section>
-<section id="so-what-does-this-actually-mean" class="level2">
-<h2 class="anchored" data-anchor-id="so-what-does-this-actually-mean">So what does this actually mean?</h2>
-<p>A* is essentially a guided Dijkstra. It adds a compass to the search — the heuristic — that tells it “the goal is roughly <em>that way</em>.” The open set is the frontier of what’s been discovered but not yet committed to. The closed set is what’s been fully explored. At each tick, the algorithm asks: of everything on the frontier, what has the best combination of <em>how far I’ve come</em> and <em>how far I still need to go</em>? That node goes next.</p>
-<p>The demo below makes this tangible. The <strong>blue-green cells</strong> are the open set (discovered, not yet expanded). The <strong>dark green cells</strong> are the closed set (expanded). The <strong>yellow path</strong> is the solution once the algorithm reaches the end node. Try switching heuristics and watch how the search shape changes — Dijkstra (<code>zero</code>) fans out evenly like a ripple, while Manhattan stays tightly focused. Then push the weight slider above 1 and watch the search narrow further at the cost of path optimality.</p>
-<hr>
+<section id="weighted-a" class="level2">
+<h2 class="anchored" data-anchor-id="weighted-a">Weighted A*</h2>
+<p>A useful, greedier A* variant is weighted A*. The variant inflates the heuristic by a weight <span class="math inline">w &gt; 1</span>:</p>
+<p><span class="math display">
+f(n) = g(n) + w \cdot h(n)
+</span></p>
+<p>The benefit of using the weight is that fewer nodes are expanded because the search prioritizes nodes that are close to the end. The trade-off is that the path found is at most <span class="math inline">w</span> times longer than optimal.</p>
 </section>
 <section id="demo" class="level2">
 <h2 class="anchored" data-anchor-id="demo">Demo</h2>
+<p>Start with Dijkstra and then swap to A* with the Manhattan heuristic. Also, test the weight slider to make the algorithm faster with the expense of accuracy.</p>
+<ul>
+<li><strong>Blue-green cells</strong> — open set: discovered, not yet expanded.</li>
+<li><strong>Dark green cells</strong> — closed set: fully expanded.</li>
+<li><strong>Yellow path</strong> — the solution once the algorithm reaches the end node.</li>
+</ul>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb1" data-startfrom="87" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 86;"><span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { renderApp } <span class="im">from</span> <span class="st">"./astar-app.js"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb6" data-startfrom="150" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 149;"><span id="cb6-150"><a href="#cb6-150" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> { renderApp } <span class="im">from</span> <span class="st">"./astar-app.js"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div id="ojs-cell-1" data-nodetype="declaration">
 
@@ -364,33 +439,31 @@ window.Quarto = {
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="91" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 90;"><span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> <span class="fu">renderApp</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb7" data-startfrom="155" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 154;"><span id="cb7-155"><a href="#cb7-155" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> <span class="fu">renderApp</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div id="ojs-cell-2" data-nodetype="declaration">
 
 </div>
 </div>
 </div>
-<hr>
 </section>
 <section id="discussion" class="level2">
 <h2 class="anchored" data-anchor-id="discussion">Discussion</h2>
-<p>A* is impressively general. The same framework that navigates a 2D grid also powers route planning in GPS systems, NPC pathfinding in video games, puzzle solvers (the 15-puzzle, Rubik’s cube with appropriate state representations), and network routing. Anywhere you can define a cost function and an admissible heuristic, A* applies.</p>
-<p>That said, it has real limitations. The open set is held in memory, and in the worst case it can grow to hold every reachable node — a problem on very large graphs. On a grid with <span class="math inline">10^6</span> cells and a bad heuristic, memory becomes the bottleneck before time does. Variants like <strong>IDA*</strong> (iterative deepening A*) trade the memory guarantee for a depth-first search pattern, keeping memory usage linear at the cost of re-expanding nodes.</p>
-<p>The other limitation is more subtle: A* is only as good as its heuristic. A weak heuristic (like zero) wastes time exploring irrelevant nodes. A heuristic that inadvertently overestimates silently discards optimal paths. Designing a good heuristic for a novel problem is often the real work — the algorithm itself is just infrastructure.</p>
-<p>One other thing to notice in the demo: on a maze with many dead ends, even Manhattan distance explores a surprisingly large fraction of the grid. The heuristic can’t see through walls. This is a fundamental constraint — the algorithm has no map of the maze structure, only a straight-line estimate of remaining distance. Algorithms that precompute structure (like JPS, Jump Point Search, or hierarchical pathfinders) can do significantly better on structured environments.</p>
-<hr>
+<p>A* shines in applications where a cost function and an admissible heuristic (a heuristic that never overestimates the distance to the end) can be defined. Examples of these types of application are GPS routing, NPC path finding in games and network routing.</p>
+<p>There is one problem with A*: it doesn’t factor walls into the heuristic when using Manhattan distance. For solving this problem, algorithms like <a href="https://en.wikipedia.org/wiki/Jump_point_search">Jump Point Search</a> (JPS) are used.</p>
 </section>
-<section id="summary" class="level2">
-<h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<p>A* solves the shortest path problem by combining two pieces of information at every step: the exact cost of how you got here (<span class="math inline">g</span>), and a heuristic estimate of how far you still have to go (<span class="math inline">h</span>). This sum, <span class="math inline">f = g + h</span>, serves as a priority score. By always expanding the node with the lowest <span class="math inline">f</span>, the algorithm balances completeness (it won’t miss the optimal path, provided the heuristic is admissible) with focus (it avoids wasting effort on nodes that are clearly far from good).</p>
-<p>The insight is simple: if you want to search smarter, not harder, give the algorithm a compass. The heuristic is that compass — and the quality of your heuristic determines how straight the algorithm walks toward the goal.</p>
-<p>If this sparked your interest, a natural next step is <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra’s algorithm</a> (A* without the compass) or <a href="https://harabor.net/data/papers/harabor-grastien-aaai11.pdf">Jump Point Search</a>, which exploits grid symmetry to skip large swathes of the search space entirely.</p>
+<section id="references" class="level2">
+
+
 
 
 </section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" id="quarto-reuse"><h2 class="anchored quarto-appendix-heading">Reuse</h2><div class="quarto-appendix-contents"><div><a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></div></div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{bogossian2026,
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-russell2022artificial" class="csl-entry" role="listitem">
+Russell, Stuart, and Peter Norvig. 2022. <em>Artificial Intelligence: A Modern Approach</em>. 4th ed. Pearson Education Limited.
+</div>
+</div></section><section class="quarto-appendix-contents" id="quarto-reuse"><h2 class="anchored quarto-appendix-heading">Reuse</h2><div class="quarto-appendix-contents"><div><a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></div></div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{bogossian2026,
   author = {Bogossian, Andreas},
   title = {A* {Pathfinding} {Algorithm}},
   date = {2026-03-19},

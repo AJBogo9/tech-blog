@@ -8,6 +8,7 @@
 
 <meta name="author" content="Andreas Bogossian">
 <meta name="dcterms.date" content="2026-03-17">
+<meta name="description" content="KL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF.">
 
 <title>KL Divergence – Andreas Bogossian</title>
 <style>
@@ -173,11 +174,11 @@ window.Quarto = {
 </script>
 
 <meta property="og:title" content="KL Divergence – Andreas Bogossian">
-<meta property="og:description" content="Notes on challenging technical things">
+<meta property="og:description" content="KL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF.">
 <meta property="og:image" content="https://andreasbogossian.com/posts/2026-03-KL-divergence/index_files/figure-html/cell-3-output-1.png">
 <meta property="og:site_name" content="Andreas Bogossian">
-<meta property="og:image:height" content="374">
-<meta property="og:image:width" content="662">
+<meta property="og:image:height" content="748">
+<meta property="og:image:width" content="1324">
 <meta name="citation_title" content="KL Divergence">
 <meta name="citation_author" content="Andreas Bogossian">
 <meta name="citation_publication_date" content="2026-03-17">
@@ -249,7 +250,7 @@ window.Quarto = {
   <li><a href="#key-properties" id="toc-key-properties" class="nav-link" data-scroll-target="#key-properties">Key properties</a></li>
   </ul></li>
   <li><a href="#code-demo" id="toc-code-demo" class="nav-link" data-scroll-target="#code-demo">Code demo</a></li>
-  <li><a href="#summary-conclusion" id="toc-summary-conclusion" class="nav-link" data-scroll-target="#summary-conclusion">Summary / conclusion</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul>
 </nav>
     </div>
@@ -261,6 +262,11 @@ window.Quarto = {
 <h1 class="title">KL Divergence</h1>
 </div>
 
+<div>
+  <div class="description">
+    KL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -288,7 +294,7 @@ window.Quarto = {
 
 
 <p>When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF <span class="citation" data-cites="ziegler2019 ouyang2022">(<a href="#ref-ziegler2019" role="doc-biblioref">Ziegler et al. 2019</a>; <a href="#ref-ouyang2022" role="doc-biblioref">Ouyang et al. 2022</a>)</span>.</p>
-<p>Large language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution <span class="math inline">Q</span> of the most likely next words. For ensuring correct output, the distribution <span class="math inline">Q</span> needs to be compared to the true distribuiton <span class="math inline">P</span>. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are.</p>
+<p>Large language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution <span class="math inline">Q</span> of the most likely next words. For ensuring correct output, the distribution <span class="math inline">Q</span> needs to be compared to the true distribution <span class="math inline">P</span>. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are.</p>
 <section id="theory" class="level2">
 <h2 class="anchored" data-anchor-id="theory">Theory</h2>
 <p>The <strong>Kullback-Leibler divergence</strong> from Q to P is defined as:</p>
@@ -330,7 +336,7 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 <section id="code-demo" class="level2">
 <h2 class="anchored" data-anchor-id="code-demo">Code demo</h2>
 <p>Now imagine a small vocabulary of five tokens: <code>["cat", "sat", "on", "the", "mat"]</code>. We have an imaginary LLM that has a predicted distribution <span class="math inline">Q</span> for the vocabulary and we also know the true distribution <span class="math inline">P</span> from the training data for the vocabulary.</p>
-<div id="54b65e08" class="cell" data-execution_count="1">
+<div id="307f4554" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>vocab <span class="op">=</span> [<span class="st">"cat"</span>, <span class="st">"sat"</span>, <span class="st">"on"</span>, <span class="st">"the"</span>, <span class="st">"mat"</span>]</span>
@@ -342,7 +348,7 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>Q <span class="op">=</span> np.array([<span class="fl">0.2</span>, <span class="fl">0.25</span>, <span class="fl">0.3</span>, <span class="fl">0.15</span>, <span class="fl">0.1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>By plotting <span class="math inline">P</span> and <span class="math inline">Q</span> the mismatch is immediately visible.</p>
-<div id="00605b0c" class="cell" data-execution_count="2">
+<div id="43ce6235" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -365,13 +371,13 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="index_files/figure-html/cell-3-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="index_files/figure-html/cell-3-output-1.png" width="662" height="374" class="figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Directly applying the discrete formula <span class="math inline">D_{KL}(P \| Q) = \sum_k p_k \log \frac{p_k}{q_k}</span>:</p>
-<div id="0c234fe9" class="cell" data-execution_count="3">
+<div id="2c8941e9" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kl_divergence(p, q):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.<span class="bu">sum</span>(p <span class="op">*</span> np.log(p <span class="op">/</span> q))</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -381,9 +387,9 @@ D_{KL}(P||Q) &amp;= H(P, Q) - H(P) \\
 <pre><code>D_KL(P || Q) = 0.1874 nats</code></pre>
 </div>
 </div>
-<p>The KL-divergence is non-zero so there is a difference between the true distribution <span class="math inline">P</span> and the current distribution <span class="math inline">Q</span> of our model. The difference between the true distribuiton <span class="math inline">P</span> and the predicted distribution <span class="math inline">Q</span> is obvious.</p>
+<p>The KL-divergence is non-zero so there is a difference between the true distribution <span class="math inline">P</span> and the current distribution <span class="math inline">Q</span> of our model. The difference between the true distribution <span class="math inline">P</span> and the predicted distribution <span class="math inline">Q</span> is obvious.</p>
 <p>The order of the distributions is not trivial when computing KL-divergence. This can be shown shown numerically:</p>
-<div id="7e07456b" class="cell" data-execution_count="4">
+<div id="fa81ea07" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>kl_qp <span class="op">=</span> kl_divergence(Q, P)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"D_KL(P || Q) = </span><span class="sc">{</span>kl_pq<span class="sc">:.4f}</span><span class="ss"> nats"</span>)</span>
@@ -396,9 +402,9 @@ Symmetric?   False</code></pre>
 </div>
 </div>
 </section>
-<section id="summary-conclusion" class="level2">
-<h2 class="anchored" data-anchor-id="summary-conclusion">Summary / conclusion</h2>
-<p>KL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribuiton is from the training data distribution. KL-divergence has a mathematical foundation in information theory.</p>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>KL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribution is from the training data distribution. KL-divergence has a mathematical foundation in information theory.</p>
 
 
 
