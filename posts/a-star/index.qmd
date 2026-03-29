@@ -4,99 +4,162 @@ author: "Andreas Bogossian"
 date: "2026-03-19"
 description: "A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance."
 image: "astar.png"
-format:
-  html:
-    echo: false
-    code-tools: false
 bibliography: references.bib
 ---
 
-How does Google Maps find the *best* route in under a second, across millions of roads?
+How does Google Maps find the *best* route in under a second, across millions of roads? Stripping this question into its basic elements, the question becomes, how to find the shortest path in a graph from the start position to the end position. If one was to approach this problem by trying every single path, the number of paths grow as $\mathcal{O}(b^d)$, where $b$ is the branching factor (average number of branches from each node) and $d$ is the depth. The brute force method scales extremely poorly so another solution must be used. 
 
-## The problem with brute force
+Dijkstra's algorithm improves on the brute force method slightly. Dijkstra always expands the cheapest node so far. The problem with Dijkstra is that it expands the search in every direction including roads that lead away from the destination. Dijkstra can be beaten with algorithms with sense of direction.
 
-- You're navigating a city. You need the shortest path, not just *a* path.
-- Brute force: try every possible route. The number of paths grows as $O(b^d)$, where $b$ is the branching factor and $d$ is the depth. Hopeless at scale.
-- Dijkstra improves this: always expand the cheapest node seen so far — but it fans out in *every* direction, including roads leading away from your destination.
-- The frustration: Dijkstra doesn't know where the goal is. It wastes effort.
-- The question this raises: what if the algorithm had a *sense of direction*?
+## The idea behind the A\* algorithm
 
----
+A\* assigns every node a single score:
 
-## The A\* cost function
+$$
+f(n) = g(n) + h(n)
+$$
 
-- A\* assigns every node a single score: $f(n) = g(n) + h(n)$
-- $g(n)$: the exact cost from start to $n$ — known, certain.
-- $h(n)$: the estimated cost from $n$ to the goal — a heuristic, an educated guess.
-- The algorithm always expands the node with the lowest $f(n)$ from the **open set** (the frontier). When expanded, a node moves to the **closed set** and won't be revisited.
-- The balance is the insight: $g$ keeps it honest (won't ignore cheap paths already found), $h$ keeps it focused (steers toward the goal).
+where
 
-### Admissibility and optimality
+- $g(n)$: the exact cost from start to the current node $n$. This is known. 
+- $h(n)$: the estimated cost from the current node $n$ to the goal. This is a heuristic (educated guess).
 
-- For A\* to guarantee the *optimal* path, $h$ must never overestimate the true remaining cost: $h(n) \leq h^*(n)$
-- Overestimate, and you risk committing to a path that only *looks* cheap.
-- Two extremes worth internalising:
-  - $h = 0$ everywhere → degenerates into Dijkstra. No direction, just uniform expansion.
-  - $h = h^*$ exactly → expands only nodes on the optimal path. A theoretical ideal.
+After A\* computes the score of each frontier node, the algorithm will always expand the node with the lowest $f(n)$. Minimizing both the cost of getting to the current node $g(n)$ and the estimate of arriving at the goal $h(n)$ makes the algorithm seek the shortest path from start point to the end point.
 
-### Heuristic for this grid
+For a more thorough study of A\*, please refer to @russell2022artificial.
 
-- On a 4-directional grid (like the demo below), **Manhattan distance** $|x_1 - x_2| + |y_1 - y_2|$ is the natural heuristic — you can't move diagonally, so it never overestimates, and it's as tight as it can be.
+## Implementation
 
-### Weighted A\*
+### Heuristic
 
-- A useful variant inflates the heuristic by a weight $w > 1$: $f(n) = g(n) + w \cdot h(n)$
-- Greedier search, fewer nodes expanded, faster in practice.
-- Trade-off: the path found is at most $w$ times longer than optimal.
-- $w = 1$ is standard A\*; as $w$ grows the algorithm approaches pure greedy best-first search.
+A common heuristic is the Manhattan distance:
 
-For a thorough treatment of A\* and admissibility, see @russell2022artificial.
+$$
+h(n) = |x_1 - x_2| + |y_1 - y_2|
+$$
 
----
+The geometric interpretation of this is amount of grid cells that need to be navigated to go from one point to another without moving diagonally.
 
-## So what does this actually mean?
+```{python}
+def heuristic(a: tuple[int, int], b: tuple[int, int]) -> int:
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+```
 
-- Think of A\* as Dijkstra with a compass.
-- The open set is everything discovered but not yet committed to; the closed set is everything fully explored.
-- At each step the algorithm asks: of all the frontier nodes, which has the best combination of *how far I've come* and *how far I still need to go*?
-- That node goes next — and the heuristic is what makes "how far I still need to go" a cheap, useful estimate rather than a blind guess.
-- The demo makes this concrete: Dijkstra ripples outward evenly in all directions; Manhattan stays tightly focused toward the goal.
+### Main loop
 
----
+The open set is a min-heap keyed on $f(n)$. At each iteration the node with the lowest $f$ is popped. Then check if the goal has been reached. Then the third step is to expand the neighbours:
+
+```{python}
+import heapq
+
+def astar(
+    grid: list[list[int]],
+    start: tuple[int, int],
+    goal: tuple[int, int]
+) -> dict[tuple[int, int], tuple[int, int]]:
+    rows, cols = len(grid), len(grid[0])
+
+    open_set: list[tuple[int, tuple[int, int]]] = []
+    heapq.heappush(open_set, (0, start))
+
+    came_from: dict[tuple[int, int], tuple[int, int]] = {}
+    g_score: dict[tuple[int, int], int] = {start: 0}
+
+    while open_set:
+        _, current = heapq.heappop(open_set)
+
+        if current == goal:
+            break
+
+        r, c = current
+        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+            neighbour: tuple[int, int] = (r + dr, c + dc)
+            nr, nc = neighbour
+
+            if not (0 <= nr < rows and 0 <= nc < cols):
+                continue
+            if grid[nr][nc] == 1:
+                continue
+
+            tentative_g = g_score[current] + 1
+
+            if tentative_g < g_score.get(neighbour, float('inf')):
+                came_from[neighbour] = current
+                g_score[neighbour] = tentative_g
+                f = tentative_g + heuristic(neighbour, goal)
+                heapq.heappush(open_set, (f, neighbour))
+
+    return came_from
+```
+
+### Path reconstruction
+
+```{python}
+def reconstruct_path(
+    came_from: dict[tuple[int, int], tuple[int, int]],
+    start: tuple[int, int],
+    goal: tuple[int, int]
+) -> list[tuple[int, int]]:
+    path: list[tuple[int, int]] = []
+    node = goal
+    while node != start:
+        path.append(node)
+        node = came_from[node]
+    path.append(start)
+    path.reverse()
+    return path
+```
+
+### Running the algorithm on a 2D grid
+
+```{python}
+grid = [
+    [0, 0, 0, 1, 0],
+    [1, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0],
+]
+start, goal = (0, 0), (4, 4)
+
+came_from = astar(grid, start, goal)
+path = reconstruct_path(came_from, start, goal)
+print(path)
+```
+
+
+## Weighted A\*
+
+A useful, greedier A\* variant is weighted A\*. The variant inflates the heuristic by a weight $w > 1$:
+
+$$
+f(n) = g(n) + w \cdot h(n)
+$$
+
+The benefit of using the weight is that fewer nodes are expanded because the search prioritizes nodes that are close to the end. The trade-off is that the path found is at most $w$ times longer than optimal. 
 
 ## Demo
 
-Start with Dijkstra and watch it flood the maze. Then switch to Manhattan and notice how much less of the grid gets explored. Finally, nudge the weight slider above 1 and watch the search narrow further — and observe whether the path changes.
+Start with Dijkstra and then swap to A\* with the Manhattan heuristic. Also, test the weight slider to make the algorithm faster with the expense of accuracy.
 
 - **Blue-green cells** — open set: discovered, not yet expanded.
 - **Dark green cells** — closed set: fully expanded.
 - **Yellow path** — the solution once the algorithm reaches the end node.
 
 ```{ojs}
+//| echo: false
 import { renderApp } from "./astar-app.js"
 ```
 
 ```{ojs}
+//| echo: false
 app = renderApp()
 ```
 
----
-
 ## Discussion
 
-- **Where A\* shines**: GPS routing, NPC pathfinding in games, puzzle solvers (the 15-puzzle, Rubik's cube with appropriate state representations), network routing — anywhere you can define a cost function and an admissible heuristic.
-- **Memory**: the open set can grow to hold every reachable node. On huge graphs, memory becomes the bottleneck before time does. IDA\* (iterative deepening A\*) solves this by going depth-first — linear memory, but re-expands nodes.
-- **The heuristic is the real work**: A\* is just infrastructure. A weak heuristic wastes effort; one that inadvertently overestimates silently discards optimal paths. Designing a good heuristic for a novel domain is often the hard problem.
-- **Walls are invisible to the heuristic**: on a maze with many dead ends, even Manhattan explores a surprisingly large fraction of the grid — it can't see through walls, only estimate straight-line distance. Algorithms like Jump Point Search (JPS) precompute maze structure to do significantly better.
+A\* shines in applications where a cost function and an admissible heuristic (a heuristic that never overestimates the distance to the end) can be defined. Examples of these types of application are GPS routing, NPC path finding in games and network routing.
 
----
-
-## Summary
-
-- The journey: brute force fails → Dijkstra improves but lacks direction → A\* adds a compass ($h$) and balances it against known cost ($g$).
-- The core insight: if you want to search smarter, not harder, give the algorithm a sense of direction — and the quality of that direction determines how efficiently it finds the answer.
-- Natural next steps: [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) (A\* without the compass) or [Jump Point Search](https://harabor.net/data/papers/harabor-grastien-aaai11.pdf), which exploits grid symmetry to skip entire regions of the search space.
-
----
+There is one problem with A\*: it doesn't factor walls into the heuristic when using Manhattan distance. For solving this problem, algorithms like [Jump Point Search](https://en.wikipedia.org/wiki/Jump_point_search) (JPS) are used.
 
 ## References
