@@ -1,6 +1,5 @@
 ---
 title: "A* Pathfinding Algorithm"
-author: "Andreas Bogossian"
 date: "2026-03-19"
 description: "A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance."
 image: "astar.png"

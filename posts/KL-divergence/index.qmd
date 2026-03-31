@@ -1,6 +1,5 @@
 ---
 title: "KL Divergence"
-author: "Andreas Bogossian"
 date: "2026-03-17"
 bibliography: references.bib
 description: "KL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF."
