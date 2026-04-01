@@ -1,0 +1,219 @@
+---
+title: "Variational Inference & the ELBO"
+description: A step-by-step derivation of the Evidence Lower Bound (ELBO), from intractable posteriors to the reconstruction-regularisation decomposition used in VAEs.
+date: "2026-04-02"
+bibliography: references.bib
+
+---
+
+```{python}
+#| echo: false
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+```
+
+Let's say we've observed the data $\mathbf{x}$ and we want to know the conditional probability of the latent variables $\mathbf{z}$. The conditional probability distribution $p(\mathbf{z} \mid \mathbf{x})$ can be then formulated with the Bayes' rule as
+
+$$
+p(\mathbf{z} \mid \mathbf{x}) = \frac{p(\mathbf{x} \mid \mathbf{z})p(\mathbf{z})}{p(\mathbf{x})}
+$$
+
+Now the problem is that the denominator that acts as a regularizer
+
+$$
+p(\mathbf{x}) = \int p(\mathbf{x} \mid \mathbf{z}) p(\mathbf{z}) d \mathbf{z}
+$$
+
+is often intractable. When something is intractable, it means that it is theoretically solvable byt can't be solved in a practical amount of time or with practical computational resources. 
+
+## Variational Inference: Approximating the Posterior
+
+With variational inference, we introduce a *tractable* approximation $q_\varphi(\mathbf{z} \mid \mathbf{x})$ and find the parameters $\varphi$ that approximate the intractable posterior $p_\theta(\mathbf{z} \mid \mathbf{x})$ as well as possible. The closeness is measured by [KL-divergence](../KL-divergence/index.qmd). Even though KL-divergence is a good measure for determining the closeness of two distributions, it requires knowing the true posterior, which we don't know because we don't know the denominator which we're trying to solve, but we need the posterior to solve the denominator. Using KL-divergence alone will not solve the approximation problem so we maximize a quantity called Evidence Lower BOund (ELBO). 
+
+## Derivation of the ELBO [@jamil2023vae]
+
+Now our goal is to transform the intractable integral $p_\theta(\mathbf{x})$ into a tractable approximation $q_\varphi(\mathbf{x})$. Instead of approximating $p_\theta(\mathbf{x})$ we approximate $\log p_\theta(\mathbf{x})$. So we start from
+
+$$
+\log p_\theta(\mathbf{x}) = \log p_\theta(\mathbf{x})
+$$
+
+Now by multiplying by $\int q_\varphi (\mathbf{z} \mid \mathbf{x}) d\mathbf{z} = 1$ we get
+
+$$
+\begin{align*}
+\log p_\theta(\mathbf{x}) &= \log p_\theta(\mathbf{x})\int q_\varphi (\mathbf{z} \mid \mathbf{x}) d\mathbf{z} \\
+&= \int \log p_\theta(\mathbf{x}) q_\varphi (\mathbf{z} \mid \mathbf{x}) d\mathbf{z}
+\end{align*}
+$$
+
+Using the property $\int f(x) \, q(z) \, dz = \mathbb{E}_{q(z)}[f(x)]$ 
+
+$$
+\log p_\theta(\mathbf{x}) = \mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log p_\theta(\mathbf{x}) \right]
+$$
+
+Next, we can apply the chain rule of probability: $p_\theta(\mathbf{x}, \mathbf{z}) = p_\theta(\mathbf{z} \mid \mathbf{x}) p_\theta(\mathbf{x}) \Rrightarrow p_\theta(\mathbf{x}) = \frac{p_\theta(\mathbf{x}, \mathbf{z})}{p_\theta(\mathbf{z}|\mathbf{x})}$:
+
+$$
+\log p_\theta(\mathbf{x}) = \mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log \frac{p_\theta(\mathbf{x}, \mathbf{z})}{p_\theta(\mathbf{z}|\mathbf{x})} \right]
+$$
+
+Multiplying by one, by introducing the new approximate tractable distribution $q_\varphi (\mathbf{z} \mid \mathbf{x})$:
+
+$$
+\log p_\theta(\mathbf{x}) = \mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log \frac{p_\theta(\mathbf{x}, \mathbf{z}) q_\varphi (\mathbf{z} \mid \mathbf{x})}{p_\theta(\mathbf{z}|\mathbf{x}) q_\varphi (\mathbf{z} \mid \mathbf{x})} \right]
+$$
+
+With KL-divergence is defines as $D_{KL}(q_\varphi(\mathbf{z}|\mathbf{x}) \| p_\theta(\mathbf{z}|\mathbf{x})) = \mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log \frac{q_\varphi(\mathbf{z}|\mathbf{x})}{p_\theta(\mathbf{z}|\mathbf{x})} \right]$:
+
+$$
+\log p_\theta(\mathbf{x}) = \underbrace{\mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log \frac{p_\theta(\mathbf{x}, \mathbf{z})}{q_\varphi(\mathbf{z}|\mathbf{x})} \right]}_{\text{ELBO}} + \underbrace{D_{\mathrm{KL}}\!\left( q_\varphi(\mathbf{z}|\mathbf{x}) \,\|\, p_\theta(\mathbf{z}|\mathbf{x}) \right)}_{\geq\, 0}
+$$
+
+Since KL divergence is always non-negative, the ELBO is a lower bound on the log evidence:
+
+$$\log p_\theta(\mathbf{x}) \geq \mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log \frac{p_\theta(\mathbf{x}, \mathbf{z})}{q_\varphi(\mathbf{z}|\mathbf{x})} \right]$$
+
+The notation $\mathcal{L}(\theta, \varphi)$ is used for the ELBO, so I'll be also using it to simplify the math notation.
+
+## What is the ELBO Optimising?
+
+Our original goal was to find a tractable distribution $q_\varphi (\mathbf{x})$ that approximates $p_\theta (\mathbf{x})$. A novel solution to this is to maximize the ELBO. With $\log p_\theta (\mathbf{x})$ being fixed, maximizing the ELBO minimizes the KL-divergence.
+
+$$
+\underbrace{\log p_\theta(\mathbf{x})}_{\text{fixed}} = \underbrace{\mathcal{L}(\theta, \varphi)}_{\uparrow \text{ maximise}} + \underbrace{D_{\mathrm{KL}}(q_\varphi \| p_\theta)}_{\downarrow \text{ minimise}}
+$$
+
+## Expanding the ELBO
+
+The ELBO can be further decomposed by factoring using the chain rule of probability and splitting the log. This decomposition is a necessary tool for variational autoencoders (VAEs).
+
+$$
+\begin{align*}
+\mathcal{L}(\theta, \varphi) &= \mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log \frac{p_\theta(\mathbf{x}, \mathbf{z})}{q_\varphi(\mathbf{z}|\mathbf{x})} \right] \\
+\mathcal{L}(\theta, \varphi) &= \mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log \frac{p_\theta(\mathbf{x}|\mathbf{z})\, p(\mathbf{z})}{q_\varphi(\mathbf{z}|\mathbf{x})} \right] \\
+&= \underbrace{\mathbb{E}_{q_\varphi(\mathbf{z}|\mathbf{x})} \left[ \log p_\theta(\mathbf{x}|\mathbf{z}) \right]}_{\text{reconstruction term}} - \underbrace{D_{\mathrm{KL}}\!\left( q_\varphi(\mathbf{z}|\mathbf{x}) \,\|\, p(\mathbf{z}) \right)}_{\text{regularisation term}}
+\end{align*}
+$$
+
+Here the **reconstruction term** measures how well the model recovers $\mathbf{x}$ from samples of the latent space and the **regularisation term** penalises $q_\varphi(\mathbf{z}|\mathbf{x})$ for deviating from the prior $p(\mathbf{z})$.
+
+
+## A Simple Example
+
+**Model:**
+
+$$
+p(z) = \mathcal{N}(0, 1), \qquad p(x \mid z) = \mathcal{N}(z, \sigma_\ell^2)
+$$
+
+**True posterior** (conjugate, so tractable here):
+
+$$
+p(z \mid x) = \mathcal{N}\!\left(\mu_*, \sigma_*^2\right), \quad \mu_* = \frac{x}{\sigma_\ell^2 + 1}, \quad \sigma_*^2 = \frac{\sigma_\ell^2}{\sigma_\ell^2 + 1}
+$$
+
+**Variational family:** $q(z) = \mathcal{N}(\mu_q, \sigma_q^2)$.
+
+We optimise $(\mu_q, \sigma_q)$ by gradient ascent on the ELBO and compare with the truth.
+
+
+```{python}
+#| label: vi-setup
+np.random.seed(42)
+x_obs   = 1.8
+sigma_l = 1.2
+mu_post   = x_obs / (sigma_l**2 + 1)
+sig2_post = sigma_l**2 / (sigma_l**2 + 1)
+
+def elbo_gaussian(mu_q, log_sq):
+    sq = np.exp(log_sq)
+    sq2 = sq**2
+    recon = -0.5 * np.log(2 * np.pi * sigma_l**2) \
+            - 0.5 * (sq2 + (mu_q - x_obs)**2) / sigma_l**2
+    kl = 0.5 * (sq2 + mu_q**2 - 1 - 2*log_sq)
+    return recon - kl
+
+mu_q, log_sq = 0.0, 0.0
+lr = 0.08
+history = []
+for _ in range(120):
+    sq = np.exp(log_sq); sq2 = sq**2
+    grad_mu  = (x_obs - mu_q)/sigma_l**2 - mu_q
+    grad_lsq = -sq2/sigma_l**2 + 1 - sq2
+    mu_q   += lr * grad_mu
+    log_sq += lr * grad_lsq
+    history.append((mu_q, np.exp(log_sq), elbo_gaussian(mu_q, log_sq)))
+history = np.array(history)
+```
+
+```{python}
+#| label: fig-vi-convergence
+#| fig-cap: "VI convergence: the variational q approaches the true posterior."
+#| code-fold: true
+fig, ax = plt.subplots(figsize=(7, 4.5))
+z = np.linspace(-3, 4, 500)
+true_p = stats.norm.pdf(z, mu_post, np.sqrt(sig2_post))
+ax.fill_between(z, true_p, alpha=0.20)
+ax.plot(z, true_p, lw=2.5, label=f"True posterior  $\\mu={mu_post:.2f}$, $\\sigma={np.sqrt(sig2_post):.2f}$")
+checkpoints = [0, 5, 20, 119]
+alphas = [0.3, 0.5, 0.7, 1.0]
+for i, alpha in zip(checkpoints, alphas):
+    mu_i, sq_i, _ = history[i]
+    q_i = stats.norm.pdf(z, mu_i, sq_i)
+    ax.plot(z, q_i, lw=1.6, alpha=alpha,
+            label=f"iter {i+1}: $\\mu_q={mu_i:.2f}$, $\\sigma_q={sq_i:.2f}$")
+ax.set_xlabel("$z$"); ax.set_ylabel("density")
+ax.set_title("VI convergence: $q$ approaches true posterior", fontweight="bold")
+ax.legend(fontsize=8); ax.grid(True)
+plt.tight_layout()
+plt.savefig("fig_vi_convergence.png", dpi=150, bbox_inches="tight")
+plt.show()
+```
+
+
+
+```{python}
+#| label: fig-vi-elbo
+#| fig-cap: "ELBO rises monotonically during VI optimisation."
+#| code-fold: true
+fig, ax = plt.subplots(figsize=(7, 4.5))
+iters = np.arange(1, 121)
+ax.plot(iters, history[:, 2], lw=2.5)
+ax.set_xlabel("iteration"); ax.set_ylabel("ELBO")
+ax.set_title("ELBO during optimisation", fontweight="bold")
+ax.grid(True)
+final_elbo = history[-1, 2]
+ax.axhline(final_elbo, lw=1, ls="--",
+           label=f"Final ELBO = {final_elbo:.3f}")
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.savefig("fig_vi_elbo.png", dpi=150, bbox_inches="tight")
+plt.show()
+```
+
+
+```{python}
+#| label: elbo-verification
+
+from scipy.special import logsumexp
+
+# True log evidence via numerical integration
+z_grid = np.linspace(-10, 10, 10000)
+dz = z_grid[1] - z_grid[0]
+log_joint = stats.norm.logpdf(z_grid, x_obs, sigma_l) + stats.norm.logpdf(z_grid, 0, 1)
+log_evidence_numerical = logsumexp(log_joint) + np.log(dz)
+
+print(f"True log p(x) (numerical): {log_evidence_numerical:.4f}")
+print(f"Final ELBO:                {history[-1, 2]:.4f}")
+print(f"Difference:                {abs(log_evidence_numerical - history[-1, 2]):.4f}")
+```
+
+As can be seen in @fig-vi-convergence, the approximation approaches the true distribution. This is verified numerically in the code block above. The code block shows that the KL divergence has converged to zero meaning that the distributions are the same up until numerical precision.
+
+
+## Summary
+
+In the beginning, we motivated the need for variational inference to solve intractable posteriors. Then we derived ELBO and showed that maximizing it is equivalent to minimizing the KL divergence between the approximation and the true posterior. Then finally, we used the theory on a simple Gaussian example confirming that we were able to approximate the posterior well.
