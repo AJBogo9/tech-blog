@@ -169,7 +169,6 @@ ax.set_xlabel("$z$"); ax.set_ylabel("density")
 ax.set_title("VI convergence: $q$ approaches true posterior", fontweight="bold")
 ax.legend(fontsize=8); ax.grid(True)
 plt.tight_layout()
-plt.savefig("fig_vi_convergence.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
 
@@ -190,7 +189,6 @@ ax.axhline(final_elbo, lw=1, ls="--",
            label=f"Final ELBO = {final_elbo:.3f}")
 ax.legend(fontsize=9)
 plt.tight_layout()
-plt.savefig("fig_vi_elbo.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
 
