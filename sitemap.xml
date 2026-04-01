@@ -2,22 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://andreasbogossian.com/blog.html</loc>
-    <lastmod>2026-03-28T17:59:02.050Z</lastmod>
+    <lastmod>2026-03-29T23:08:10.653Z</lastmod>
   </url>
   <url>
     <loc>https://andreasbogossian.com/cv.html</loc>
-    <lastmod>2026-03-28T18:18:23.366Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/posts/2026-03-KL-divergence/index.html</loc>
-    <lastmod>2026-03-28T21:48:29.927Z</lastmod>
+    <lastmod>2026-03-30T10:12:32.920Z</lastmod>
   </url>
   <url>
     <loc>https://andreasbogossian.com/posts/a-star/index.html</loc>
-    <lastmod>2026-03-29T00:18:38.686Z</lastmod>
+    <lastmod>2026-03-31T21:22:32.238Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/posts/KL-divergence/index.html</loc>
+    <lastmod>2026-03-31T21:22:55.182Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/posts/evidence-lower-bound/index.html</loc>
+    <lastmod>2026-04-01T22:47:04.624Z</lastmod>
   </url>
   <url>
     <loc>https://andreasbogossian.com/index.html</loc>
-    <lastmod>2026-03-28T18:35:56.818Z</lastmod>
+    <lastmod>2026-04-01T09:20:55.106Z</lastmod>
   </url>
 </urlset>

@@ -1,0 +1,94 @@
+/* ── Mobile responsiveness ───────────────────────────────────────────── */
+
+/* KaTeX / MathJax: horizontal scroll like code blocks */
+.math.display,
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  display: block;
+}
+
+/* Prevent the inner katex span from forcing width */
+.katex-display>.katex {
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.5em;
+  /* prevents scrollbar from clipping descenders */
+}
+
+/* Inline math: leave as-is, wrapping is fine for inline */
+.math.inline .katex {
+  overflow-x: visible;
+}
+
+/* Code blocks: scroll horizontally instead of overflowing */
+pre,
+pre.sourceCode {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  white-space: pre;
+  /* keep syntax highlighting intact */
+}
+
+/* Output from executed code cells */
+.cell-output pre,
+.cell-output-stdout pre,
+.cell-output-display pre {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* Charts / figures: scale down to fit screen width */
+img,
+.cell-output-display img,
+figure img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Matplotlib / plotly output containers */
+.cell-output-display {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* Tables: scroll horizontally on mobile */
+table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* ── Small screen tweaks (≤600px) ────────────────────────────────────── */
+@media (max-width: 600px) {
+
+  /* Reduce font size slightly for code so it fits better */
+  pre,
+  code {
+    font-size: 0.82em;
+  }
+
+  /* KaTeX display math: slightly smaller */
+  .katex-display .katex {
+    font-size: 1em;
+  }
+
+  /* TOC: hide on very small screens to save vertical space */
+  #TOC {
+    display: none;
+  }
+
+  /* Give the main content full width */
+  .content,
+  .page-layout-article .content {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}

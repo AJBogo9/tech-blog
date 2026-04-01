@@ -4,49 +4,49 @@
     "href": "blog.html",
     "title": "Blog",
     "section": "",
-    "text": "A* Pathfinding Algorithm\n\n\nA* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.\n\n\n\n\n\nMar 19, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\n\n\n\n\n\n\n\nKL Divergence\n\n\nKL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF.\n\n\n\n\n\nMar 17, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\nNo matching items"
+    "text": "Variational Inference & the ELBO\n\n\nA step-by-step derivation of the Evidence Lower Bound (ELBO), from intractable posteriors to the reconstruction-regularisation decomposition used in VAEs.\n\n\n\n\n\nApr 2, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\n\n\n\n\n\n\n\nA* Pathfinding Algorithm\n\n\nA* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.\n\n\n\n\n\nMar 19, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\n\n\n\n\n\n\n\nKL Divergence\n\n\nKL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF.\n\n\n\n\n\nMar 17, 2026\n\n\nAndreas Bogossian\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "cv.html",
     "href": "cv.html",
     "title": "Andreas Bogossian",
     "section": "",
-    "text": "Master of Science — Machine Learning, Data Science and Artificial Intelligence Aalto University · 2025–2027 Minor in Operations Research\nBachelor of Science — Computer Science Aalto University · Sep 2023–Jan 2026 Minor in Mathematics"
+    "text": "Master of Science — Machine Learning, Data Science and Artificial Intelligence\nAalto University · 2025–2027\nMinor in Operations Research\nBachelor of Science — Computer Science\nAalto University · Sep 2023–Jan 2026\nMinor in Mathematics"
   },
   {
     "objectID": "cv.html#education",
     "href": "cv.html#education",
     "title": "Andreas Bogossian",
     "section": "",
-    "text": "Master of Science — Machine Learning, Data Science and Artificial Intelligence Aalto University · 2025–2027 Minor in Operations Research\nBachelor of Science — Computer Science Aalto University · Sep 2023–Jan 2026 Minor in Mathematics"
+    "text": "Master of Science — Machine Learning, Data Science and Artificial Intelligence\nAalto University · 2025–2027\nMinor in Operations Research\nBachelor of Science — Computer Science\nAalto University · Sep 2023–Jan 2026\nMinor in Mathematics"
   },
   {
     "objectID": "cv.html#experience",
     "href": "cv.html#experience",
     "title": "Andreas Bogossian",
     "section": "Experience",
-    "text": "Experience\nFull Stack Developer · Droppe (Internship, part-time) Sep 2024–May 2025 · Helsinki, Finland\n\nOptimized data pipeline with caching, reducing query costs by 37×\nDesigned a customized analytics schema to surface relevant data for developers\nBuilt a no-code filtering tool for data visualization\nPresented final product to ~80 course staff and students\n\nLogistics Assistant · Viking Line (Seasonal) Jun 2024–Aug 2024 · Finland\n\nServed customers across three ships in English, Swedish and Finnish"
+    "text": "Experience\nFull Stack Developer · Droppe (Internship, part-time)\nSep 2024–May 2025 · Helsinki, Finland\n\nOptimized data pipeline with caching, reducing query costs by 37×\nDesigned a customized analytics schema to surface relevant data for developers\nBuilt a no-code filtering tool for data visualization\nPresented final product to ~80 course staff and students\n\nLogistics Assistant · Viking Line (Seasonal)\nJun 2024–Aug 2024 · Finland\n\nServed customers across three ships in English, Swedish and Finnish"
   },
   {
     "objectID": "cv.html#publications",
     "href": "cv.html#publications",
     "title": "Andreas Bogossian",
     "section": "Publications",
-    "text": "Publications\nKnowledge Graph Enhanced Recommender Systems Aaltodoc · Sep 2025 View publication"
+    "text": "Publications\nKnowledge Graph Enhanced Recommender Systems\nAaltodoc · Sep 2025\nView publication"
   },
   {
     "objectID": "cv.html#projects",
     "href": "cv.html#projects",
     "title": "Andreas Bogossian",
     "section": "Projects",
-    "text": "Projects\nBachelor’s Thesis — Knowledge Graph Enhanced Recommender Systems Jul–Aug 2025 · Grade: 5/5 GitHub\nActivity Challenge Telegram Bot Dec 2025–Jan 2026 A Telegram bot tracking activity competition scores among Aalto university guilds. GitHub"
+    "text": "Projects\nActivity Challenge Telegram Bot\nDec 2025–Jan 2026\nA Telegram bot tracking activity competition scores among Aalto university guilds.\nGitHub"
   },
   {
     "objectID": "cv.html#honors-awards",
     "href": "cv.html#honors-awards",
     "title": "Andreas Bogossian",
     "section": "Honors & Awards",
-    "text": "Honors & Awards\nAccenture Software Quality Award — Finalist Accenture · May 2025 Top 3 of 19 teams, awarded for software implementation quality. Associated with Aalto University."
+    "text": "Honors & Awards\nAccenture Software Quality Award — Finalist\nAccenture · May 2025\nTop 3 of 19 teams, awarded for software implementation quality. Associated with Aalto University."
   },
   {
     "objectID": "cv.html#volunteering",
@@ -60,7 +60,7 @@
     "href": "cv.html#languages",
     "title": "Andreas Bogossian",
     "section": "Languages",
-    "text": "Languages\nEnglish · Native or bilingual proficiency\nChinese (Mandarin) · Elementary proficiency"
+    "text": "Languages\n\n\n\nLanguage\nProficiency\n\n\n\n\nEnglish\nNative or bilingual\n\n\nFinnish\nNative or bilingual\n\n\nSwedish\nLimited working\n\n\nChinese (Mandarin)\nElementary"
   },
   {
     "objectID": "cv.html#links",
@@ -68,34 +68,6 @@
     "title": "Andreas Bogossian",
     "section": "Links",
     "text": "Links\nGitHub · LinkedIn · andreasbogossian.com"
-  },
-  {
-    "objectID": "posts/2026-03-KL-divergence/index.html",
-    "href": "posts/2026-03-KL-divergence/index.html",
-    "title": "KL Divergence",
-    "section": "",
-    "text": "When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF (Ziegler et al. 2019; Ouyang et al. 2022).\nLarge language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution Q of the most likely next words. For ensuring correct output, the distribution Q needs to be compared to the true distribution P. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are."
-  },
-  {
-    "objectID": "posts/2026-03-KL-divergence/index.html#theory",
-    "href": "posts/2026-03-KL-divergence/index.html#theory",
-    "title": "KL Divergence",
-    "section": "Theory",
-    "text": "Theory\nThe Kullback-Leibler divergence from Q to P is defined as:\n\nD_{KL}(P||Q) = \\sum_k \\operatorname{log}p_k\\frac{p_k}{q_k}\n\nwhere p_k = P(X = k) and q_k = Q(X = k) are the probabilities assigned by distributions P and Q to outcome k, and the sum is taken over all outcomes k in the support of P.\nKL divergence can be interpreted intuitively using the concept of entropy form information theory.\nThe entropy of P is\n\nH(P) = - \\sum_k p_k \\operatorname{log}p_k\n\nThis is the average number of bits needed to encode samples from P using an optimal code for P (Goodfellow, Bengio, and Courville 2016).\nIf instead if a code optimized for Q was used to encode samples that came form P, the average code length is the cross-entropy:\n\nH(P, Q) = - \\sum_k p_k \\operatorname{log}q_k\n\nNow combining entropy and cross entropy together, KL divergence is the extra cost you pay for using a code for Q to encode samples from P:\n\n\\begin{align*}\nD_{KL}(P||Q) &= H(P, Q) - H(P) \\\\\n&= - \\sum_k p_k \\operatorname{log}q_k - (- \\sum_k p_k \\operatorname{log}p_k) \\\\\n&= - \\sum_k p_k \\operatorname{log}q_k + \\sum_k p_k \\operatorname{log}p_k \\\\\n&= \\sum_k p_k \\operatorname{log}p_k - \\sum_k p_k \\operatorname{log}q_k  \\\\\n&= \\sum_k p_k (\\operatorname{log}p_k - \\operatorname{log}q_k)  \\\\\n&= \\sum_k p_k \\operatorname{log} \\frac{p_k}{q_k} \\\\\n\\end{align*}\n\n\nKey properties\n\nAsymmetric: D_{KL}(P \\| Q) \\neq D_{KL}(Q \\| P)\nAlways non-negative: D_{KL}(P \\| Q) \\geq 0\nEqual to zero only when the two distributions are identical. D_{KL}(P \\| Q) = 0 \\iff P = Q\n\nSo intuitively, the KL-divergence asks how supriced you would be about the current distribution of the model given you know what the training data looks like. The more suprised you would be, the further the model is from the truth and thus the KL-divergence would be bigger."
-  },
-  {
-    "objectID": "posts/2026-03-KL-divergence/index.html#code-demo",
-    "href": "posts/2026-03-KL-divergence/index.html#code-demo",
-    "title": "KL Divergence",
-    "section": "Code demo",
-    "text": "Code demo\nNow imagine a small vocabulary of five tokens: [\"cat\", \"sat\", \"on\", \"the\", \"mat\"]. We have an imaginary LLM that has a predicted distribution Q for the vocabulary and we also know the true distribution P from the training data for the vocabulary.\n\nimport numpy as np\n\nvocab = [\"cat\", \"sat\", \"on\", \"the\", \"mat\"]\n\n# True distribution (training data)\nP = np.array([0.4, 0.3, 0.1, 0.15, 0.05])\n\n# Model's predicted distribution\nQ = np.array([0.2, 0.25, 0.3, 0.15, 0.1])\n\nBy plotting P and Q the mismatch is immediately visible.\n\n\nShow code\nimport matplotlib.pyplot as plt\n\nx = np.arange(len(vocab))\nwidth = 0.35\n\nfig, ax = plt.subplots(figsize=(7, 4))\nax.bar(x - width/2, P, width, label=\"P (true)\", color=\"steelblue\")\nax.bar(x + width/2, Q, width, label=\"Q (model)\", color=\"tomato\")\n\nax.set_xticks(x)\nax.set_xticklabels(vocab)\nax.set_ylabel(\"Probability\")\nax.set_title(f\"P vs Q\")\nax.legend()\nplt.tight_layout()\nplt.show()\n\n\n\n\n\n\n\n\n\nDirectly applying the discrete formula D_{KL}(P \\| Q) = \\sum_k p_k \\log \\frac{p_k}{q_k}:\n\ndef kl_divergence(p, q):\n    return np.sum(p * np.log(p / q))\n\nkl_pq = kl_divergence(P, Q)\nprint(f\"D_KL(P || Q) = {kl_pq:.4f} nats\")\n\nD_KL(P || Q) = 0.1874 nats\n\n\nThe KL-divergence is non-zero so there is a difference between the true distribution P and the current distribution Q of our model. The difference between the true distribution P and the predicted distribution Q is obvious.\nThe order of the distributions is not trivial when computing KL-divergence. This can be shown shown numerically:\n\nkl_qp = kl_divergence(Q, P)\n\nprint(f\"D_KL(P || Q) = {kl_pq:.4f} nats\")\nprint(f\"D_KL(Q || P) = {kl_qp:.4f} nats\")\nprint(f\"Symmetric?   {np.isclose(kl_pq, kl_qp)}\")\n\nD_KL(P || Q) = 0.1874 nats\nD_KL(Q || P) = 0.2147 nats\nSymmetric?   False"
-  },
-  {
-    "objectID": "posts/2026-03-KL-divergence/index.html#summary",
-    "href": "posts/2026-03-KL-divergence/index.html#summary",
-    "title": "KL Divergence",
-    "section": "Summary",
-    "text": "Summary\nKL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribution is from the training data distribution. KL-divergence has a mathematical foundation in information theory."
   },
   {
     "objectID": "posts/a-star/index.html",
@@ -138,6 +110,83 @@
     "title": "A* Pathfinding Algorithm",
     "section": "Discussion",
     "text": "Discussion\nA* shines in applications where a cost function and an admissible heuristic (a heuristic that never overestimates the distance to the end) can be defined. Examples of these types of application are GPS routing, NPC path finding in games and network routing.\nThere is one problem with A*: it doesn’t factor walls into the heuristic when using Manhattan distance. For solving this problem, algorithms like Jump Point Search (JPS) are used."
+  },
+  {
+    "objectID": "posts/KL-divergence/index.html",
+    "href": "posts/KL-divergence/index.html",
+    "title": "KL Divergence",
+    "section": "",
+    "text": "When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF (Ziegler et al. 2019; Ouyang et al. 2022).\nLarge language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution Q of the most likely next words. For ensuring correct output, the distribution Q needs to be compared to the true distribution P. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are."
+  },
+  {
+    "objectID": "posts/KL-divergence/index.html#theory",
+    "href": "posts/KL-divergence/index.html#theory",
+    "title": "KL Divergence",
+    "section": "Theory",
+    "text": "Theory\nThe Kullback-Leibler divergence from Q to P is defined as:\n\nD_{KL}(P||Q) = \\sum_k \\operatorname{log}p_k\\frac{p_k}{q_k}\n\nwhere p_k = P(X = k) and q_k = Q(X = k) are the probabilities assigned by distributions P and Q to outcome k, and the sum is taken over all outcomes k in the support of P.\nKL divergence can be interpreted intuitively using the concept of entropy form information theory.\nThe entropy of P is\n\nH(P) = - \\sum_k p_k \\operatorname{log}p_k\n\nThis is the average number of bits needed to encode samples from P using an optimal code for P (Goodfellow et al. 2016).\nIf instead if a code optimized for Q was used to encode samples that came form P, the average code length is the cross-entropy:\n\nH(P, Q) = - \\sum_k p_k \\operatorname{log}q_k\n\nNow combining entropy and cross entropy together, KL divergence is the extra cost you pay for using a code for Q to encode samples from P:\n\n\\begin{align*}\nD_{KL}(P||Q) &= H(P, Q) - H(P) \\\\\n&= - \\sum_k p_k \\operatorname{log}q_k - (- \\sum_k p_k \\operatorname{log}p_k) \\\\\n&= - \\sum_k p_k \\operatorname{log}q_k + \\sum_k p_k \\operatorname{log}p_k \\\\\n&= \\sum_k p_k \\operatorname{log}p_k - \\sum_k p_k \\operatorname{log}q_k  \\\\\n&= \\sum_k p_k (\\operatorname{log}p_k - \\operatorname{log}q_k)  \\\\\n&= \\sum_k p_k \\operatorname{log} \\frac{p_k}{q_k} \\\\\n\\end{align*}\n\n\nKey properties\n\nAsymmetric: D_{KL}(P \\| Q) \\neq D_{KL}(Q \\| P)\nAlways non-negative: D_{KL}(P \\| Q) \\geq 0\nEqual to zero only when the two distributions are identical. D_{KL}(P \\| Q) = 0 \\iff P = Q\n\nSo intuitively, the KL-divergence asks how supriced you would be about the current distribution of the model given you know what the training data looks like. The more suprised you would be, the further the model is from the truth and thus the KL-divergence would be bigger."
+  },
+  {
+    "objectID": "posts/KL-divergence/index.html#code-demo",
+    "href": "posts/KL-divergence/index.html#code-demo",
+    "title": "KL Divergence",
+    "section": "Code demo",
+    "text": "Code demo\nNow imagine a small vocabulary of five tokens: [\"cat\", \"sat\", \"on\", \"the\", \"mat\"]. We have an imaginary LLM that has a predicted distribution Q for the vocabulary and we also know the true distribution P from the training data for the vocabulary.\n\nimport numpy as np\n\nvocab = [\"cat\", \"sat\", \"on\", \"the\", \"mat\"]\n\n# True distribution (training data)\nP = np.array([0.4, 0.3, 0.1, 0.15, 0.05])\n\n# Model's predicted distribution\nQ = np.array([0.2, 0.25, 0.3, 0.15, 0.1])\n\nBy plotting P and Q the mismatch is immediately visible.\n\n\nShow code\nimport matplotlib.pyplot as plt\n\nx = np.arange(len(vocab))\nwidth = 0.35\n\nfig, ax = plt.subplots(figsize=(7, 4))\nax.bar(x - width/2, P, width, label=\"P (true)\", color=\"steelblue\")\nax.bar(x + width/2, Q, width, label=\"Q (model)\", color=\"tomato\")\n\nax.set_xticks(x)\nax.set_xticklabels(vocab)\nax.set_ylabel(\"Probability\")\nax.set_title(f\"P vs Q\")\nax.legend()\nplt.tight_layout()\nplt.show()\n\n\n\n\n\n\n\n\n\nDirectly applying the discrete formula D_{KL}(P \\| Q) = \\sum_k p_k \\log \\frac{p_k}{q_k}:\n\ndef kl_divergence(p, q):\n    return np.sum(p * np.log(p / q))\n\nkl_pq = kl_divergence(P, Q)\nprint(f\"D_KL(P || Q) = {kl_pq:.4f} nats\")\n\nD_KL(P || Q) = 0.1874 nats\n\n\nThe KL-divergence is non-zero so there is a difference between the true distribution P and the current distribution Q of our model. The difference between the true distribution P and the predicted distribution Q is obvious.\nThe order of the distributions is not trivial when computing KL-divergence. This can be shown shown numerically:\n\nkl_qp = kl_divergence(Q, P)\n\nprint(f\"D_KL(P || Q) = {kl_pq:.4f} nats\")\nprint(f\"D_KL(Q || P) = {kl_qp:.4f} nats\")\nprint(f\"Symmetric?   {np.isclose(kl_pq, kl_qp)}\")\n\nD_KL(P || Q) = 0.1874 nats\nD_KL(Q || P) = 0.2147 nats\nSymmetric?   False"
+  },
+  {
+    "objectID": "posts/KL-divergence/index.html#summary",
+    "href": "posts/KL-divergence/index.html#summary",
+    "title": "KL Divergence",
+    "section": "Summary",
+    "text": "Summary\nKL-divergence can be used answering the question: how different are two probability distributions? The distribution is used, for example, LLM alignment to tell how far away the models predicted vocabulary distribution is from the training data distribution. KL-divergence has a mathematical foundation in information theory."
+  },
+  {
+    "objectID": "posts/evidence-lower-bound/index.html",
+    "href": "posts/evidence-lower-bound/index.html",
+    "title": "Variational Inference & the ELBO",
+    "section": "",
+    "text": "Let’s say we’ve observed the data \\mathbf{x} and we want to know the conditional probability of the latent variables \\mathbf{z}. The conditional probability distribution p(\\mathbf{z} \\mid \\mathbf{x}) can be then formulated with the Bayes’ rule as\np(\\mathbf{z} \\mid \\mathbf{x}) = \\frac{p(\\mathbf{x} \\mid \\mathbf{z})p(\\mathbf{z})}{p(\\mathbf{x})}\nNow the problem is that the denominator that acts as a regularizer\np(\\mathbf{x}) = \\int p(\\mathbf{x} \\mid \\mathbf{z}) p(\\mathbf{z}) d \\mathbf{z}\nis often intractable. When something is intractable, it means that it is theoretically solvable byt can’t be solved in a practical amount of time or with practical computational resources."
+  },
+  {
+    "objectID": "posts/evidence-lower-bound/index.html#variational-inference-approximating-the-posterior",
+    "href": "posts/evidence-lower-bound/index.html#variational-inference-approximating-the-posterior",
+    "title": "Variational Inference & the ELBO",
+    "section": "Variational Inference: Approximating the Posterior",
+    "text": "Variational Inference: Approximating the Posterior\nWith variational inference, we introduce a tractable approximation q_\\varphi(\\mathbf{z} \\mid \\mathbf{x}) and find the parameters \\varphi that approximate the intractable posterior p_\\theta(\\mathbf{z} \\mid \\mathbf{x}) as well as possible. The closeness is measured by KL-divergence. Even though KL-divergence is a good measure for determining the closeness of two distributions, it requires knowing the true posterior, which we don’t know because we don’t know the denominator which we’re trying to solve, but we need the posterior to solve the denominator. Using KL-divergence alone will not solve the approximation problem so we maximize a quantity called Evidence Lower BOund (ELBO)."
+  },
+  {
+    "objectID": "posts/evidence-lower-bound/index.html#derivation-of-the-elbo-jamil2023vae",
+    "href": "posts/evidence-lower-bound/index.html#derivation-of-the-elbo-jamil2023vae",
+    "title": "Variational Inference & the ELBO",
+    "section": "Derivation of the ELBO (Jamil 2023)",
+    "text": "Derivation of the ELBO (Jamil 2023)\nNow our goal is to transform the intractable integral p_\\theta(\\mathbf{x}) into a tractable approximation q_\\varphi(\\mathbf{x}). Instead of approximating p_\\theta(\\mathbf{x}) we approximate \\log p_\\theta(\\mathbf{x}). So we start from\n\n\\log p_\\theta(\\mathbf{x}) = \\log p_\\theta(\\mathbf{x})\n\nNow by multiplying by \\int q_\\varphi (\\mathbf{z} \\mid \\mathbf{x}) d\\mathbf{z} = 1 we get\n\n\\begin{align*}\n\\log p_\\theta(\\mathbf{x}) &= \\log p_\\theta(\\mathbf{x})\\int q_\\varphi (\\mathbf{z} \\mid \\mathbf{x}) d\\mathbf{z} \\\\\n&= \\int \\log p_\\theta(\\mathbf{x}) q_\\varphi (\\mathbf{z} \\mid \\mathbf{x}) d\\mathbf{z}\n\\end{align*}\n\nUsing the property \\int f(x) \\, q(z) \\, dz = \\mathbb{E}_{q(z)}[f(x)]\n\n\\log p_\\theta(\\mathbf{x}) = \\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log p_\\theta(\\mathbf{x}) \\right]\n\nNext, we can apply the chain rule of probability: p_\\theta(\\mathbf{x}, \\mathbf{z}) = p_\\theta(\\mathbf{z} \\mid \\mathbf{x}) p_\\theta(\\mathbf{x}) \\Rrightarrow p_\\theta(\\mathbf{x}) = \\frac{p_\\theta(\\mathbf{x}, \\mathbf{z})}{p_\\theta(\\mathbf{z}|\\mathbf{x})}:\n\n\\log p_\\theta(\\mathbf{x}) = \\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log \\frac{p_\\theta(\\mathbf{x}, \\mathbf{z})}{p_\\theta(\\mathbf{z}|\\mathbf{x})} \\right]\n\nMultiplying by one, by introducing the new approximate tractable distribution q_\\varphi (\\mathbf{z} \\mid \\mathbf{x}):\n\n\\log p_\\theta(\\mathbf{x}) = \\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log \\frac{p_\\theta(\\mathbf{x}, \\mathbf{z}) q_\\varphi (\\mathbf{z} \\mid \\mathbf{x})}{p_\\theta(\\mathbf{z}|\\mathbf{x}) q_\\varphi (\\mathbf{z} \\mid \\mathbf{x})} \\right]\n\nWith KL-divergence is defines as D_{KL}(q_\\varphi(\\mathbf{z}|\\mathbf{x}) \\| p_\\theta(\\mathbf{z}|\\mathbf{x})) = \\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log \\frac{q_\\varphi(\\mathbf{z}|\\mathbf{x})}{p_\\theta(\\mathbf{z}|\\mathbf{x})} \\right]:\n\n\\log p_\\theta(\\mathbf{x}) = \\underbrace{\\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log \\frac{p_\\theta(\\mathbf{x}, \\mathbf{z})}{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\right]}_{\\text{ELBO}} + \\underbrace{D_{\\mathrm{KL}}\\!\\left( q_\\varphi(\\mathbf{z}|\\mathbf{x}) \\,\\|\\, p_\\theta(\\mathbf{z}|\\mathbf{x}) \\right)}_{\\geq\\, 0}\n\nSince KL divergence is always non-negative, the ELBO is a lower bound on the log evidence:\n\\log p_\\theta(\\mathbf{x}) \\geq \\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log \\frac{p_\\theta(\\mathbf{x}, \\mathbf{z})}{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\right]\nThe notation \\mathcal{L}(\\theta, \\varphi) is used for the ELBO, so I’ll be also using it to simplify the math notation."
+  },
+  {
+    "objectID": "posts/evidence-lower-bound/index.html#what-is-the-elbo-optimising",
+    "href": "posts/evidence-lower-bound/index.html#what-is-the-elbo-optimising",
+    "title": "Variational Inference & the ELBO",
+    "section": "What is the ELBO Optimising?",
+    "text": "What is the ELBO Optimising?\nOur original goal was to find a tractable distribution q_\\varphi (\\mathbf{x}) that approximates p_\\theta (\\mathbf{x}). A novel solution to this is to maximize the ELBO. With \\log p_\\theta (\\mathbf{x}) being fixed, maximizing the ELBO minimizes the KL-divergence.\n\n\\underbrace{\\log p_\\theta(\\mathbf{x})}_{\\text{fixed}} = \\underbrace{\\mathcal{L}(\\theta, \\varphi)}_{\\uparrow \\text{ maximise}} + \\underbrace{D_{\\mathrm{KL}}(q_\\varphi \\| p_\\theta)}_{\\downarrow \\text{ minimise}}"
+  },
+  {
+    "objectID": "posts/evidence-lower-bound/index.html#expanding-the-elbo",
+    "href": "posts/evidence-lower-bound/index.html#expanding-the-elbo",
+    "title": "Variational Inference & the ELBO",
+    "section": "Expanding the ELBO",
+    "text": "Expanding the ELBO\nThe ELBO can be further decomposed by factoring using the chain rule of probability and splitting the log. This decomposition is a necessary tool for variational autoencoders (VAEs).\n\n\\begin{align*}\n\\mathcal{L}(\\theta, \\varphi) &= \\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log \\frac{p_\\theta(\\mathbf{x}, \\mathbf{z})}{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\right] \\\\\n\\mathcal{L}(\\theta, \\varphi) &= \\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log \\frac{p_\\theta(\\mathbf{x}|\\mathbf{z})\\, p(\\mathbf{z})}{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\right] \\\\\n&= \\underbrace{\\mathbb{E}_{q_\\varphi(\\mathbf{z}|\\mathbf{x})} \\left[ \\log p_\\theta(\\mathbf{x}|\\mathbf{z}) \\right]}_{\\text{reconstruction term}} - \\underbrace{D_{\\mathrm{KL}}\\!\\left( q_\\varphi(\\mathbf{z}|\\mathbf{x}) \\,\\|\\, p(\\mathbf{z}) \\right)}_{\\text{regularisation term}}\n\\end{align*}\n\nHere the reconstruction term measures how well the model recovers \\mathbf{x} from samples of the latent space and the regularisation term penalises q_\\varphi(\\mathbf{z}|\\mathbf{x}) for deviating from the prior p(\\mathbf{z})."
+  },
+  {
+    "objectID": "posts/evidence-lower-bound/index.html#a-simple-example",
+    "href": "posts/evidence-lower-bound/index.html#a-simple-example",
+    "title": "Variational Inference & the ELBO",
+    "section": "A Simple Example",
+    "text": "A Simple Example\nModel:\n\np(z) = \\mathcal{N}(0, 1), \\qquad p(x \\mid z) = \\mathcal{N}(z, \\sigma_\\ell^2)\n\nTrue posterior (conjugate, so tractable here):\n\np(z \\mid x) = \\mathcal{N}\\!\\left(\\mu_*, \\sigma_*^2\\right), \\quad \\mu_* = \\frac{x}{\\sigma_\\ell^2 + 1}, \\quad \\sigma_*^2 = \\frac{\\sigma_\\ell^2}{\\sigma_\\ell^2 + 1}\n\nVariational family: q(z) = \\mathcal{N}(\\mu_q, \\sigma_q^2).\nWe optimise (\\mu_q, \\sigma_q) by gradient ascent on the ELBO and compare with the truth.\n\nnp.random.seed(42)\nx_obs   = 1.8\nsigma_l = 1.2\nmu_post   = x_obs / (sigma_l**2 + 1)\nsig2_post = sigma_l**2 / (sigma_l**2 + 1)\n\ndef elbo_gaussian(mu_q, log_sq):\n    sq = np.exp(log_sq)\n    sq2 = sq**2\n    recon = -0.5 * np.log(2 * np.pi * sigma_l**2) \\\n            - 0.5 * (sq2 + (mu_q - x_obs)**2) / sigma_l**2\n    kl = 0.5 * (sq2 + mu_q**2 - 1 - 2*log_sq)\n    return recon - kl\n\nmu_q, log_sq = 0.0, 0.0\nlr = 0.08\nhistory = []\nfor _ in range(120):\n    sq = np.exp(log_sq); sq2 = sq**2\n    grad_mu  = (x_obs - mu_q)/sigma_l**2 - mu_q\n    grad_lsq = -sq2/sigma_l**2 + 1 - sq2\n    mu_q   += lr * grad_mu\n    log_sq += lr * grad_lsq\n    history.append((mu_q, np.exp(log_sq), elbo_gaussian(mu_q, log_sq)))\nhistory = np.array(history)\n\n\n\nCode\nfig, ax = plt.subplots(figsize=(7, 4.5))\nz = np.linspace(-3, 4, 500)\ntrue_p = stats.norm.pdf(z, mu_post, np.sqrt(sig2_post))\nax.fill_between(z, true_p, alpha=0.20)\nax.plot(z, true_p, lw=2.5, label=f\"True posterior  $\\\\mu={mu_post:.2f}$, $\\\\sigma={np.sqrt(sig2_post):.2f}$\")\ncheckpoints = [0, 5, 20, 119]\nalphas = [0.3, 0.5, 0.7, 1.0]\nfor i, alpha in zip(checkpoints, alphas):\n    mu_i, sq_i, _ = history[i]\n    q_i = stats.norm.pdf(z, mu_i, sq_i)\n    ax.plot(z, q_i, lw=1.6, alpha=alpha,\n            label=f\"iter {i+1}: $\\\\mu_q={mu_i:.2f}$, $\\\\sigma_q={sq_i:.2f}$\")\nax.set_xlabel(\"$z$\"); ax.set_ylabel(\"density\")\nax.set_title(\"VI convergence: $q$ approaches true posterior\", fontweight=\"bold\")\nax.legend(fontsize=8); ax.grid(True)\nplt.tight_layout()\nplt.savefig(\"fig_vi_convergence.png\", dpi=150, bbox_inches=\"tight\")\nplt.show()\n\n\n\n\n\n\n\n\nFigure 1: VI convergence: the variational q approaches the true posterior.\n\n\n\n\n\n\n\nCode\nfig, ax = plt.subplots(figsize=(7, 4.5))\niters = np.arange(1, 121)\nax.plot(iters, history[:, 2], lw=2.5)\nax.set_xlabel(\"iteration\"); ax.set_ylabel(\"ELBO\")\nax.set_title(\"ELBO during optimisation\", fontweight=\"bold\")\nax.grid(True)\nfinal_elbo = history[-1, 2]\nax.axhline(final_elbo, lw=1, ls=\"--\",\n           label=f\"Final ELBO = {final_elbo:.3f}\")\nax.legend(fontsize=9)\nplt.tight_layout()\nplt.savefig(\"fig_vi_elbo.png\", dpi=150, bbox_inches=\"tight\")\nplt.show()\n\n\n\n\n\n\n\n\nFigure 2: ELBO rises monotonically during VI optimisation.\n\n\n\n\n\n\nfrom scipy.special import logsumexp\n\n# True log evidence via numerical integration\nz_grid = np.linspace(-10, 10, 10000)\ndz = z_grid[1] - z_grid[0]\nlog_joint = stats.norm.logpdf(z_grid, x_obs, sigma_l) + stats.norm.logpdf(z_grid, 0, 1)\nlog_evidence_numerical = logsumexp(log_joint) + np.log(dz)\n\nprint(f\"True log p(x) (numerical): {log_evidence_numerical:.4f}\")\nprint(f\"Final ELBO:                {history[-1, 2]:.4f}\")\nprint(f\"Difference:                {abs(log_evidence_numerical - history[-1, 2]):.4f}\")\n\nTrue log p(x) (numerical): -2.0289\nFinal ELBO:                -2.0289\nDifference:                0.0000\n\n\nAs can be seen in Figure 1, the approximation approaches the true distribution. This is verified numerically in the code block above. The code block shows that the KL divergence has converged to zero meaning that the distributions are the same up until numerical precision."
+  },
+  {
+    "objectID": "posts/evidence-lower-bound/index.html#summary",
+    "href": "posts/evidence-lower-bound/index.html#summary",
+    "title": "Variational Inference & the ELBO",
+    "section": "Summary",
+    "text": "Summary\nIn the beginning, we motivated the need for variational inference to solve intractable posteriors. Then we derived ELBO and showed that maximizing it is equivalent to minimizing the KL divergence between the approximation and the true posterior. Then finally, we used the theory on a simple Gaussian example confirming that we were able to approximate the posterior well."
   },
   {
     "objectID": "index.html",

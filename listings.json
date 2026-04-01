@@ -2,8 +2,9 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/posts/evidence-lower-bound/index.html",
       "/posts/a-star/index.html",
-      "/posts/2026-03-KL-divergence/index.html"
+      "/posts/KL-divergence/index.html"
     ]
   }
 ]
