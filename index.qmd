@@ -10,6 +10,8 @@ about:
     - icon: linkedin
       text: LinkedIn
       href: https://www.linkedin.com/in/bogo9/
+    - text: Blog
+      href: blog.qmd
     - text: CV
       href: cv.qmd
 page-layout: article
