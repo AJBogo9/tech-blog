@@ -6,7 +6,7 @@ image: "astar.png"
 bibliography: references.bib
 ---
 
-How does Google Maps find the *best* route in under a second, across millions of roads? Stripping this question into its basic elements, the question becomes, how to find the shortest path in a graph from the start position to the end position. If one was to approach this problem by trying every single path, the number of paths grow as $\mathcal{O}(b^d)$, where $b$ is the branching factor (average number of branches from each node) and $d$ is the depth. The brute force method scales extremely poorly so another solution must be used. 
+How does Google Maps find the *best* route in under a second, across millions of roads? Stripping this question into its basic elements, the question becomes, how to find the shortest path in a graph from the start position to the end position. If one was to approach this problem by trying every single path, the number of paths grow as $\mathcal{O}(b^d)$, where $b$ is the branching factor (average number of branches from each node) and $d$ is the depth. The brute force method scales extremely poorly so another solution must be used.
 
 Dijkstra's algorithm improves on the brute force method slightly. Dijkstra always expands the cheapest node so far. The problem with Dijkstra is that it expands the search in every direction including roads that lead away from the destination. Dijkstra can be beaten with algorithms with sense of direction.
 
@@ -20,7 +20,7 @@ $$
 
 where
 
-- $g(n)$: the exact cost from start to the current node $n$. This is known. 
+- $g(n)$: the exact cost from start to the current node $n$. This is known.
 - $h(n)$: the estimated cost from the current node $n$ to the goal. This is a heuristic (educated guess).
 
 After A\* computes the score of each frontier node, the algorithm will always expand the node with the lowest $f(n)$. Minimizing both the cost of getting to the current node $g(n)$ and the estimate of arriving at the goal $h(n)$ makes the algorithm seek the shortest path from start point to the end point.
@@ -135,7 +135,7 @@ $$
 f(n) = g(n) + w \cdot h(n)
 $$
 
-The benefit of using the weight is that fewer nodes are expanded because the search prioritizes nodes that are close to the end. The trade-off is that the path found is at most $w$ times longer than optimal. 
+The benefit of using the weight is that fewer nodes are expanded because the search prioritizes nodes that are close to the end. The trade-off is that the path found is at most $w$ times longer than optimal.
 
 ## Demo
 
@@ -147,13 +147,371 @@ Start with Dijkstra and then swap to A\* with the Manhattan heuristic. Also, tes
 
 ```{ojs}
 //| echo: false
-import { renderApp } from "./astar-app.js"
+
+// ── constants ────────────────────────────────────────────────────────────────
+COLS = 29
+ROWS = 17
+CELL = 28
+W    = COLS * CELL
+H    = ROWS * CELL
+key  = (r, c) => `${r},${c}`
+```
+
+
+```{ojs}
+//| echo: false
+
+// ── controls ─────────────────────────────────────────────────────────────────
+viewof heuristic = Inputs.select(
+  ["zero (Dijkstra)", "manhattan"],
+  { label: "Heuristic", value: "zero (Dijkstra)" }
+)
+
+viewof weight = Inputs.range([1, 5], {
+  label: "Weight (w)",
+  value: 1,
+  step: 0.1
+})
 ```
 
 ```{ojs}
 //| echo: false
-app = renderApp()
+
+// ── heuristic function ───────────────────────────────────────────────────────
+function heuristicFn(r1, c1, r2, c2, type) {
+  const dr = Math.abs(r1 - r2), dc = Math.abs(c1 - c2);
+  if (type === "manhattan")       return dr + dc;
+  if (type === "zero (Dijkstra)") return 0;
+  return dr + dc;
+}
 ```
+
+
+```{ojs}
+//| echo: false
+
+// ── search functions ─────────────────────────────────────────────────────────
+function initSearch(s) {
+  const sk = key(s.start.r, s.start.c);
+  s.openSet   = [{ r: s.start.r, c: s.start.c }];
+  s.closedSet = new Set();
+  s.cameFrom  = {};
+  s.gScore    = { [sk]: 0 };
+  s.fScore    = { [sk]: s.weight * heuristicFn(s.start.r, s.start.c, s.end.r, s.end.c, s.heuristic) };
+  s.path      = [];
+  s.running   = true;
+  s.done      = false;
+  s.iter      = 0;
+  s.status    = "searching…";
+}
+
+function stepOnce(s) {
+  if (!s.running || s.done) return;
+  if (s.openSet.length === 0) {
+    s.running = false; s.done = true; s.status = "no path found"; return;
+  }
+  let bestIdx = 0;
+  for (let i = 1; i < s.openSet.length; i++) {
+    const fi = s.fScore[key(s.openSet[i].r, s.openSet[i].c)] ?? Infinity;
+    const fb = s.fScore[key(s.openSet[bestIdx].r, s.openSet[bestIdx].c)] ?? Infinity;
+    if (fi < fb) bestIdx = i;
+  }
+  const cur = s.openSet.splice(bestIdx, 1)[0];
+  const ck  = key(cur.r, cur.c);
+
+  if (cur.r === s.end.r && cur.c === s.end.c) {
+    let k = ck;
+    while (s.cameFrom[k]) { s.path.push(k); k = s.cameFrom[k]; }
+    s.path.push(key(s.start.r, s.start.c));
+    s.running = false; s.done = true;
+    s.status  = `done — ${s.path.length - 1} steps`;
+    return;
+  }
+  s.closedSet.add(ck);
+  s.iter++;
+
+  for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+    const nr = cur.r + dr, nc = cur.c + dc;
+    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+    if (s.walls[nr][nc]) continue;
+    const nk = key(nr, nc);
+    if (s.closedSet.has(nk)) continue;
+    const tentG = (s.gScore[ck] ?? Infinity) + 1;
+    if (tentG < (s.gScore[nk] ?? Infinity)) {
+      s.cameFrom[nk] = ck;
+      s.gScore[nk]   = tentG;
+      s.fScore[nk]   = tentG + s.weight * heuristicFn(nr, nc, s.end.r, s.end.c, s.heuristic);
+      if (!s.openSet.find(n => n.r === nr && n.c === nc))
+        s.openSet.push({ r: nr, c: nc });
+    }
+  }
+}
+
+function resetSearch(s) {
+  s.openSet = []; s.closedSet = new Set(); s.cameFrom = {};
+  s.gScore  = {}; s.fScore   = {};
+  s.path    = []; s.running  = false; s.done = false; s.iter = 0; s.status = "idle";
+}
+```
+
+
+```{ojs}
+//| echo: false
+
+// ── maze generation ──────────────────────────────────────────────────────────
+function generateMaze(s) {
+  s.walls = Array.from({ length: ROWS }, () => new Array(COLS).fill(true));
+  const inMaze    = Array.from({ length: ROWS }, () => new Array(COLS).fill(false));
+  const cardinals = [[0,2],[0,-2],[2,0],[-2,0]];
+
+  function neighbours(r, c) {
+    return cardinals
+      .map(([dr, dc]) => [r + dr, c + dc])
+      .filter(([nr, nc]) => nr >= 1 && nr < ROWS - 1 && nc >= 1 && nc < COLS - 1);
+  }
+
+  s.walls[1][1] = false;
+  inMaze[1][1]  = true;
+  let frontier  = neighbours(1, 1).map(([nr, nc]) => [nr, nc, 1, 1]);
+
+  while (frontier.length) {
+    const idx = Math.floor(Math.random() * frontier.length);
+    const [r, c, pr, pc] = frontier.splice(idx, 1)[0];
+    if (inMaze[r][c]) continue;
+    s.walls[r][c] = false;
+    s.walls[(r + pr) / 2][(c + pc) / 2] = false;
+    inMaze[r][c] = true;
+    for (const [nr, nc] of neighbours(r, c))
+      if (!inMaze[nr][nc]) frontier.push([nr, nc, r, c]);
+  }
+
+  const dist  = Array.from({ length: ROWS }, () => new Array(COLS).fill(-1));
+  const queue = [[1, 1]];
+  dist[1][1]  = 0;
+  let furthest = [1, 1];
+  while (queue.length) {
+    const [r, c] = queue.shift();
+    for (const [dr, dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      if (s.walls[nr][nc] || dist[nr][nc] !== -1) continue;
+      dist[nr][nc] = dist[r][c] + 1;
+      if (dist[nr][nc] > dist[furthest[0]][furthest[1]]) furthest = [nr, nc];
+      queue.push([nr, nc]);
+    }
+  }
+  s.start = { r: 1, c: 1 };
+  s.end   = { r: furthest[0], c: furthest[1] };
+  resetSearch(s);
+}
+```
+
+```{ojs}
+//| echo: false
+
+// ── state (runs once, no reactive deps) ──────────────────────────────────────
+s = {
+  const state = {
+    walls:     Array.from({ length: ROWS }, () => new Array(COLS).fill(false)),
+    start:     { r: 1, c: 1 },
+    end:       { r: ROWS - 2, c: COLS - 2 },
+    openSet:   [], closedSet: new Set(), cameFrom: {},
+    gScore:    {}, fScore:    {}, path: [],
+    running:   false, done: false, iter: 0, status: "idle",
+    heuristic: "zero (Dijkstra)", weight: 1,
+    animating: false, animTimer: null,
+  };
+  generateMaze(state);
+  return state;
+}
+```
+
+
+```{ojs}
+//| echo: false
+
+// ── app (never mentions heuristic or weight — no reactive dep on controls) ───
+app = {
+  const canvas = document.createElement("canvas");
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;
+  const ctx = canvas.getContext("2d");
+
+  function getColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const v  = name => cs.getPropertyValue(name).trim();
+    return {
+      bg:      v("--bs-body-bg")           || "#212529",
+      grid:    v("--bs-border-color")      || "#495057",
+      empty:   v("--bs-body-bg")           || "#212529",
+      wall:    v("--bs-gray-700")          || "#495057",
+      start:   v("--bs-primary")           || "#375a7f",
+      end:     v("--bs-danger")            || "#e74c3c",
+      open:    v("--bs-info-bg-subtle")    || "#0d2a4a",
+      openBdr: v("--bs-info")              || "#3498db",
+      closed:  v("--bs-success-bg-subtle") || "#0a2318",
+      clsBdr:  v("--bs-success")           || "#00bc8c",
+      path:    "#f0e130", pathBdr: "#f0e130",
+      text:    v("--bs-body-color")        || "#dee2e6",
+    };
+  }
+
+  const iterDisplay = document.createElement("div");
+  iterDisplay.style.cssText = "margin-top:6px;font-size:0.85em";
+  iterDisplay.textContent = "iterations: —";
+
+  function draw() {
+    const C        = getColors();
+    const openKeys = new Set(s.openSet.map(n => key(n.r, n.c)));
+    const pathSet  = new Set(s.path);
+
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const x = c * CELL, y = r * CELL, k = key(r, c);
+        const isStart  = r === s.start.r && c === s.start.c;
+        const isEnd    = r === s.end.r   && c === s.end.c;
+        const isWall   = s.walls[r][c];
+        const isPath   = pathSet.has(k)     && !isStart && !isEnd;
+        const isOpen   = openKeys.has(k)    && !isStart && !isEnd;
+        const isClosed = s.closedSet.has(k) && !isStart && !isEnd;
+
+        ctx.fillStyle =
+          isWall   ? C.wall   :
+          isStart  ? C.start  :
+          isEnd    ? C.end    :
+          isPath   ? C.path   :
+          isOpen   ? C.open   :
+          isClosed ? C.closed : C.empty;
+        ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+
+        if (isOpen)   { ctx.strokeStyle = C.openBdr; ctx.lineWidth = 0.5; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
+        if (isClosed) { ctx.strokeStyle = C.clsBdr;  ctx.lineWidth = 0.5; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
+        if (isPath)   { ctx.strokeStyle = C.pathBdr; ctx.lineWidth = 1;   ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
+
+        if (isStart || isEnd) {
+          ctx.fillStyle    = C.text;
+          ctx.font         = `bold ${CELL * 0.38}px monospace`;
+          ctx.textAlign    = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(isStart ? "S" : "E", x + CELL / 2, y + CELL / 2);
+          ctx.textAlign    = "left";
+          ctx.textBaseline = "alphabetic";
+        }
+      }
+    }
+
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 0.4;
+    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r*CELL); ctx.lineTo(W, r*CELL); ctx.stroke(); }
+    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c*CELL, 0); ctx.lineTo(c*CELL, H); ctx.stroke(); }
+
+    iterDisplay.textContent = s.done
+      ? `iterations: ${s.iter} · ${s.status}`
+      : s.iter > 0 ? `iterations: ${s.iter}…` : "iterations: —";
+  }
+
+  function stopAnim() {
+    s.animating = false;
+    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
+    btnAnimate.textContent = "▶ Animate";
+  }
+
+  function animTick() {
+    if (!s.animating) return;
+    if (!s.running && !s.done) initSearch(s);
+    stepOnce(s); draw();
+    if (!s.done) s.animTimer = setTimeout(animTick, 50);
+    else stopAnim();
+  }
+
+  function startAnim() {
+    if (s.done) resetSearch(s);
+    s.animating = true;
+    btnAnimate.textContent = "⏸ Pause";
+    animTick();
+  }
+
+  let painting = false, paintValue = true;
+
+  function cellAt(e) {
+    const rect = canvas.getBoundingClientRect(), scale = W / rect.width;
+    return {
+      r: Math.floor((e.clientY - rect.top)  * scale / CELL),
+      c: Math.floor((e.clientX - rect.left) * scale / CELL),
+    };
+  }
+
+  function applyEdit(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    if (s.walls[r][c] === paintValue) return;
+    s.walls[r][c] = paintValue;
+    resetSearch(s); draw();
+  }
+
+  canvas.addEventListener("pointerdown", e => {
+    stopAnim(); painting = true; canvas.setPointerCapture(e.pointerId);
+    const { r, c } = cellAt(e);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    paintValue = !s.walls[r][c]; applyEdit(r, c);
+  });
+  canvas.addEventListener("pointermove", e => { if (painting) { const {r,c} = cellAt(e); applyEdit(r,c); } });
+  canvas.addEventListener("pointerup", () => { painting = false; });
+
+  const btnAnimate = Object.assign(document.createElement("button"), { textContent: "▶ Animate" });
+  const btnReset   = Object.assign(document.createElement("button"), { textContent: "Reset" });
+  const btnClear   = Object.assign(document.createElement("button"), { textContent: "Clear walls" });
+  const btnMaze    = Object.assign(document.createElement("button"), { textContent: "Gen maze" });
+
+  btnAnimate.onclick = () => s.animating ? stopAnim() : startAnim();
+  btnReset.onclick   = () => { stopAnim(); resetSearch(s); draw(); };
+  btnClear.onclick   = () => {
+    stopAnim();
+    s.walls = Array.from({ length: ROWS }, () => new Array(COLS).fill(false));
+    resetSearch(s); draw();
+  };
+  btnMaze.onclick = () => { stopAnim(); generateMaze(s); draw(); };
+
+  const btnRow = document.createElement("div");
+  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-top:8px";
+  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
+
+  const root = document.createElement("div");
+  root.append(canvas, btnRow, iterDisplay);
+
+  draw();
+  return { root, draw };
+}
+```
+
+```{ojs}
+//| echo: false
+
+// ── display ───────────────────────────────────────────────────────────────────
+app.root
+```
+
+```{ojs}
+//| echo: false
+
+// ── watcher (only cell that depends on heuristic and weight) ─────────────────
+{
+  s.heuristic = heuristic;
+  s.weight    = weight;
+  if (!s.animating) {
+    resetSearch(s);
+    app.draw();
+  }
+}
+```
+
+
+
+
 
 ## Discussion
 
