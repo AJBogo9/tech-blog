@@ -157,7 +157,6 @@ H    = ROWS * CELL
 key  = (r, c) => `${r},${c}`
 ```
 
-
 ```{ojs}
 //| echo: false
 
@@ -185,7 +184,6 @@ function heuristicFn(r1, c1, r2, c2, type) {
   return dr + dc;
 }
 ```
-
 
 ```{ojs}
 //| echo: false
@@ -254,7 +252,6 @@ function resetSearch(s) {
 }
 ```
 
-
 ```{ojs}
 //| echo: false
 
@@ -285,9 +282,9 @@ function generateMaze(s) {
       if (!inMaze[nr][nc]) frontier.push([nr, nc, r, c]);
   }
 
-  const dist  = Array.from({ length: ROWS }, () => new Array(COLS).fill(-1));
-  const queue = [[1, 1]];
-  dist[1][1]  = 0;
+  const dist   = Array.from({ length: ROWS }, () => new Array(COLS).fill(-1));
+  const queue  = [[1, 1]];
+  dist[1][1]   = 0;
   let furthest = [1, 1];
   while (queue.length) {
     const [r, c] = queue.shift();
@@ -326,93 +323,186 @@ s = {
 }
 ```
 
-
 ```{ojs}
 //| echo: false
 
-// ── app (never mentions heuristic or weight — no reactive dep on controls) ───
+// ── app (D3 implementation — never mentions heuristic or weight) ──────────────
 app = {
-  const canvas = document.createElement("canvas");
-  canvas.width  = W;
-  canvas.height = H;
-  canvas.style.cssText = `display:block;width:100%;max-width:${W}px;cursor:crosshair`;
-  const ctx = canvas.getContext("2d");
+  const css = getComputedStyle(document.documentElement);
+  const v   = name => css.getPropertyValue(name).trim();
 
-  function getColors() {
-    const cs = getComputedStyle(document.documentElement);
-    const v  = name => cs.getPropertyValue(name).trim();
-    return {
-      bg:      v("--bs-body-bg")           || "#212529",
-      grid:    v("--bs-border-color")      || "#495057",
-      empty:   v("--bs-body-bg")           || "#212529",
-      wall:    v("--bs-gray-700")          || "#495057",
-      start:   v("--bs-primary")           || "#375a7f",
-      end:     v("--bs-danger")            || "#e74c3c",
-      open:    v("--bs-info-bg-subtle")    || "#0d2a4a",
-      openBdr: v("--bs-info")              || "#3498db",
-      closed:  v("--bs-success-bg-subtle") || "#0a2318",
-      clsBdr:  v("--bs-success")           || "#00bc8c",
-      path:    "#f0e130", pathBdr: "#f0e130",
-      text:    v("--bs-body-color")        || "#dee2e6",
-    };
+  const C = {
+    bg:      v("--bs-body-bg")           || "#212529",
+    grid:    v("--bs-border-color")      || "#495057",
+    empty:   v("--bs-body-bg")           || "#212529",
+    wall:    v("--bs-gray-700")          || "#495057",
+    start:   v("--bs-primary")           || "#375a7f",
+    end:     v("--bs-danger")            || "#e74c3c",
+    open:    v("--bs-info-bg-subtle")    || "#0d2a4a",
+    closed:  v("--bs-success-bg-subtle") || "#0a2318",
+    path:    "#f0e130",
+    text:    v("--bs-body-color")        || "#dee2e6",
+  };
+
+  // ── SVG setup ───────────────────────────────────────────────────────────────
+  const svg = d3.create("svg")
+    .attr("width",  "100%")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .style("cursor", "crosshair")
+    .style("max-width", `${W}px`)
+    .style("display", "block");
+
+  // background
+  svg.append("rect").attr("width", W).attr("height", H).attr("fill", C.bg);
+
+  // ── build flat cell array ────────────────────────────────────────────────
+  // Each object is a stable reference — D3 joins on identity, not index.
+  const cells = Array.from({ length: ROWS }, (_, r) =>
+    Array.from({ length: COLS }, (_, c) => ({ r, c }))
+  ).flat();
+
+  // ── cell rects ───────────────────────────────────────────────────────────
+  const rects = svg.append("g").attr("class", "cells")
+    .selectAll("rect")
+    .data(cells, d => key(d.r, d.c))   // key by position — stable across updates
+    .join("rect")
+      .attr("x",      d => d.c * CELL + 1)
+      .attr("y",      d => d.r * CELL + 1)
+      .attr("width",  CELL - 2)
+      .attr("height", CELL - 2)
+      .attr("rx", 1);
+
+  // ── tooltip ───────────────────────────────────────────────────────────────
+  const tooltip = Object.assign(document.createElement("div"), {});
+  tooltip.style.cssText = `
+  position: fixed;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.75em;
+  font-family: monospace;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+  `;
+  document.body.appendChild(tooltip);
+
+  invalidation.then(() => tooltip.remove());
+
+  rects.on("mousemove", function(e, d) {
+  const k = key(d.r, d.c);
+  const g = s.gScore[k] ?? "—";
+  const h = heuristicFn(d.r, d.c, s.end.r, s.end.c, s.heuristic);
+  const f = s.fScore[k] ?? "—";
+  tooltip.innerHTML = `g=${g} &nbsp; h=${h} &nbsp; f=${f}`;
+  tooltip.style.opacity = 1;
+  tooltip.style.left = (e.clientX + 12) + "px";
+  tooltip.style.top  = (e.clientY - 28) + "px";
+  });
+
+  rects.on("mouseleave", () => { tooltip.style.opacity = 0; });
+
+  // ── labels (S / E) ────────────────────────────────────────────────────────
+  const labels = svg.append("g").attr("class", "labels");
+
+  function updateLabels() {
+    const data = [
+      { r: s.start.r, c: s.start.c, text: "S" },
+      { r: s.end.r,   c: s.end.c,   text: "E" },
+    ];
+    labels.selectAll("text")
+      .data(data)
+      .join("text")
+        .attr("x", d => d.c * CELL + CELL / 2)
+        .attr("y", d => d.r * CELL + CELL / 2)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("font-size", CELL * 0.38)
+        .attr("font-family", "monospace")
+        .attr("font-weight", "bold")
+        .attr("fill", C.text)
+        .attr("pointer-events", "none")
+        .text(d => d.text);
   }
 
+  // ── grid lines ────────────────────────────────────────────────────────────
+  const gridG = svg.append("g").attr("class", "grid")
+    .attr("stroke", C.grid)
+    .attr("stroke-width", 0.4);
+
+  for (let r = 0; r <= ROWS; r++)
+    gridG.append("line").attr("x1", 0).attr("y1", r*CELL).attr("x2", W).attr("y2", r*CELL);
+  for (let c = 0; c <= COLS; c++)
+    gridG.append("line").attr("x1", c*CELL).attr("y1", 0).attr("x2", c*CELL).attr("y2", H);
+
+  // ── draw — only updates fill, no DOM rebuild ──────────────────────────────
   const iterDisplay = document.createElement("div");
   iterDisplay.style.cssText = "margin-top:6px;font-size:0.85em";
-  iterDisplay.textContent = "iterations: —";
+  iterDisplay.textContent   = "iterations: —";
+
+  function cellColor(d) {
+    const k        = key(d.r, d.c);
+    const isStart  = d.r === s.start.r && d.c === s.start.c;
+    const isEnd    = d.r === s.end.r   && d.c === s.end.c;
+    const isWall   = s.walls[d.r][d.c];
+    const isPath   = pathSet.has(k)     && !isStart && !isEnd;
+    const isOpen   = openKeys.has(k)    && !isStart && !isEnd;
+    const isClosed = s.closedSet.has(k) && !isStart && !isEnd;
+    return isWall ? C.wall : isStart ? C.start : isEnd ? C.end :
+           isPath ? C.path : isOpen  ? C.open  : isClosed ? C.closed : C.empty;
+  }
+
+  // these are updated before every draw call
+  let openKeys = new Set(), pathSet = new Set();
 
   function draw() {
-    const C        = getColors();
-    const openKeys = new Set(s.openSet.map(n => key(n.r, n.c)));
-    const pathSet  = new Set(s.path);
+    openKeys = new Set(s.openSet.map(n => key(n.r, n.c)));
+    pathSet  = new Set(s.path);
 
-    ctx.fillStyle = C.bg;
-    ctx.fillRect(0, 0, W, H);
+    // D3 only touches the fill attribute — no DOM nodes created or destroyed
+    rects.attr("fill", d => cellColor(d));
 
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const x = c * CELL, y = r * CELL, k = key(r, c);
-        const isStart  = r === s.start.r && c === s.start.c;
-        const isEnd    = r === s.end.r   && c === s.end.c;
-        const isWall   = s.walls[r][c];
-        const isPath   = pathSet.has(k)     && !isStart && !isEnd;
-        const isOpen   = openKeys.has(k)    && !isStart && !isEnd;
-        const isClosed = s.closedSet.has(k) && !isStart && !isEnd;
-
-        ctx.fillStyle =
-          isWall   ? C.wall   :
-          isStart  ? C.start  :
-          isEnd    ? C.end    :
-          isPath   ? C.path   :
-          isOpen   ? C.open   :
-          isClosed ? C.closed : C.empty;
-        ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
-
-        if (isOpen)   { ctx.strokeStyle = C.openBdr; ctx.lineWidth = 0.5; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
-        if (isClosed) { ctx.strokeStyle = C.clsBdr;  ctx.lineWidth = 0.5; ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
-        if (isPath)   { ctx.strokeStyle = C.pathBdr; ctx.lineWidth = 1;   ctx.strokeRect(x+1,y+1,CELL-2,CELL-2); }
-
-        if (isStart || isEnd) {
-          ctx.fillStyle    = C.text;
-          ctx.font         = `bold ${CELL * 0.38}px monospace`;
-          ctx.textAlign    = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(isStart ? "S" : "E", x + CELL / 2, y + CELL / 2);
-          ctx.textAlign    = "left";
-          ctx.textBaseline = "alphabetic";
-        }
-      }
-    }
-
-    ctx.strokeStyle = C.grid; ctx.lineWidth = 0.4;
-    for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r*CELL); ctx.lineTo(W, r*CELL); ctx.stroke(); }
-    for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c*CELL, 0); ctx.lineTo(c*CELL, H); ctx.stroke(); }
+    updateLabels();
 
     iterDisplay.textContent = s.done
       ? `iterations: ${s.iter} · ${s.status}`
       : s.iter > 0 ? `iterations: ${s.iter}…` : "iterations: —";
   }
 
+  // ── pointer / paint ───────────────────────────────────────────────────────
+  let painting = false, paintValue = true;
+
+  function cellAt(e) {
+    const svgEl = svg.node();
+    const rect  = svgEl.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    return {
+      r: Math.floor((e.clientY - rect.top)  * scaleY / CELL),
+      c: Math.floor((e.clientX - rect.left) * scaleX / CELL),
+    };
+  }
+
+  function applyEdit(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    if (s.walls[r][c] === paintValue) return;
+    s.walls[r][c] = paintValue;
+    resetSearch(s); draw();
+  }
+
+  svg.on("pointerdown", e => {
+    stopAnim(); painting = true; svg.node().setPointerCapture(e.pointerId);
+    const { r, c } = cellAt(e);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    paintValue = !s.walls[r][c]; applyEdit(r, c);
+  });
+  svg.on("pointermove", e => { if (painting) { const {r,c} = cellAt(e); applyEdit(r,c); } });
+  svg.on("pointerup",   () => { painting = false; });
+
+  // ── animation ─────────────────────────────────────────────────────────────
   function stopAnim() {
     s.animating = false;
     if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
@@ -434,34 +524,7 @@ app = {
     animTick();
   }
 
-  let painting = false, paintValue = true;
-
-  function cellAt(e) {
-    const rect = canvas.getBoundingClientRect(), scale = W / rect.width;
-    return {
-      r: Math.floor((e.clientY - rect.top)  * scale / CELL),
-      c: Math.floor((e.clientX - rect.left) * scale / CELL),
-    };
-  }
-
-  function applyEdit(r, c) {
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
-    if (s.walls[r][c] === paintValue) return;
-    s.walls[r][c] = paintValue;
-    resetSearch(s); draw();
-  }
-
-  canvas.addEventListener("pointerdown", e => {
-    stopAnim(); painting = true; canvas.setPointerCapture(e.pointerId);
-    const { r, c } = cellAt(e);
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
-    paintValue = !s.walls[r][c]; applyEdit(r, c);
-  });
-  canvas.addEventListener("pointermove", e => { if (painting) { const {r,c} = cellAt(e); applyEdit(r,c); } });
-  canvas.addEventListener("pointerup", () => { painting = false; });
-
+  // ── buttons ───────────────────────────────────────────────────────────────
   const btnAnimate = Object.assign(document.createElement("button"), { textContent: "▶ Animate" });
   const btnReset   = Object.assign(document.createElement("button"), { textContent: "Reset" });
   const btnClear   = Object.assign(document.createElement("button"), { textContent: "Clear walls" });
@@ -481,7 +544,7 @@ app = {
   btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
 
   const root = document.createElement("div");
-  root.append(canvas, btnRow, iterDisplay);
+  root.append(svg.node(), btnRow, iterDisplay);
 
   draw();
   return { root, draw };
@@ -490,15 +553,14 @@ app = {
 
 ```{ojs}
 //| echo: false
-
-// ── display ───────────────────────────────────────────────────────────────────
 app.root
 ```
 
 ```{ojs}
 //| echo: false
+//| output: false
 
-// ── watcher (only cell that depends on heuristic and weight) ─────────────────
+// ── watcher ───────────────────────────────────────────────────────────────────
 {
   s.heuristic = heuristic;
   s.weight    = weight;
