@@ -509,10 +509,6 @@ app.root
 }
 ```
 
-
-
-
-
 ## Discussion
 
 A\* shines in applications where a cost function and an admissible heuristic (a heuristic that never overestimates the distance to the end) can be defined. Examples of these types of application are GPS routing, NPC path finding in games and network routing.
