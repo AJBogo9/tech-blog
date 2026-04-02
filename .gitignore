@@ -7,7 +7,7 @@ _site/
 _freeze/
 
 # Quarto notebooks
-**/*.quarto_ipynb
+**/*.quarto_ipynb*
 
 # Python
 __pycache__/
