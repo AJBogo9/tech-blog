@@ -3,17 +3,42 @@ title: "Variational Inference & the ELBO"
 description: A step-by-step derivation of the Evidence Lower Bound (ELBO), from intractable posteriors to the reconstruction-regularisation decomposition used in VAEs.
 date: "2026-04-02"
 bibliography: references.bib
+image: thumbnail.png
 categories:
   - variational inference
   - probabilistic ML
   - deep learning
 ---
 
+
+::: {.callout-note collapse="true"}
+## Notation Reference
+
+| Symbol | Meaning |
+|--------|---------|
+| $\mathbf{x}$ | Observed data |
+| $\mathbf{z}$ | Latent variables |
+| $p(\mathbf{z} \mid \mathbf{x})$ | True (intractable) posterior |
+| $p(\mathbf{x} \mid \mathbf{z})$ | Likelihood |
+| $p(\mathbf{z})$ | Prior distribution |
+| $p(\mathbf{x})$ | Marginal likelihood (evidence) |
+| $q_\varphi(\mathbf{z} \mid \mathbf{x})$ | Variational approximation to the posterior |
+| $\theta$ | Generative model parameters |
+| $\varphi$ | Variational parameters |
+| $\mathcal{L}(\theta, \varphi)$ | Evidence Lower Bound (ELBO) |
+| $D_{\mathrm{KL}}(q \| p)$ | KL divergence from $q$ to $p$ |
+| $\mathbb{E}_{q}[\cdot]$ | Expectation under distribution $q$ |
+| $\mu_q,\ \sigma_q$ | Mean and std. dev. of the variational distribution |
+| $\mu_*,\ \sigma_*$ | Mean and std. dev. of the true posterior |
+| $\sigma_\ell$ | Likelihood standard deviation |
+| $\mathcal{N}(\mu, \sigma^2)$ | Gaussian distribution with mean $\mu$ and variance $\sigma^2$ |
+:::
+
 ```{python}
 #| echo: false
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import stats
+from scipy.special import logsumexp
 ```
 
 Let's say we've observed the data $\mathbf{x}$ and we want to know the conditional probability of the latent variables $\mathbf{z}$. The conditional probability distribution $p(\mathbf{z} \mid \mathbf{x})$ can be then formulated with the Bayes' rule as
@@ -28,7 +53,7 @@ $$
 p(\mathbf{x}) = \int p(\mathbf{x} \mid \mathbf{z}) p(\mathbf{z}) d \mathbf{z}
 $$
 
-is often intractable. When something is intractable, it means that it is theoretically solvable byt can't be solved in a practical amount of time or with practical computational resources. 
+is often intractable. When something is intractable, it means that it is theoretically solvable but can't be solved in a practical amount of time or with practical computational resources. 
 
 ## Variational Inference: Approximating the Posterior
 
@@ -148,58 +173,117 @@ for _ in range(120):
     grad_lsq = -sq2/sigma_l**2 + 1 - sq2
     mu_q   += lr * grad_mu
     log_sq += lr * grad_lsq
-    history.append((mu_q, np.exp(log_sq), elbo_gaussian(mu_q, log_sq)))
-history = np.array(history)
+    history.append({
+        "iter":   len(history) + 1,
+        "mu_q":   round(mu_q, 4),
+        "sq":     round(np.exp(log_sq), 4),
+        "elbo":   round(elbo_gaussian(mu_q, log_sq), 4),
+    })
+
+ojs_define(
+    history   = history,
+    mu_post   = mu_post,
+    sig_post  = float(np.sqrt(sig2_post)),
+)
 ```
 
-```{python}
-#| label: fig-vi-convergence
-#| fig-cap: "VI convergence: the variational q approaches the true posterior."
-#| code-fold: true
-fig, ax = plt.subplots(figsize=(7, 4.5))
-z = np.linspace(-3, 4, 500)
-true_p = stats.norm.pdf(z, mu_post, np.sqrt(sig2_post))
-ax.fill_between(z, true_p, alpha=0.20)
-ax.plot(z, true_p, lw=2.5, label=f"True posterior  $\\mu={mu_post:.2f}$, $\\sigma={np.sqrt(sig2_post):.2f}$")
-checkpoints = [0, 5, 20, 119]
-alphas = [0.3, 0.5, 0.7, 1.0]
-for i, alpha in zip(checkpoints, alphas):
-    mu_i, sq_i, _ = history[i]
-    q_i = stats.norm.pdf(z, mu_i, sq_i)
-    ax.plot(z, q_i, lw=1.6, alpha=alpha,
-            label=f"iter {i+1}: $\\mu_q={mu_i:.2f}$, $\\sigma_q={sq_i:.2f}$")
-ax.set_xlabel("$z$"); ax.set_ylabel("density")
-ax.set_title("VI convergence: $q$ approaches true posterior", fontweight="bold")
-ax.legend(fontsize=8); ax.grid(True)
-plt.tight_layout()
-plt.show()
+```{ojs}
+//| label: ojs-controls
+//| echo: false
+
+viewof iter = Inputs.range(
+  [1, 40],
+  { value: 1, step: 1, label: "VI iteration" }
+)
 ```
 
+```{ojs}
+//| label: fig-vi-convergence
+//| echo: false
+//| fig-cap: "VI convergence: the variational q approaches the true posterior. Drag the slider to step through iterations. Dashed blue line is the true posterior; solid orange line is the current q."
 
+snap = history[iter - 1]
 
-```{python}
-#| label: fig-vi-elbo
-#| fig-cap: "ELBO rises monotonically during VI optimisation."
-#| code-fold: true
-fig, ax = plt.subplots(figsize=(7, 4.5))
-iters = np.arange(1, 121)
-ax.plot(iters, history[:, 2], lw=2.5)
-ax.set_xlabel("iteration"); ax.set_ylabel("ELBO")
-ax.set_title("ELBO during optimisation", fontweight="bold")
-ax.grid(True)
-final_elbo = history[-1, 2]
-ax.axhline(final_elbo, lw=1, ls="--",
-           label=f"Final ELBO = {final_elbo:.3f}")
-ax.legend(fontsize=9)
-plt.tight_layout()
-plt.show()
+z_vals = Array.from({length: 500}, (_, i) => -3 + i * 7 / 499)
+
+function normalPDF(zArr, mu, sigma) {
+  return zArr.map(zi =>
+    Math.exp(-0.5 * ((zi - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI))
+  )
+}
+
+true_curve = z_vals.map((zi, i) => ({
+  z: zi,
+  y: normalPDF(z_vals, mu_post, sig_post)[i],
+}))
+
+q_curve = z_vals.map((zi, i) => ({
+  z: zi,
+  y: normalPDF(z_vals, snap.mu_q, snap.sq)[i],
+}))
+
+Plot.plot({
+  width: 700,
+  height: 360,
+  marginLeft: 50,
+  x: { label: "z", domain: [-3, 4] },
+  y: { label: "density" },
+  marks: [
+    Plot.line(true_curve, {
+      x: "z", y: "y",
+      stroke: "steelblue", strokeWidth: 2.5, strokeDasharray: "6 3",
+    }),
+    Plot.line(q_curve, {
+      x: "z", y: "y",
+      stroke: "darkorange", strokeWidth: 2.5,
+    }),
+    Plot.ruleX([mu_post], {
+      stroke: "steelblue", strokeDasharray: "4 3", strokeOpacity: 0.5,
+    }),
+    Plot.ruleX([snap.mu_q], {
+      stroke: "darkorange", strokeDasharray: "4 3", strokeOpacity: 0.5,
+    }),
+    Plot.text(
+      [{ z: mu_post + 0.08, label: `μ* = ${mu_post.toFixed(2)},  σ* = ${sig_post.toFixed(2)}` }],
+      { x: "z", y: 0.88, text: "label", fontSize: 12, fill: "steelblue", textAnchor: "start" }
+    ),
+    Plot.text(
+      [{ z: snap.mu_q + 0.08, label: `μq = ${snap.mu_q.toFixed(2)},  σq = ${snap.sq.toFixed(2)}` }],
+      { x: "z", y: 0.78, text: "label", fontSize: 12, fill: "darkorange", textAnchor: "start" }
+    ),
+  ],
+})
 ```
 
+```{ojs}
+//| label: fig-vi-elbo
+//| echo: false
+//| fig-cap: "ELBO rises monotonically during VI optimisation."
+
+ll_data = history.slice(0, 40).map(d => ({ iter: d.iter, elbo: d.elbo }))
+
+Plot.plot({
+  width: 700,
+  height: 200,
+  marginLeft: 60,
+  x: { label: "iteration" },
+  y: { label: "ELBO" },
+  marks: [
+    Plot.line(ll_data, {
+      x: "iter", y: "elbo", stroke: "steelblue", strokeWidth: 2,
+    }),
+    Plot.ruleX([iter], {
+      stroke: "darkorange", strokeOpacity: 0.4, strokeDasharray: "4 2",
+    }),
+    Plot.dot([ll_data[iter - 1]], {
+      x: "iter", y: "elbo", fill: "darkorange", r: 5,
+    }),
+  ],
+})
+```
 
 ```{python}
 #| label: elbo-verification
-
-from scipy.special import logsumexp
 
 # True log evidence via numerical integration
 z_grid = np.linspace(-10, 10, 10000)
@@ -208,8 +292,8 @@ log_joint = stats.norm.logpdf(z_grid, x_obs, sigma_l) + stats.norm.logpdf(z_grid
 log_evidence_numerical = logsumexp(log_joint) + np.log(dz)
 
 print(f"True log p(x) (numerical): {log_evidence_numerical:.4f}")
-print(f"Final ELBO:                {history[-1, 2]:.4f}")
-print(f"Difference:                {abs(log_evidence_numerical - history[-1, 2]):.4f}")
+print(f"Final ELBO:                {history[-1]['elbo']:.4f}")
+print(f"Difference:                {abs(log_evidence_numerical - history[-1]['elbo']):.4f}")
 ```
 
 As can be seen in @fig-vi-convergence, the approximation approaches the true distribution. This is verified numerically in the code block above. The code block shows that the KL divergence has converged to zero meaning that the distributions are the same up until numerical precision.
