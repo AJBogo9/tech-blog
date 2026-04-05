@@ -3,6 +3,10 @@ title: "KL Divergence"
 date: "2026-03-17"
 bibliography: references.bib
 description: "KL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF."
+categories:
+  - information theory
+  - probabilistic ML
+  - llms
 ---
 
 When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF [@ziegler2019; @ouyang2022].

@@ -3,9 +3,10 @@ title: "Blog"
 listing:
   contents: posts
   sort: "date desc"
-  type: default
-  sort-ui: false
-  filter-ui: false
+  type: grid
+  sort-ui: true
+  filter-ui: true
+  categories: true
 page-layout: full
 title-block-banner: false
 ---
