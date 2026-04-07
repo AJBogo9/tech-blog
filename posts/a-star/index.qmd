@@ -146,16 +146,18 @@ The benefit of using the weight is that fewer nodes are expanded because the sea
 Start with Dijkstra and then swap to A\* with the Manhattan heuristic. Also, test the weight slider to make the algorithm faster with the expense of accuracy.
 
 - **Blue-green cells** — open set: discovered, not yet expanded.
+- **Orange cell** — node currently being expanded.
 - **Dark green cells** — closed set: fully expanded.
 - **Yellow path** — the solution once the algorithm reaches the end node.
+- Drag **S** or **E** to reposition start and goal. Paint walls by clicking and dragging on empty cells.
 
 ```{ojs}
 //| echo: false
 
 // ── constants ────────────────────────────────────────────────────────────────
-COLS = 29
-ROWS = 17
-CELL = 28
+COLS = 19
+ROWS = 11
+CELL = 40
 W    = COLS * CELL
 H    = ROWS * CELL
 key  = (r, c) => `${r},${c}`
@@ -174,6 +176,12 @@ viewof weight = Inputs.range([1, 5], {
   label: "Weight (w)",
   value: 1,
   step: 0.1
+})
+
+viewof speed = Inputs.range([10, 500], {
+  label: "Speed (ms/step)",
+  value: 80,
+  step: 10
 })
 ```
 
@@ -201,6 +209,7 @@ function initSearch(s) {
   s.gScore    = { [sk]: 0 };
   s.fScore    = { [sk]: s.weight * heuristicFn(s.start.r, s.start.c, s.end.r, s.end.c, s.heuristic) };
   s.path      = [];
+  s.current   = null;
   s.running   = true;
   s.done      = false;
   s.iter      = 0;
@@ -210,7 +219,7 @@ function initSearch(s) {
 function stepOnce(s) {
   if (!s.running || s.done) return;
   if (s.openSet.length === 0) {
-    s.running = false; s.done = true; s.status = "no path found"; return;
+    s.running = false; s.done = true; s.current = null; s.status = "no path found"; return;
   }
   let bestIdx = 0;
   for (let i = 1; i < s.openSet.length; i++) {
@@ -220,12 +229,13 @@ function stepOnce(s) {
   }
   const cur = s.openSet.splice(bestIdx, 1)[0];
   const ck  = key(cur.r, cur.c);
+  s.current = ck;
 
   if (cur.r === s.end.r && cur.c === s.end.c) {
     let k = ck;
     while (s.cameFrom[k]) { s.path.push(k); k = s.cameFrom[k]; }
     s.path.push(key(s.start.r, s.start.c));
-    s.running = false; s.done = true;
+    s.running = false; s.done = true; s.current = null;
     s.status  = `done — ${s.path.length - 1} steps`;
     return;
   }
@@ -252,7 +262,7 @@ function stepOnce(s) {
 function resetSearch(s) {
   s.openSet = []; s.closedSet = new Set(); s.cameFrom = {};
   s.gScore  = {}; s.fScore   = {};
-  s.path    = []; s.running  = false; s.done = false; s.iter = 0; s.status = "idle";
+  s.path    = []; s.current = null; s.running  = false; s.done = false; s.iter = 0; s.status = "idle";
 }
 ```
 
@@ -319,7 +329,8 @@ s = {
     openSet:   [], closedSet: new Set(), cameFrom: {},
     gScore:    {}, fScore:    {}, path: [],
     running:   false, done: false, iter: 0, status: "idle",
-    heuristic: "zero (Dijkstra)", weight: 1,
+    heuristic: "zero (Dijkstra)", weight: 1, speed: 80,
+    showScores: false, current: null,
     animating: false, animTimer: null,
   };
   generateMaze(state);
@@ -332,20 +343,19 @@ s = {
 
 // ── app (D3 implementation — never mentions heuristic or weight) ──────────────
 app = {
-  const css = getComputedStyle(document.documentElement);
-  const v   = name => css.getPropertyValue(name).trim();
-
   const C = {
-    bg:      v("--bs-body-bg")           || "#212529",
-    grid:    v("--bs-border-color")      || "#495057",
-    empty:   v("--bs-body-bg")           || "#212529",
-    wall:    v("--bs-gray-700")          || "#495057",
-    start:   v("--bs-primary")           || "#375a7f",
-    end:     v("--bs-danger")            || "#e74c3c",
-    open:    v("--bs-info-bg-subtle")    || "#0d2a4a",
-    closed:  v("--bs-success-bg-subtle") || "#0a2318",
-    path:    "#f0e130",
-    text:    v("--bs-body-color")        || "#dee2e6",
+    bg:        "#f8fafc",  // very light gray
+    grid:      "#cbd5e1",  // slate-300
+    empty:     "#f1f5f9",  // slate-100
+    wall:      "#334155",  // slate-700
+    start:     "#3b82f6",  // blue-500
+    end:       "#ef4444",  // red-500
+    open:      "#93c5fd",  // blue-300
+    closed:    "#86efac",  // green-300
+    path:      "#fbbf24",  // amber-400
+    current:   "#f97316",  // orange-500
+    text:      "#ffffff",  // white — for S/E labels on coloured cells
+    scoreText: "#1e293b",  // slate-800 — dark, readable on all light cell colours
   };
 
   // ── SVG setup ───────────────────────────────────────────────────────────────
@@ -380,11 +390,12 @@ app = {
   const tooltip = Object.assign(document.createElement("div"), {});
   tooltip.style.cssText = `
   position: fixed;
-  background: var(--bs-body-bg);
-  border: 1px solid var(--bs-border-color);
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #475569;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 0.75em;
+  font-size: 0.8em;
   font-family: monospace;
   pointer-events: none;
   opacity: 0;
@@ -430,6 +441,47 @@ app = {
         .text(d => d.text);
   }
 
+  // ── score text overlay ───────────────────────────────────────────────────
+  const scoreG = svg.append("g").attr("class", "scores");
+
+  function updateScores() {
+    scoreG.selectAll("*").remove();
+    if (!s.showScores) return;
+    const scored = cells.filter(d => {
+      const k = key(d.r, d.c);
+      return s.gScore[k] !== undefined && !s.walls[d.r][d.c]
+        && !(d.r === s.start.r && d.c === s.start.c)
+        && !(d.r === s.end.r   && d.c === s.end.c);
+    });
+    // g — top-left
+    scoreG.selectAll("text.gs")
+      .data(scored, d => key(d.r, d.c) + "g")
+      .join("text").attr("class", "gs")
+        .attr("x", d => d.c * CELL + 3).attr("y", d => d.r * CELL + 10)
+        .attr("text-anchor", "start").attr("font-size", 9)
+        .attr("font-family", "monospace").attr("fill", C.scoreText)
+        .attr("pointer-events", "none")
+        .text(d => `g:${s.gScore[key(d.r, d.c)]}`);
+    // h — top-right
+    scoreG.selectAll("text.hs")
+      .data(scored, d => key(d.r, d.c) + "h")
+      .join("text").attr("class", "hs")
+        .attr("x", d => d.c * CELL + CELL - 3).attr("y", d => d.r * CELL + 10)
+        .attr("text-anchor", "end").attr("font-size", 9)
+        .attr("font-family", "monospace").attr("fill", C.scoreText)
+        .attr("pointer-events", "none")
+        .text(d => `h:${heuristicFn(d.r, d.c, s.end.r, s.end.c, s.heuristic)}`);
+    // f — bottom-centre, bold
+    scoreG.selectAll("text.fs")
+      .data(scored, d => key(d.r, d.c) + "f")
+      .join("text").attr("class", "fs")
+        .attr("x", d => d.c * CELL + CELL / 2).attr("y", d => d.r * CELL + CELL - 5)
+        .attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", "bold")
+        .attr("font-family", "monospace").attr("fill", C.scoreText)
+        .attr("pointer-events", "none")
+        .text(d => { const f = s.fScore[key(d.r, d.c)]; return f !== undefined ? `f:${Number.isInteger(f) ? f : f.toFixed(1)}` : ""; });
+  }
+
   // ── grid lines ────────────────────────────────────────────────────────────
   const gridG = svg.append("g").attr("class", "grid")
     .attr("stroke", C.grid)
@@ -446,15 +498,16 @@ app = {
   iterDisplay.textContent   = "iterations: —";
 
   function cellColor(d) {
-    const k        = key(d.r, d.c);
-    const isStart  = d.r === s.start.r && d.c === s.start.c;
-    const isEnd    = d.r === s.end.r   && d.c === s.end.c;
-    const isWall   = s.walls[d.r][d.c];
-    const isPath   = pathSet.has(k)     && !isStart && !isEnd;
-    const isOpen   = openKeys.has(k)    && !isStart && !isEnd;
-    const isClosed = s.closedSet.has(k) && !isStart && !isEnd;
+    const k         = key(d.r, d.c);
+    const isStart   = d.r === s.start.r && d.c === s.start.c;
+    const isEnd     = d.r === s.end.r   && d.c === s.end.c;
+    const isWall    = s.walls[d.r][d.c];
+    const isPath    = pathSet.has(k)     && !isStart && !isEnd;
+    const isCurrent = k === s.current   && !isStart && !isEnd;
+    const isOpen    = openKeys.has(k)    && !isStart && !isEnd;
+    const isClosed  = s.closedSet.has(k) && !isStart && !isEnd;
     return isWall ? C.wall : isStart ? C.start : isEnd ? C.end :
-           isPath ? C.path : isOpen  ? C.open  : isClosed ? C.closed : C.empty;
+           isPath ? C.path : isCurrent ? C.current : isOpen ? C.open : isClosed ? C.closed : C.empty;
   }
 
   // these are updated before every draw call
@@ -468,14 +521,15 @@ app = {
     rects.attr("fill", d => cellColor(d));
 
     updateLabels();
+    updateScores();
 
     iterDisplay.textContent = s.done
       ? `iterations: ${s.iter} · ${s.status}`
       : s.iter > 0 ? `iterations: ${s.iter}…` : "iterations: —";
   }
 
-  // ── pointer / paint ───────────────────────────────────────────────────────
-  let painting = false, paintValue = true;
+  // ── pointer / paint / drag ────────────────────────────────────────────────
+  let painting = false, paintValue = true, dragging = null;
 
   function cellAt(e) {
     const svgEl = svg.node();
@@ -497,14 +551,26 @@ app = {
   }
 
   svg.on("pointerdown", e => {
-    stopAnim(); painting = true; svg.node().setPointerCapture(e.pointerId);
+    stopAnim(); svg.node().setPointerCapture(e.pointerId);
     const { r, c } = cellAt(e);
     if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
-    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    if (r === s.start.r && c === s.start.c) { dragging = "start"; return; }
+    if (r === s.end.r   && c === s.end.c)   { dragging = "end";   return; }
+    painting = true;
     paintValue = !s.walls[r][c]; applyEdit(r, c);
   });
-  svg.on("pointermove", e => { if (painting) { const {r,c} = cellAt(e); applyEdit(r,c); } });
-  svg.on("pointerup",   () => { painting = false; });
+  svg.on("pointermove", e => {
+    const { r, c } = cellAt(e);
+    if (dragging) {
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || s.walls[r][c]) return;
+      if (dragging === "start") s.start = { r, c };
+      else                      s.end   = { r, c };
+      resetSearch(s); draw();
+    } else if (painting) {
+      applyEdit(r, c);
+    }
+  });
+  svg.on("pointerup", () => { painting = false; dragging = null; });
 
   // ── animation ─────────────────────────────────────────────────────────────
   function stopAnim() {
@@ -517,7 +583,7 @@ app = {
     if (!s.animating) return;
     if (!s.running && !s.done) initSearch(s);
     stepOnce(s); draw();
-    if (!s.done) s.animTimer = setTimeout(animTick, 50);
+    if (!s.done) s.animTimer = setTimeout(animTick, s.speed);
     else stopAnim();
   }
 
@@ -530,22 +596,42 @@ app = {
 
   // ── buttons ───────────────────────────────────────────────────────────────
   const btnAnimate = Object.assign(document.createElement("button"), { textContent: "▶ Animate" });
+  const btnStep    = Object.assign(document.createElement("button"), { textContent: "Step" });
+  const btnRun     = Object.assign(document.createElement("button"), { textContent: "Run" });
   const btnReset   = Object.assign(document.createElement("button"), { textContent: "Reset" });
   const btnClear   = Object.assign(document.createElement("button"), { textContent: "Clear walls" });
-  const btnMaze    = Object.assign(document.createElement("button"), { textContent: "Gen maze" });
+  const btnMaze    = Object.assign(document.createElement("button"), { textContent: "New maze" });
+  const chkScores  = Object.assign(document.createElement("input"),  { type: "checkbox", id: "chk-scores" });
+  const lblScores  = Object.assign(document.createElement("label"),  { textContent: "Show g/h/f", htmlFor: "chk-scores" });
+  lblScores.style.cssText = "font-size:0.85em;cursor:pointer;user-select:none";
 
   btnAnimate.onclick = () => s.animating ? stopAnim() : startAnim();
+  btnStep.onclick    = () => {
+    stopAnim();
+    if (!s.running && !s.done) initSearch(s);
+    stepOnce(s); draw();
+  };
+  btnRun.onclick     = () => {
+    stopAnim();
+    if (!s.running && !s.done) initSearch(s);
+    while (!s.done) stepOnce(s);
+    draw();
+  };
   btnReset.onclick   = () => { stopAnim(); resetSearch(s); draw(); };
   btnClear.onclick   = () => {
     stopAnim();
     s.walls = Array.from({ length: ROWS }, () => new Array(COLS).fill(false));
     resetSearch(s); draw();
   };
-  btnMaze.onclick = () => { stopAnim(); generateMaze(s); draw(); };
+  btnMaze.onclick    = () => { stopAnim(); generateMaze(s); draw(); };
+  chkScores.onchange = () => { s.showScores = chkScores.checked; draw(); };
 
   const btnRow = document.createElement("div");
-  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-top:8px";
-  btnRow.append(btnAnimate, btnReset, btnClear, btnMaze);
+  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center";
+  const scoreWrap = document.createElement("span");
+  scoreWrap.style.cssText = "display:flex;align-items:center;gap:4px;margin-left:8px";
+  scoreWrap.append(chkScores, lblScores);
+  btnRow.append(btnAnimate, btnStep, btnRun, btnReset, btnClear, btnMaze, scoreWrap);
 
   const root = document.createElement("div");
   root.append(svg.node(), btnRow, iterDisplay);
@@ -573,6 +659,9 @@ app.root
     app.draw();
   }
 }
+
+// speed sync — no search reset
+{ s.speed = speed; }
 ```
 
 ## Discussion
