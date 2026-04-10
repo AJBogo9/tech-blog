@@ -28,6 +28,8 @@ website:
     left:
       - text: "Blog"
         href: blog.qmd
+      - text: "Publications"
+        href: publications.qmd
       - text: "CV"
         href: cv.qmd
     right:
