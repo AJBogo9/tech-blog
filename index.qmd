@@ -17,8 +17,20 @@ about:
 page-layout: article
 title-block-banner: false
 toc: false
+listing:
+  id: recent-posts
+  contents: posts
+  sort: "date desc"
+  max-items: 3
+  type: grid
+  fields: [image, title, description, date, categories]
 ---
 
 MSc student in Machine Learning, Data Science and Artificial Intelligence at Aalto University, with a minor in Operations Research. Previously completed a BSc in Computer Science with a minor in Mathematics.
 
 My research interests lie at the intersection of machine learning and mathematics. I write about technical concepts in ML, statistics and algorithms with the goal of building deep understanding through writing about concepts I don't yet understand.
+
+## Recent Posts
+
+::: {#recent-posts}
+:::
