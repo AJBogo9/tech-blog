@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://andreasbogossian.com/blog.html</loc>
-    <lastmod>2026-04-05T10:42:22.536Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/cv.html</loc>
-    <lastmod>2026-03-30T10:12:32.920Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/posts/a-star/index.html</loc>
-    <lastmod>2026-04-05T10:44:35.247Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/posts/KL-divergence/index.html</loc>
-    <lastmod>2026-04-05T10:45:32.874Z</lastmod>
-  </url>
-  <url>
-    <loc>https://andreasbogossian.com/posts/evidence-lower-bound/index.html</loc>
-    <lastmod>2026-04-05T10:42:42.246Z</lastmod>
+    <loc>https://andreasbogossian.com/publications.html</loc>
+    <lastmod>2026-04-10T09:07:57.903Z</lastmod>
   </url>
   <url>
     <loc>https://andreasbogossian.com/index.html</loc>
-    <lastmod>2026-04-05T10:56:57.334Z</lastmod>
+    <lastmod>2026-04-10T09:03:35.830Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/posts/evidence-lower-bound/index.html</loc>
+    <lastmod>2026-04-05T15:24:42.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/posts/KL-divergence/index.html</loc>
+    <lastmod>2026-04-05T11:15:08.844Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/posts/a-star/index.html</loc>
+    <lastmod>2026-04-07T22:05:36.399Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/cv.html</loc>
+    <lastmod>2026-04-12T13:52:42.534Z</lastmod>
+  </url>
+  <url>
+    <loc>https://andreasbogossian.com/blog.html</loc>
+    <lastmod>2026-04-05T10:42:22.536Z</lastmod>
   </url>
 </urlset>

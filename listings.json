@@ -1,5 +1,13 @@
 [
   {
+    "listing": "/index.html",
+    "items": [
+      "/posts/evidence-lower-bound/index.html",
+      "/posts/a-star/index.html",
+      "/posts/KL-divergence/index.html"
+    ]
+  },
+  {
     "listing": "/blog.html",
     "items": [
       "/posts/evidence-lower-bound/index.html",

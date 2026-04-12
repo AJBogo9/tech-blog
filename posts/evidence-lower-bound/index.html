@@ -83,7 +83,7 @@ div.csl-indent {
 }</style>
 
 
-<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -101,9 +101,6 @@ div.csl-indent {
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../../site_libs/bootstrap/bootstrap-eb10bd9c93dd9ff533a5df8980e2c1d3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
-<script src="../../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
-<link href="../../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
-<link href="../../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -132,6 +129,11 @@ div.csl-indent {
   }
 }</script>
 <style>html{ scroll-behavior: smooth; }</style>
+<script type="module" src="../../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
   <script>document.addEventListener("DOMContentLoaded", function () {
@@ -180,10 +182,10 @@ window.Quarto = {
 <link rel="stylesheet" href="../../custom.css">
 <meta property="og:title" content="Variational Inference &amp; the ELBO – Andreas Bogossian">
 <meta property="og:description" content="A step-by-step derivation of the Evidence Lower Bound (ELBO), from intractable posteriors to the reconstruction-regularisation decomposition used in VAEs.">
-<meta property="og:image" content="https://andreasbogossian.com/posts/evidence-lower-bound/index_files/figure-html/fig-vi-convergence-output-1.png">
+<meta property="og:image" content="https://andreasbogossian.com/posts/evidence-lower-bound/thumbnail.png">
 <meta property="og:site_name" content="Andreas Bogossian">
-<meta property="og:image:height" content="842">
-<meta property="og:image:width" content="1324">
+<meta property="og:image:height" content="563">
+<meta property="og:image:width" content="1094">
 <meta name="citation_title" content="Variational Inference &amp;amp; the ELBO">
 <meta name="citation_author" content="Andreas Bogossian">
 <meta name="citation_publication_date" content="2026-04-02">
@@ -216,6 +218,10 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link" href="../../blog.html"> 
 <span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../publications.html"> 
+<span class="menu-text">Publications</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../../cv.html"> 
@@ -302,6 +308,99 @@ window.Quarto = {
 </header>
 
 
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Notation Reference
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 47%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\mathbf{x}</span></td>
+<td>Observed data</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mathbf{z}</span></td>
+<td>Latent variables</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">p(\mathbf{z} \mid \mathbf{x})</span></td>
+<td>True (intractable) posterior</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">p(\mathbf{x} \mid \mathbf{z})</span></td>
+<td>Likelihood</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">p(\mathbf{z})</span></td>
+<td>Prior distribution</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">p(\mathbf{x})</span></td>
+<td>Marginal likelihood (evidence)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">q_\varphi(\mathbf{z} \mid \mathbf{x})</span></td>
+<td>Variational approximation to the posterior</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\theta</span></td>
+<td>Generative model parameters</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\varphi</span></td>
+<td>Variational parameters</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mathcal{L}(\theta, \varphi)</span></td>
+<td>Evidence Lower Bound (ELBO)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">D_{\mathrm{KL}}(q \| p)</span></td>
+<td>KL divergence from <span class="math inline">q</span> to <span class="math inline">p</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mathbb{E}_{q}[\cdot]</span></td>
+<td>Expectation under distribution <span class="math inline">q</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\mu_q,\ \sigma_q</span></td>
+<td>Mean and std. dev. of the variational distribution</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mu_*,\ \sigma_*</span></td>
+<td>Mean and std. dev. of the true posterior</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\sigma_\ell</span></td>
+<td>Likelihood standard deviation</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\mathcal{N}(\mu, \sigma^2)</span></td>
+<td>Gaussian distribution with mean <span class="math inline">\mu</span> and variance <span class="math inline">\sigma^2</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
 <p>Let’s say we’ve observed the data <span class="math inline">\mathbf{x}</span> and we want to know the conditional probability of the latent variables <span class="math inline">\mathbf{z}</span>. The conditional probability distribution <span class="math inline">p(\mathbf{z} \mid \mathbf{x})</span> can be then formulated with the Bayes’ rule as</p>
 <p><span class="math display">
 p(\mathbf{z} \mid \mathbf{x}) = \frac{p(\mathbf{x} \mid \mathbf{z})p(\mathbf{z})}{p(\mathbf{x})}
@@ -310,7 +409,7 @@ p(\mathbf{z} \mid \mathbf{x}) = \frac{p(\mathbf{x} \mid \mathbf{z})p(\mathbf{z})
 <p><span class="math display">
 p(\mathbf{x}) = \int p(\mathbf{x} \mid \mathbf{z}) p(\mathbf{z}) d \mathbf{z}
 </span></p>
-<p>is often intractable. When something is intractable, it means that it is theoretically solvable byt can’t be solved in a practical amount of time or with practical computational resources.</p>
+<p>is often intractable. When something is intractable, it means that it is theoretically solvable but can’t be solved in a practical amount of time or with practical computational resources.</p>
 <section id="variational-inference-approximating-the-posterior" class="level2">
 <h2 class="anchored" data-anchor-id="variational-inference-approximating-the-posterior">Variational Inference: Approximating the Posterior</h2>
 <p>With variational inference, we introduce a <em>tractable</em> approximation <span class="math inline">q_\varphi(\mathbf{z} \mid \mathbf{x})</span> and find the parameters <span class="math inline">\varphi</span> that approximate the intractable posterior <span class="math inline">p_\theta(\mathbf{z} \mid \mathbf{x})</span> as well as possible. The closeness is measured by <a href="../../posts/KL-divergence/index.html">KL-divergence</a>. Even though KL-divergence is a good measure for determining the closeness of two distributions, it requires knowing the true posterior, which we don’t know because we don’t know the denominator which we’re trying to solve, but we need the posterior to solve the denominator. Using KL-divergence alone will not solve the approximation problem so we maximize a quantity called Evidence Lower BOund (ELBO).</p>
@@ -379,7 +478,7 @@ p(z \mid x) = \mathcal{N}\!\left(\mu_*, \sigma_*^2\right), \quad \mu_* = \frac{x
 </span></p>
 <p><strong>Variational family:</strong> <span class="math inline">q(z) = \mathcal{N}(\mu_q, \sigma_q^2)</span>.</p>
 <p>We optimise <span class="math inline">(\mu_q, \sigma_q)</span> by gradient ascent on the ELBO and compare with the truth.</p>
-<div id="vi-setup" class="cell" data-execution_count="2">
+<div id="cell-vi-setup" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>x_obs   <span class="op">=</span> <span class="fl">1.8</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>sigma_l <span class="op">=</span> <span class="fl">1.2</span></span>
@@ -403,64 +502,231 @@ p(z \mid x) = \mathcal{N}\!\left(\mu_*, \sigma_*^2\right), \quad \mu_* = \frac{x
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    grad_lsq <span class="op">=</span> <span class="op">-</span>sq2<span class="op">/</span>sigma_l<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> <span class="dv">1</span> <span class="op">-</span> sq2</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    mu_q   <span class="op">+=</span> lr <span class="op">*</span> grad_mu</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    log_sq <span class="op">+=</span> lr <span class="op">*</span> grad_lsq</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    history.append((mu_q, np.exp(log_sq), elbo_gaussian(mu_q, log_sq)))</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>history <span class="op">=</span> np.array(history)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    history.append({</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">"iter"</span>:   <span class="bu">len</span>(history) <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"mu_q"</span>:   <span class="bu">round</span>(mu_q, <span class="dv">4</span>),</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sq"</span>:     <span class="bu">round</span>(np.exp(log_sq), <span class="dv">4</span>),</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="st">"elbo"</span>:   <span class="bu">round</span>(elbo_gaussian(mu_q, log_sq), <span class="dv">4</span>),</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>ojs_define(</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    history   <span class="op">=</span> history,</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    mu_post   <span class="op">=</span> mu_post,</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    sig_post  <span class="op">=</span> <span class="bu">float</span>(np.sqrt(sig2_post)),</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="vi-setup" class="cell-output cell-output-display">
+<script type="ojs-define">{"contents": [{"name": "history", "value": [{"iter": 1, "mu_q": 0.1, "sq": 0.946, "elbo": -2.4234}, {"iter": 2, "mu_q": 0.1864, "sq": 0.9077, "elbo": -2.3175}, {"iter": 3, "mu_q": 0.2612, "sq": 0.8794, "elbo": -2.2413}, {"iter": 4, "mu_q": 0.3258, "sq": 0.8578, "elbo": -2.1858}, {"iter": 5, "mu_q": 0.3816, "sq": 0.841, "elbo": -2.145}, {"iter": 6, "mu_q": 0.4299, "sq": 0.8278, "elbo": -2.115}, {"iter": 7, "mu_q": 0.4716, "sq": 0.8172, "elbo": -2.0928}, {"iter": 8, "mu_q": 0.5077, "sq": 0.8086, "elbo": -2.0764}, {"iter": 9, "mu_q": 0.5389, "sq": 0.8017, "elbo": -2.0642}, {"iter": 10, "mu_q": 0.5658, "sq": 0.796, "elbo": -2.0552}, {"iter": 11, "mu_q": 0.5891, "sq": 0.7913, "elbo": -2.0485}, {"iter": 12, "mu_q": 0.6093, "sq": 0.7875, "elbo": -2.0435}, {"iter": 13, "mu_q": 0.6267, "sq": 0.7843, "elbo": -2.0398}, {"iter": 14, "mu_q": 0.6417, "sq": 0.7816, "elbo": -2.037}, {"iter": 15, "mu_q": 0.6547, "sq": 0.7794, "elbo": -2.0349}, {"iter": 16, "mu_q": 0.666, "sq": 0.7776, "elbo": -2.0334}, {"iter": 17, "mu_q": 0.6757, "sq": 0.7761, "elbo": -2.0322}, {"iter": 18, "mu_q": 0.6841, "sq": 0.7748, "elbo": -2.0314}, {"iter": 19, "mu_q": 0.6914, "sq": 0.7737, "elbo": -2.0307}, {"iter": 20, "mu_q": 0.6977, "sq": 0.7728, "elbo": -2.0303}, {"iter": 21, "mu_q": 0.7031, "sq": 0.7721, "elbo": -2.0299}, {"iter": 22, "mu_q": 0.7078, "sq": 0.7715, "elbo": -2.0296}, {"iter": 23, "mu_q": 0.7118, "sq": 0.7709, "elbo": -2.0295}, {"iter": 24, "mu_q": 0.7153, "sq": 0.7705, "elbo": -2.0293}, {"iter": 25, "mu_q": 0.7184, "sq": 0.7701, "elbo": -2.0292}, {"iter": 26, "mu_q": 0.721, "sq": 0.7698, "elbo": -2.0291}, {"iter": 27, "mu_q": 0.7233, "sq": 0.7696, "elbo": -2.0291}, {"iter": 28, "mu_q": 0.7252, "sq": 0.7694, "elbo": -2.029}, {"iter": 29, "mu_q": 0.7269, "sq": 0.7692, "elbo": -2.029}, {"iter": 30, "mu_q": 0.7284, "sq": 0.769, "elbo": -2.0289}, {"iter": 31, "mu_q": 0.7296, "sq": 0.7689, "elbo": -2.0289}, {"iter": 32, "mu_q": 0.7307, "sq": 0.7688, "elbo": -2.0289}, {"iter": 33, "mu_q": 0.7317, "sq": 0.7687, "elbo": -2.0289}, {"iter": 34, "mu_q": 0.7325, "sq": 0.7686, "elbo": -2.0289}, {"iter": 35, "mu_q": 0.7332, "sq": 0.7686, "elbo": -2.0289}, {"iter": 36, "mu_q": 0.7338, "sq": 0.7685, "elbo": -2.0289}, {"iter": 37, "mu_q": 0.7343, "sq": 0.7685, "elbo": -2.0289}, {"iter": 38, "mu_q": 0.7348, "sq": 0.7684, "elbo": -2.0289}, {"iter": 39, "mu_q": 0.7352, "sq": 0.7684, "elbo": -2.0289}, {"iter": 40, "mu_q": 0.7355, "sq": 0.7684, "elbo": -2.0289}, {"iter": 41, "mu_q": 0.7358, "sq": 0.7683, "elbo": -2.0289}, {"iter": 42, "mu_q": 0.7361, "sq": 0.7683, "elbo": -2.0289}, {"iter": 43, "mu_q": 0.7363, "sq": 0.7683, "elbo": -2.0289}, {"iter": 44, "mu_q": 0.7365, "sq": 0.7683, "elbo": -2.0289}, {"iter": 45, "mu_q": 0.7367, "sq": 0.7683, "elbo": -2.0289}, {"iter": 46, "mu_q": 0.7368, "sq": 0.7683, "elbo": -2.0289}, {"iter": 47, "mu_q": 0.7369, "sq": 0.7683, "elbo": -2.0289}, {"iter": 48, "mu_q": 0.737, "sq": 0.7683, "elbo": -2.0289}, {"iter": 49, "mu_q": 0.7371, "sq": 0.7683, "elbo": -2.0289}, {"iter": 50, "mu_q": 0.7372, "sq": 0.7682, "elbo": -2.0289}, {"iter": 51, "mu_q": 0.7373, "sq": 0.7682, "elbo": -2.0289}, {"iter": 52, "mu_q": 0.7373, "sq": 0.7682, "elbo": -2.0289}, {"iter": 53, "mu_q": 0.7374, "sq": 0.7682, "elbo": -2.0289}, {"iter": 54, "mu_q": 0.7374, "sq": 0.7682, "elbo": -2.0289}, {"iter": 55, "mu_q": 0.7375, "sq": 0.7682, "elbo": -2.0289}, {"iter": 56, "mu_q": 0.7375, "sq": 0.7682, "elbo": -2.0289}, {"iter": 57, "mu_q": 0.7375, "sq": 0.7682, "elbo": -2.0289}, {"iter": 58, "mu_q": 0.7375, "sq": 0.7682, "elbo": -2.0289}, {"iter": 59, "mu_q": 0.7376, "sq": 0.7682, "elbo": -2.0289}, {"iter": 60, "mu_q": 0.7376, "sq": 0.7682, "elbo": -2.0289}, {"iter": 61, "mu_q": 0.7376, "sq": 0.7682, "elbo": -2.0289}, {"iter": 62, "mu_q": 0.7376, "sq": 0.7682, "elbo": -2.0289}, {"iter": 63, "mu_q": 0.7376, "sq": 0.7682, "elbo": -2.0289}, {"iter": 64, "mu_q": 0.7376, "sq": 0.7682, "elbo": -2.0289}, {"iter": 65, "mu_q": 0.7376, "sq": 0.7682, "elbo": -2.0289}, {"iter": 66, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 67, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 68, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 69, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 70, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 71, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 72, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 73, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 74, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 75, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 76, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 77, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 78, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 79, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 80, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 81, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 82, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 83, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 84, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 85, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 86, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 87, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 88, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 89, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 90, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 91, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 92, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 93, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 94, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 95, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 96, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 97, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 98, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 99, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 100, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 101, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 102, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 103, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 104, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 105, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 106, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 107, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 108, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 109, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 110, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 111, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 112, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 113, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 114, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 115, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 116, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 117, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 118, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 119, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}, {"iter": 120, "mu_q": 0.7377, "sq": 0.7682, "elbo": -2.0289}]}, {"name": "mu_post", "value": 0.7377049180327869}, {"name": "sig_post", "value": 0.7682212795973759}]}</script>
 </div>
-<div id="cell-fig-vi-convergence" class="cell" data-execution_count="3">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="fl">4.5</span>))</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">500</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>true_p <span class="op">=</span> stats.norm.pdf(z, mu_post, np.sqrt(sig2_post))</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>ax.fill_between(z, true_p, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>ax.plot(z, true_p, lw<span class="op">=</span><span class="fl">2.5</span>, label<span class="op">=</span><span class="ss">f"True posterior  $</span><span class="ch">\\</span><span class="ss">mu=</span><span class="sc">{</span>mu_post<span class="sc">:.2f}</span><span class="ss">$, $</span><span class="ch">\\</span><span class="ss">sigma=</span><span class="sc">{</span>np<span class="sc">.</span>sqrt(sig2_post)<span class="sc">:.2f}</span><span class="ss">$"</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>checkpoints <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">20</span>, <span class="dv">119</span>]</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>alphas <span class="op">=</span> [<span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.7</span>, <span class="fl">1.0</span>]</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, alpha <span class="kw">in</span> <span class="bu">zip</span>(checkpoints, alphas):</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    mu_i, sq_i, _ <span class="op">=</span> history[i]</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    q_i <span class="op">=</span> stats.norm.pdf(z, mu_i, sq_i)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    ax.plot(z, q_i, lw<span class="op">=</span><span class="fl">1.6</span>, alpha<span class="op">=</span>alpha,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="ss">f"iter </span><span class="sc">{</span>i<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">: $</span><span class="ch">\\</span><span class="ss">mu_q=</span><span class="sc">{</span>mu_i<span class="sc">:.2f}</span><span class="ss">$, $</span><span class="ch">\\</span><span class="ss">sigma_q=</span><span class="sc">{</span>sq_i<span class="sc">:.2f}</span><span class="ss">$"</span>)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"$z$"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"density"</span>)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"VI convergence: $q$ approaches true posterior"</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)<span class="op">;</span> ax.grid(<span class="va">True</span>)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="fig-vi-convergence" class="quarto-float quarto-figure quarto-figure-center anchored">
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="192" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 191;"><span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>viewof iter <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>(</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a>  [<span class="dv">1</span><span class="op">,</span> <span class="dv">40</span>]<span class="op">,</span></span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">value</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span> <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"VI iteration"</span> }</span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ojs-controls" class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb3" data-startfrom="205" data-source-offset="-1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 204;"><span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a>snap <span class="op">=</span> history[iter <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a>z_vals <span class="op">=</span> <span class="bu">Array</span><span class="op">.</span><span class="fu">from</span>({<span class="dt">length</span><span class="op">:</span> <span class="dv">500</span>}<span class="op">,</span> (_<span class="op">,</span> i) <span class="kw">=&gt;</span> <span class="op">-</span><span class="dv">3</span> <span class="op">+</span> i <span class="op">*</span> <span class="dv">7</span> <span class="op">/</span> <span class="dv">499</span>)</span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">normalPDF</span>(zArr<span class="op">,</span> mu<span class="op">,</span> sigma) {</span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> zArr<span class="op">.</span><span class="fu">map</span>(zi <span class="kw">=&gt;</span></span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a>    <span class="bu">Math</span><span class="op">.</span><span class="fu">exp</span>(<span class="op">-</span><span class="fl">0.5</span> <span class="op">*</span> ((zi <span class="op">-</span> mu) <span class="op">/</span> sigma) <span class="op">**</span> <span class="dv">2</span>) <span class="op">/</span> (sigma <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sqrt</span>(<span class="dv">2</span> <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="cn">PI</span>))</span>
+<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>true_curve <span class="op">=</span> z_vals<span class="op">.</span><span class="fu">map</span>((zi<span class="op">,</span> i) <span class="kw">=&gt;</span> ({</span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a>  <span class="dt">z</span><span class="op">:</span> zi<span class="op">,</span></span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a>  <span class="dt">y</span><span class="op">:</span> <span class="fu">normalPDF</span>(z_vals<span class="op">,</span> mu_post<span class="op">,</span> sig_post)[i]<span class="op">,</span></span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a>q_curve <span class="op">=</span> z_vals<span class="op">.</span><span class="fu">map</span>((zi<span class="op">,</span> i) <span class="kw">=&gt;</span> ({</span>
+<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a>  <span class="dt">z</span><span class="op">:</span> zi<span class="op">,</span></span>
+<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a>  <span class="dt">y</span><span class="op">:</span> <span class="fu">normalPDF</span>(z_vals<span class="op">,</span> snap<span class="op">.</span><span class="at">mu_q</span><span class="op">,</span> snap<span class="op">.</span><span class="at">sq</span>)[i]<span class="op">,</span></span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a>Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>  <span class="dt">width</span><span class="op">:</span> <span class="dv">700</span><span class="op">,</span></span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a>  <span class="dt">height</span><span class="op">:</span> <span class="dv">360</span><span class="op">,</span></span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a>  <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">50</span><span class="op">,</span></span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a>  <span class="dt">x</span><span class="op">:</span> { <span class="dt">label</span><span class="op">:</span> <span class="st">"z"</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="op">-</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span>] }<span class="op">,</span></span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>  <span class="dt">y</span><span class="op">:</span> { <span class="dt">label</span><span class="op">:</span> <span class="st">"density"</span> }<span class="op">,</span></span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a>  <span class="dt">marks</span><span class="op">:</span> [</span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">line</span>(true_curve<span class="op">,</span> {</span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>      <span class="dt">x</span><span class="op">:</span> <span class="st">"z"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"y"</span><span class="op">,</span></span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>      <span class="dt">stroke</span><span class="op">:</span> <span class="st">"steelblue"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.5</span><span class="op">,</span> <span class="dt">strokeDasharray</span><span class="op">:</span> <span class="st">"6 3"</span><span class="op">,</span></span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a>    })<span class="op">,</span></span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">line</span>(q_curve<span class="op">,</span> {</span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a>      <span class="dt">x</span><span class="op">:</span> <span class="st">"z"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"y"</span><span class="op">,</span></span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a>      <span class="dt">stroke</span><span class="op">:</span> <span class="st">"darkorange"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.5</span><span class="op">,</span></span>
+<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a>    })<span class="op">,</span></span>
+<span id="cb3-240"><a href="#cb3-240" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">ruleX</span>([mu_post]<span class="op">,</span> {</span>
+<span id="cb3-241"><a href="#cb3-241" aria-hidden="true" tabindex="-1"></a>      <span class="dt">stroke</span><span class="op">:</span> <span class="st">"steelblue"</span><span class="op">,</span> <span class="dt">strokeDasharray</span><span class="op">:</span> <span class="st">"4 3"</span><span class="op">,</span> <span class="dt">strokeOpacity</span><span class="op">:</span> <span class="fl">0.5</span><span class="op">,</span></span>
+<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a>    })<span class="op">,</span></span>
+<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">ruleX</span>([snap<span class="op">.</span><span class="at">mu_q</span>]<span class="op">,</span> {</span>
+<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a>      <span class="dt">stroke</span><span class="op">:</span> <span class="st">"darkorange"</span><span class="op">,</span> <span class="dt">strokeDasharray</span><span class="op">:</span> <span class="st">"4 3"</span><span class="op">,</span> <span class="dt">strokeOpacity</span><span class="op">:</span> <span class="fl">0.5</span><span class="op">,</span></span>
+<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a>    })<span class="op">,</span></span>
+<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">text</span>(</span>
+<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a>      [{ <span class="dt">z</span><span class="op">:</span> mu_post <span class="op">+</span> <span class="fl">0.08</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="vs">`μ* = </span><span class="sc">${</span>mu_post<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs">,  σ* = </span><span class="sc">${</span>sig_post<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs">`</span> }]<span class="op">,</span></span>
+<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a>      { <span class="dt">x</span><span class="op">:</span> <span class="st">"z"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="fl">0.88</span><span class="op">,</span> <span class="dt">text</span><span class="op">:</span> <span class="st">"label"</span><span class="op">,</span> <span class="dt">fontSize</span><span class="op">:</span> <span class="dv">12</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"steelblue"</span><span class="op">,</span> <span class="dt">textAnchor</span><span class="op">:</span> <span class="st">"start"</span> }</span>
+<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a>    )<span class="op">,</span></span>
+<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">text</span>(</span>
+<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a>      [{ <span class="dt">z</span><span class="op">:</span> snap<span class="op">.</span><span class="at">mu_q</span> <span class="op">+</span> <span class="fl">0.08</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="vs">`μq = </span><span class="sc">${</span>snap<span class="op">.</span><span class="at">mu_q</span><span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs">,  σq = </span><span class="sc">${</span>snap<span class="op">.</span><span class="at">sq</span><span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs">`</span> }]<span class="op">,</span></span>
+<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a>      { <span class="dt">x</span><span class="op">:</span> <span class="st">"z"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="fl">0.78</span><span class="op">,</span> <span class="dt">text</span><span class="op">:</span> <span class="st">"label"</span><span class="op">,</span> <span class="dt">fontSize</span><span class="op">:</span> <span class="dv">12</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"darkorange"</span><span class="op">,</span> <span class="dt">textAnchor</span><span class="op">:</span> <span class="st">"start"</span> }</span>
+<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a>    )<span class="op">,</span></span>
+<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a>  ]<span class="op">,</span></span>
+<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-vi-convergence" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-vi-convergence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="index_files/figure-html/fig-vi-convergence-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: VI convergence: the variational q approaches the true posterior."><img src="index_files/figure-html/fig-vi-convergence-output-1.png" width="662" height="421" class="figure-img"></a>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-convergence-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-convergence-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-2-1" data-nodetype="declaration">
+
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vi-convergence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: VI convergence: the variational q approaches the true posterior.
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-convergence-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a)
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-convergence-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-convergence-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-2-2" data-nodetype="declaration">
+
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-convergence-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b)
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-convergence-3" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-convergence-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-2-3" data-nodetype="declaration">
+
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-convergence-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(c)
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-convergence-4" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-convergence-4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-2-4" data-nodetype="declaration">
+
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-convergence-4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(d)
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-convergence-5" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-convergence-5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-2-5" data-nodetype="declaration">
+
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-convergence-5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(e)
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-convergence-6" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-convergence-6-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-2-6" data-nodetype="expression">
+
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-convergence-6-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(f)
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<div id="cell-fig-vi-elbo" class="cell" data-execution_count="4">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="fl">4.5</span>))</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>iters <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="dv">121</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>ax.plot(iters, history[:, <span class="dv">2</span>], lw<span class="op">=</span><span class="fl">2.5</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"iteration"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"ELBO"</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"ELBO during optimisation"</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>final_elbo <span class="op">=</span> history[<span class="op">-</span><span class="dv">1</span>, <span class="dv">2</span>]</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>ax.axhline(final_elbo, lw<span class="op">=</span><span class="dv">1</span>, ls<span class="op">=</span><span class="st">"--"</span>,</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>           label<span class="op">=</span><span class="ss">f"Final ELBO = </span><span class="sc">{</span>final_elbo<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">9</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-display">
-<div id="fig-vi-elbo" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vi-convergence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: VI convergence: the variational q approaches the true posterior. Drag the slider to step through iterations. Dashed blue line is the true posterior; solid orange line is the current q.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb4" data-startfrom="263" data-source-offset="-1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 262;"><span id="cb4-263"><a href="#cb4-263" aria-hidden="true" tabindex="-1"></a>ll_data <span class="op">=</span> history<span class="op">.</span><span class="fu">slice</span>(<span class="dv">0</span><span class="op">,</span> <span class="dv">40</span>)<span class="op">.</span><span class="fu">map</span>(d <span class="kw">=&gt;</span> ({ <span class="dt">iter</span><span class="op">:</span> d<span class="op">.</span><span class="at">iter</span><span class="op">,</span> <span class="dt">elbo</span><span class="op">:</span> d<span class="op">.</span><span class="at">elbo</span> }))</span>
+<span id="cb4-264"><a href="#cb4-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-265"><a href="#cb4-265" aria-hidden="true" tabindex="-1"></a>Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb4-266"><a href="#cb4-266" aria-hidden="true" tabindex="-1"></a>  <span class="dt">width</span><span class="op">:</span> <span class="dv">700</span><span class="op">,</span></span>
+<span id="cb4-267"><a href="#cb4-267" aria-hidden="true" tabindex="-1"></a>  <span class="dt">height</span><span class="op">:</span> <span class="dv">200</span><span class="op">,</span></span>
+<span id="cb4-268"><a href="#cb4-268" aria-hidden="true" tabindex="-1"></a>  <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">60</span><span class="op">,</span></span>
+<span id="cb4-269"><a href="#cb4-269" aria-hidden="true" tabindex="-1"></a>  <span class="dt">x</span><span class="op">:</span> { <span class="dt">label</span><span class="op">:</span> <span class="st">"iteration"</span> }<span class="op">,</span></span>
+<span id="cb4-270"><a href="#cb4-270" aria-hidden="true" tabindex="-1"></a>  <span class="dt">y</span><span class="op">:</span> { <span class="dt">label</span><span class="op">:</span> <span class="st">"ELBO"</span> }<span class="op">,</span></span>
+<span id="cb4-271"><a href="#cb4-271" aria-hidden="true" tabindex="-1"></a>  <span class="dt">marks</span><span class="op">:</span> [</span>
+<span id="cb4-272"><a href="#cb4-272" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">line</span>(ll_data<span class="op">,</span> {</span>
+<span id="cb4-273"><a href="#cb4-273" aria-hidden="true" tabindex="-1"></a>      <span class="dt">x</span><span class="op">:</span> <span class="st">"iter"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"elbo"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"steelblue"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb4-274"><a href="#cb4-274" aria-hidden="true" tabindex="-1"></a>    })<span class="op">,</span></span>
+<span id="cb4-275"><a href="#cb4-275" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">ruleX</span>([iter]<span class="op">,</span> {</span>
+<span id="cb4-276"><a href="#cb4-276" aria-hidden="true" tabindex="-1"></a>      <span class="dt">stroke</span><span class="op">:</span> <span class="st">"darkorange"</span><span class="op">,</span> <span class="dt">strokeOpacity</span><span class="op">:</span> <span class="fl">0.4</span><span class="op">,</span> <span class="dt">strokeDasharray</span><span class="op">:</span> <span class="st">"4 2"</span><span class="op">,</span></span>
+<span id="cb4-277"><a href="#cb4-277" aria-hidden="true" tabindex="-1"></a>    })<span class="op">,</span></span>
+<span id="cb4-278"><a href="#cb4-278" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">dot</span>([ll_data[iter <span class="op">-</span> <span class="dv">1</span>]]<span class="op">,</span> {</span>
+<span id="cb4-279"><a href="#cb4-279" aria-hidden="true" tabindex="-1"></a>      <span class="dt">x</span><span class="op">:</span> <span class="st">"iter"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"elbo"</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"darkorange"</span><span class="op">,</span> <span class="dt">r</span><span class="op">:</span> <span class="dv">5</span><span class="op">,</span></span>
+<span id="cb4-280"><a href="#cb4-280" aria-hidden="true" tabindex="-1"></a>    })<span class="op">,</span></span>
+<span id="cb4-281"><a href="#cb4-281" aria-hidden="true" tabindex="-1"></a>  ]<span class="op">,</span></span>
+<span id="cb4-282"><a href="#cb4-282" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-vi-elbo" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-vi-elbo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="index_files/figure-html/fig-vi-elbo-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: ELBO rises monotonically during VI optimisation."><img src="index_files/figure-html/fig-vi-elbo-output-1.png" width="662" height="422" class="figure-img"></a>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-elbo-1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-elbo-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-3-1" data-nodetype="declaration">
+
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-elbo-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a)
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-vi-elbo-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-vi-elbo-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="ojs-cell-3-2" data-nodetype="expression">
+
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-vi-elbo-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b)
+</figcaption>
+</figure>
+</div>
+</div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-vi-elbo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;2: ELBO rises monotonically during VI optimisation.
@@ -468,19 +734,16 @@ Figure&nbsp;2: ELBO rises monotonically during VI optimisation.
 </figure>
 </div>
 </div>
-</div>
-<div id="elbo-verification" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.special <span class="im">import</span> logsumexp</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># True log evidence via numerical integration</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>z_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">10000</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>dz <span class="op">=</span> z_grid[<span class="dv">1</span>] <span class="op">-</span> z_grid[<span class="dv">0</span>]</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>log_joint <span class="op">=</span> stats.norm.logpdf(z_grid, x_obs, sigma_l) <span class="op">+</span> stats.norm.logpdf(z_grid, <span class="dv">0</span>, <span class="dv">1</span>)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>log_evidence_numerical <span class="op">=</span> logsumexp(log_joint) <span class="op">+</span> np.log(dz)</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"True log p(x) (numerical): </span><span class="sc">{</span>log_evidence_numerical<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Final ELBO:                </span><span class="sc">{</span>history[<span class="op">-</span><span class="dv">1</span>, <span class="dv">2</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Difference:                </span><span class="sc">{</span><span class="bu">abs</span>(log_evidence_numerical <span class="op">-</span> history[<span class="op">-</span><span class="dv">1</span>, <span class="dv">2</span>])<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="elbo-verification" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># True log evidence via numerical integration</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>z_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">10000</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>dz <span class="op">=</span> z_grid[<span class="dv">1</span>] <span class="op">-</span> z_grid[<span class="dv">0</span>]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>log_joint <span class="op">=</span> stats.norm.logpdf(z_grid, x_obs, sigma_l) <span class="op">+</span> stats.norm.logpdf(z_grid, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>log_evidence_numerical <span class="op">=</span> logsumexp(log_joint) <span class="op">+</span> np.log(dz)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"True log p(x) (numerical): </span><span class="sc">{</span>log_evidence_numerical<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Final ELBO:                </span><span class="sc">{</span>history[<span class="op">-</span><span class="dv">1</span>][<span class="st">'elbo'</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Difference:                </span><span class="sc">{</span><span class="bu">abs</span>(log_evidence_numerical <span class="op">-</span> history[<span class="op">-</span><span class="dv">1</span>][<span class="st">'elbo'</span>])<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>True log p(x) (numerical): -2.0289
 Final ELBO:                -2.0289
@@ -512,6 +775,17 @@ Jamil, Umar. 2023. <em><span class="nocase">Variational Autoencoder - Model, ELB
 Bogossian, Andreas. 2026. <span>“Variational Inference &amp; the
 ELBO.”</span> April 2. <a href="https://andreasbogossian.com/posts/evidence-lower-bound/">https://andreasbogossian.com/posts/evidence-lower-bound/</a>.
 </div></div></section></div></main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6Ilxudmlld29mIGl0ZXIgPSBJbnB1dHMucmFuZ2UoXG4gIFsxLCA0MF0sXG4gIHsgdmFsdWU6IDEsIHN0ZXA6IDEsIGxhYmVsOiBcIlZJIGl0ZXJhdGlvblwiIH1cbilcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMiIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6Ilxuc25hcCA9IGhpc3RvcnlbaXRlciAtIDFdXG5cbnpfdmFscyA9IEFycmF5LmZyb20oe2xlbmd0aDogNTAwfSwgKF8sIGkpID0+IC0zICsgaSAqIDcgLyA0OTkpXG5cbmZ1bmN0aW9uIG5vcm1hbFBERih6QXJyLCBtdSwgc2lnbWEpIHtcbiAgcmV0dXJuIHpBcnIubWFwKHppID0+XG4gICAgTWF0aC5leHAoLTAuNSAqICgoemkgLSBtdSkgLyBzaWdtYSkgKiogMikgLyAoc2lnbWEgKiBNYXRoLnNxcnQoMiAqIE1hdGguUEkpKVxuICApXG59XG5cbnRydWVfY3VydmUgPSB6X3ZhbHMubWFwKCh6aSwgaSkgPT4gKHtcbiAgejogemksXG4gIHk6IG5vcm1hbFBERih6X3ZhbHMsIG11X3Bvc3QsIHNpZ19wb3N0KVtpXSxcbn0pKVxuXG5xX2N1cnZlID0gel92YWxzLm1hcCgoemksIGkpID0+ICh7XG4gIHo6IHppLFxuICB5OiBub3JtYWxQREYoel92YWxzLCBzbmFwLm11X3EsIHNuYXAuc3EpW2ldLFxufSkpXG5cblBsb3QucGxvdCh7XG4gIHdpZHRoOiA3MDAsXG4gIGhlaWdodDogMzYwLFxuICBtYXJnaW5MZWZ0OiA1MCxcbiAgeDogeyBsYWJlbDogXCJ6XCIsIGRvbWFpbjogWy0zLCA0XSB9LFxuICB5OiB7IGxhYmVsOiBcImRlbnNpdHlcIiB9LFxuICBtYXJrczogW1xuICAgIFBsb3QubGluZSh0cnVlX2N1cnZlLCB7XG4gICAgICB4OiBcInpcIiwgeTogXCJ5XCIsXG4gICAgICBzdHJva2U6IFwic3RlZWxibHVlXCIsIHN0cm9rZVdpZHRoOiAyLjUsIHN0cm9rZURhc2hhcnJheTogXCI2IDNcIixcbiAgICB9KSxcbiAgICBQbG90LmxpbmUocV9jdXJ2ZSwge1xuICAgICAgeDogXCJ6XCIsIHk6IFwieVwiLFxuICAgICAgc3Ryb2tlOiBcImRhcmtvcmFuZ2VcIiwgc3Ryb2tlV2lkdGg6IDIuNSxcbiAgICB9KSxcbiAgICBQbG90LnJ1bGVYKFttdV9wb3N0XSwge1xuICAgICAgc3Ryb2tlOiBcInN0ZWVsYmx1ZVwiLCBzdHJva2VEYXNoYXJyYXk6IFwiNCAzXCIsIHN0cm9rZU9wYWNpdHk6IDAuNSxcbiAgICB9KSxcbiAgICBQbG90LnJ1bGVYKFtzbmFwLm11X3FdLCB7XG4gICAgICBzdHJva2U6IFwiZGFya29yYW5nZVwiLCBzdHJva2VEYXNoYXJyYXk6IFwiNCAzXCIsIHN0cm9rZU9wYWNpdHk6IDAuNSxcbiAgICB9KSxcbiAgICBQbG90LnRleHQoXG4gICAgICBbeyB6OiBtdV9wb3N0ICsgMC4wOCwgbGFiZWw6IGDOvCogPSAke211X3Bvc3QudG9GaXhlZCgyKX0sICDPgyogPSAke3NpZ19wb3N0LnRvRml4ZWQoMil9YCB9XSxcbiAgICAgIHsgeDogXCJ6XCIsIHk6IDAuODgsIHRleHQ6IFwibGFiZWxcIiwgZm9udFNpemU6IDEyLCBmaWxsOiBcInN0ZWVsYmx1ZVwiLCB0ZXh0QW5jaG9yOiBcInN0YXJ0XCIgfVxuICAgICksXG4gICAgUGxvdC50ZXh0KFxuICAgICAgW3sgejogc25hcC5tdV9xICsgMC4wOCwgbGFiZWw6IGDOvHEgPSAke3NuYXAubXVfcS50b0ZpeGVkKDIpfSwgIM+DcSA9ICR7c25hcC5zcS50b0ZpeGVkKDIpfWAgfV0sXG4gICAgICB7IHg6IFwielwiLCB5OiAwLjc4LCB0ZXh0OiBcImxhYmVsXCIsIGZvbnRTaXplOiAxMiwgZmlsbDogXCJkYXJrb3JhbmdlXCIsIHRleHRBbmNob3I6IFwic3RhcnRcIiB9XG4gICAgKSxcbiAgXSxcbn0pXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTMiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJcbmxsX2RhdGEgPSBoaXN0b3J5LnNsaWNlKDAsIDQwKS5tYXAoZCA9PiAoeyBpdGVyOiBkLml0ZXIsIGVsYm86IGQuZWxibyB9KSlcblxuUGxvdC5wbG90KHtcbiAgd2lkdGg6IDcwMCxcbiAgaGVpZ2h0OiAyMDAsXG4gIG1hcmdpbkxlZnQ6IDYwLFxuICB4OiB7IGxhYmVsOiBcIml0ZXJhdGlvblwiIH0sXG4gIHk6IHsgbGFiZWw6IFwiRUxCT1wiIH0sXG4gIG1hcmtzOiBbXG4gICAgUGxvdC5saW5lKGxsX2RhdGEsIHtcbiAgICAgIHg6IFwiaXRlclwiLCB5OiBcImVsYm9cIiwgc3Ryb2tlOiBcInN0ZWVsYmx1ZVwiLCBzdHJva2VXaWR0aDogMixcbiAgICB9KSxcbiAgICBQbG90LnJ1bGVYKFtpdGVyXSwge1xuICAgICAgc3Ryb2tlOiBcImRhcmtvcmFuZ2VcIiwgc3Ryb2tlT3BhY2l0eTogMC40LCBzdHJva2VEYXNoYXJyYXk6IFwiNCAyXCIsXG4gICAgfSksXG4gICAgUGxvdC5kb3QoW2xsX2RhdGFbaXRlciAtIDFdXSwge1xuICAgICAgeDogXCJpdGVyXCIsIHk6IFwiZWxib1wiLCBmaWxsOiBcImRhcmtvcmFuZ2VcIiwgcjogNSxcbiAgICB9KSxcbiAgXSxcbn0pXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ2l0ZXInKSJ9XX0=
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../posts/evidence-lower-bound";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "../..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -931,7 +1205,7 @@ ELBO.”</span> April 2. <a href="https://andreasbogossian.com/posts/evidence-lo
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
     <li class="nav-item compact">
-    <a class="nav-link" href="https://www.linkedin.com/in/bogo9/">
+    <a class="nav-link" href="https://www.linkedin.com/in/andreas-bogossian/">
       <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
 </i> 
     </a>
@@ -946,38 +1220,6 @@ ELBO.”</span> April 2. <a href="https://andreasbogossian.com/posts/evidence-lo
     </div>
   </div>
 </footer>
-<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
-(function() {
-  let previousOnload = window.onload;
-  window.onload = () => {
-    if (previousOnload) {
-      previousOnload();
-    }
-    lightboxQuarto.on('slide_before_load', (data) => {
-      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
-      const href = trigger.getAttribute('href');
-      if (href !== null) {
-        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
-        if (imgEl !== null) {
-          const srcAttr = imgEl.getAttribute("src");
-          if (srcAttr && srcAttr.startsWith("data:")) {
-            slideConfig.href = srcAttr;
-          }
-        }
-      } 
-    });
-  
-    lightboxQuarto.on('slide_after_load', (data) => {
-      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(slideNode);
-      }
-    });
-  
-  };
-  
-})();
-          </script>
 
 
 

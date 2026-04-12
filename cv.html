@@ -76,7 +76,7 @@ ul.task-list li input[type="checkbox"] {
 
 <link rel="stylesheet" href="custom.css">
 <meta property="og:title" content="Andreas Bogossian">
-<meta property="og:description" content="Machine Learning · Operations Research · Software">
+<meta property="og:description" content="Machine Learning · Software">
 <meta property="og:site_name" content="Andreas Bogossian">
 </head>
 
@@ -100,6 +100,10 @@ ul.task-list li input[type="checkbox"] {
   <li class="nav-item">
     <a class="nav-link" href="./blog.html"> 
 <span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./publications.html"> 
+<span class="menu-text">Publications</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./cv.html" aria-current="page"> 
@@ -129,14 +133,14 @@ ul.task-list li input[type="checkbox"] {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-    <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="cv.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></div>
+    <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="cv.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Andreas Bogossian</h1>
-<p class="subtitle lead">Machine Learning · Operations Research · Software</p>
+<p class="subtitle lead">Machine Learning · Software</p>
 </div>
 
 
@@ -153,24 +157,82 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<p>M.Sc. student at Aalto University specialising in machine learning and mathematics. I build systems at the intersection of math and production-quality software.</p>
+<p><a href="https://github.com/AJBogo9">GitHub</a> · <a href="https://www.linkedin.com/in/bogo9/">LinkedIn</a> · <a href="https://andreasbogossian.com">andreasbogossian.com</a></p>
 <section id="education" class="level2">
 <h2 class="anchored" data-anchor-id="education">Education</h2>
 <p><strong>Master of Science — Machine Learning, Data Science and Artificial Intelligence</strong><br>
 <em>Aalto University</em> · 2025–2027<br>
-Minor in Operations Research</p>
+</p>
 <p><strong>Bachelor of Science — Computer Science</strong><br>
 <em>Aalto University</em> · Sep 2023–Jan 2026<br>
 Minor in Mathematics</p>
+<p>Relevant coursework: Machine Learning, Bayesian Data Analysis, Reinforcement Learning, Stochastic Processes, Prediction and Time Series Analysis, Introduction to Optimization, Numerical Analysis, Linear Algebra, Programming Parallel Computers, Databases, Theory of Computation, Software Engineering</p>
+</section>
+<section id="skills" class="level2">
+<h2 class="anchored" data-anchor-id="skills">Skills</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Category</th>
+<th>Technologies</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Languages</td>
+<td>Python, R, TypeScript, Scala, C</td>
+</tr>
+<tr class="even">
+<td>ML / Data</td>
+<td>scikit-learn, PyTorch, pandas, NumPy, brms, ggplot2</td>
+</tr>
+<tr class="odd">
+<td>Web &amp; Backend</td>
+<td>React, Next.js, Bun, PostgreSQL</td>
+</tr>
+<tr class="even">
+<td>Infrastructure</td>
+<td>Docker, Kubernetes, Terraform, Google Cloud, Flux CD</td>
+</tr>
+<tr class="odd">
+<td>Tools</td>
+<td>Git, Ubuntu, Quarto</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="publications" class="level2">
+<h2 class="anchored" data-anchor-id="publications">Publications</h2>
+<p><strong>Knowledge Graph Enhanced Recommender Systems</strong><br>
+<em>Aalto University</em> · Sep 2025 · <em>Graded 5/5 (Excellent)</em><br>
+Bachelor’s thesis comparing traditional recommendation algorithms with knowledge graph-based approaches (graph neural networks and knowledge graph embeddings), analysing the strengths and weaknesses and optimal use cases for each method.<br>
+<a href="https://aaltodoc.aalto.fi/server/api/core/bitstreams/d141fd14-5b38-475d-a149-429aa3f8812b/content">Read thesis</a></p>
+</section>
+<section id="projects" class="level2">
+<h2 class="anchored" data-anchor-id="projects">Projects</h2>
+<p><strong>Activity Challenge Telegram Bot</strong> · Dec 2025–Jan 2026<br>
+Production Telegram bot running guild-based fitness competitions across Aalto university societies. Features a point system based on the 2024 Physical Activity Compendium, multi-step conversation flows for activity logging, a React/Vite analytics dashboard, and full IaC deployment on Kubernetes (Talos OS) with Terraform and Flux CD.<br>
+<a href="https://github.com/AJBogo9/activity-challenge-bot">GitHub</a></p>
+<p><strong>Hierarchical Bayesian Analysis of Aviation Safety</strong><br>
+Investigated fatality rate patterns across aircraft manufacturers using hierarchical Bayesian models in R with brms. Partial pooling models revealed persistent manufacturer-level safety differences despite industry standardisation.<br>
+<a href="https://github.com/AJBogo9/bayesian-fatality-analysis">GitHub</a></p>
+<p><strong>iPhone Premium Analysis: Hardware vs.&nbsp;Price</strong><br>
+Regression study assessing whether Apple devices are priced above hardware-justified levels. Tested linear regression, decision trees, random forests and neural networks in Python. The report concludes that all Apple models are priced above predicted hardware value.<br>
+<a href="https://github.com/AJBogo9/phone-price-prediction">GitHub</a></p>
 </section>
 <section id="experience" class="level2">
 <h2 class="anchored" data-anchor-id="experience">Experience</h2>
 <p><strong>Full Stack Developer</strong> · Droppe <em>(Internship, part-time)</em><br>
 Sep 2024–May 2025 · Helsinki, Finland</p>
 <ul>
-<li>Optimized data pipeline with caching, reducing query costs by 37×</li>
-<li>Designed a customized analytics schema to surface relevant data for developers</li>
-<li>Built a no-code filtering tool for data visualization</li>
-<li>Presented final product to ~80 course staff and students</li>
+<li>Optimised data pipeline with caching, reducing query costs by 37×</li>
+<li>Designed a customised analytics schema to surface relevant data for developers</li>
+<li>Built a no-code filtering tool for data visualisation</li>
 </ul>
 <p><strong>Logistics Assistant</strong> · Viking Line <em>(Seasonal)</em><br>
 Jun 2024–Aug 2024 · Finland</p>
@@ -178,24 +240,11 @@ Jun 2024–Aug 2024 · Finland</p>
 <li>Served customers across three ships in English, Swedish and Finnish</li>
 </ul>
 </section>
-<section id="publications" class="level2">
-<h2 class="anchored" data-anchor-id="publications">Publications</h2>
-<p><strong>Knowledge Graph Enhanced Recommender Systems</strong><br>
-<em>Aaltodoc</em> · Sep 2025<br>
-<a href="https://aaltodoc.aalto.fi/server/api/core/bitstreams/d141fd14-5b38-475d-a149-429aa3f8812b/content">View publication</a></p>
-</section>
-<section id="projects" class="level2">
-<h2 class="anchored" data-anchor-id="projects">Projects</h2>
-<p><strong>Activity Challenge Telegram Bot</strong><br>
-Dec 2025–Jan 2026<br>
-A Telegram bot tracking activity competition scores among Aalto university guilds.<br>
-<a href="https://github.com/AJBogo9/activity-challenge-bot">GitHub</a></p>
-</section>
 <section id="honors-awards" class="level2">
 <h2 class="anchored" data-anchor-id="honors-awards">Honors &amp; Awards</h2>
 <p><strong>Accenture Software Quality Award — Finalist</strong><br>
 <em>Accenture</em> · May 2025<br>
-Top 3 of 19 teams, awarded for software implementation quality. Associated with Aalto University.</p>
+Top 3 of 19 teams at Aalto University, recognized for software implementation quality.</p>
 </section>
 <section id="volunteering" class="level2">
 <h2 class="anchored" data-anchor-id="volunteering">Volunteering</h2>
@@ -230,10 +279,6 @@ Top 3 of 19 teams, awarded for software implementation quality. Associated with 
 </tr>
 </tbody>
 </table>
-</section>
-<section id="links" class="level2">
-<h2 class="anchored" data-anchor-id="links">Links</h2>
-<p><a href="https://github.com/AJBogo9">GitHub</a> · <a href="https://www.linkedin.com/in/bogo9/">LinkedIn</a> · <a href="https://andreasbogossian.com">andreasbogossian.com</a></p>
 
 
 </section>
@@ -658,7 +703,7 @@ Top 3 of 19 teams, awarded for software implementation quality. Associated with 
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
     <li class="nav-item compact">
-    <a class="nav-link" href="https://www.linkedin.com/in/bogo9/">
+    <a class="nav-link" href="https://www.linkedin.com/in/andreas-bogossian/">
       <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
 </i> 
     </a>
