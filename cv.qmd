@@ -1,64 +1,99 @@
 ---
 title: "Andreas Bogossian"
-subtitle: "Machine Learning · Operations Research · Software" 
+subtitle: "Machine Learning · Software"
 page-layout: article
 title-block-banner: false
-toc: false
 format:
-  html: default
-  pdf: default
+  html:
+    toc: false
+  typst:
+    output-file: "cv.pdf"
 ---
+
+M.Sc. student at Aalto University specialising in machine learning and mathematics. I build systems at the intersection of math and production-quality software.
+
+[GitHub](https://github.com/AJBogo9) · [LinkedIn](https://www.linkedin.com/in/bogo9/) · [andreasbogossian.com](https://andreasbogossian.com)
 
 ## Education
 
 **Master of Science — Machine Learning, Data Science and Artificial Intelligence** \
 *Aalto University* · 2025–2027 \
-Minor in Operations Research
 
 **Bachelor of Science — Computer Science** \
 *Aalto University* · Sep 2023–Jan 2026 \
 Minor in Mathematics
+
+Relevant coursework: Machine Learning, Bayesian Data Analysis, Reinforcement
+Learning, Stochastic Processes, Prediction and Time Series Analysis,
+Introduction to Optimization, Numerical Analysis, Linear Algebra,
+Programming Parallel Computers, Databases, Theory of Computation,
+Software Engineering
+
+## Skills
+
+| Category | Technologies |
+|---|---|
+| Languages | Python, R, TypeScript, Scala, C |
+| ML / Data | scikit-learn, PyTorch, pandas, NumPy, brms, ggplot2 |
+| Web & Backend | React, Next.js, Bun, PostgreSQL |
+| Infrastructure | Docker, Kubernetes, Terraform, Google Cloud, Flux CD |
+| Tools | Git, Ubuntu, Quarto |
+
+## Publications
+
+**Knowledge Graph Enhanced Recommender Systems** \
+*Aalto University* · Sep 2025 · *Graded 5/5 (Excellent)* \
+Bachelor's thesis comparing traditional recommendation algorithms with knowledge
+graph-based approaches (graph neural networks and knowledge graph embeddings),
+analysing the strengths and weaknesses and optimal use cases for each method. \
+[Read thesis](https://aaltodoc.aalto.fi/server/api/core/bitstreams/d141fd14-5b38-475d-a149-429aa3f8812b/content)
+
+## Projects
+
+**Activity Challenge Telegram Bot** · Dec 2025–Jan 2026 \
+Production Telegram bot running guild-based fitness competitions across Aalto
+university societies. Features a point system based on the 2024 Physical Activity
+Compendium, multi-step conversation flows for activity logging, a React/Vite
+analytics dashboard, and full IaC deployment on Kubernetes (Talos OS) with
+Terraform and Flux CD. \
+[GitHub](https://github.com/AJBogo9/activity-challenge-bot)
+
+**Hierarchical Bayesian Analysis of Aviation Safety** \
+Investigated fatality rate patterns across aircraft manufacturers using hierarchical
+Bayesian models in R with brms. Partial pooling models revealed persistent
+manufacturer-level safety differences despite industry standardisation. \
+[GitHub](https://github.com/AJBogo9/bayesian-fatality-analysis)
+
+**iPhone Premium Analysis: Hardware vs. Price** \
+Regression study assessing whether Apple devices are priced above hardware-justified
+levels. Tested linear regression, decision trees, random forests and neural networks
+in Python. The report concludes that all Apple models are priced above predicted hardware value. \
+[GitHub](https://github.com/AJBogo9/phone-price-prediction)
 
 ## Experience
 
 **Full Stack Developer** · Droppe *(Internship, part-time)* \
 Sep 2024–May 2025 · Helsinki, Finland
 
-- Optimized data pipeline with caching, reducing query costs by 37×
-- Designed a customized analytics schema to surface relevant data for developers
-- Built a no-code filtering tool for data visualization
-- Presented final product to ~80 course staff and students
+- Optimised data pipeline with caching, reducing query costs by 37×
+- Designed a customised analytics schema to surface relevant data for developers
+- Built a no-code filtering tool for data visualisation
 
 **Logistics Assistant** · Viking Line *(Seasonal)* \
 Jun 2024–Aug 2024 · Finland
 
 - Served customers across three ships in English, Swedish and Finnish
 
-
-## Publications
-
-**Knowledge Graph Enhanced Recommender Systems** \
-*Aaltodoc* · Sep 2025 \
-[View publication](https://aaltodoc.aalto.fi/server/api/core/bitstreams/d141fd14-5b38-475d-a149-429aa3f8812b/content)
-
-## Projects
-
-**Activity Challenge Telegram Bot** \
-Dec 2025–Jan 2026 \
-A Telegram bot tracking activity competition scores among Aalto university guilds. \
-[GitHub](https://github.com/AJBogo9/activity-challenge-bot)
-
 ## Honors & Awards
 
 **Accenture Software Quality Award — Finalist** \
 *Accenture* · May 2025 \
-Top 3 of 19 teams, awarded for software implementation quality. Associated with Aalto University.
+Top 3 of 19 teams at Aalto University, recognized for software implementation quality.
 
 ## Volunteering
 
 **Board Member** · Aalto Triathlon Club · Sep 2024–Present \
 **Sports Committee Board Member** · Tietokilta · Jan 2025–Present
-
 
 ## Languages
 
@@ -68,7 +103,3 @@ Top 3 of 19 teams, awarded for software implementation quality. Associated with 
 | Finnish | Native or bilingual |
 | Swedish | Limited working |
 | Chinese (Mandarin) | Elementary |
-
-## Links
-
-[GitHub](https://github.com/AJBogo9) · [LinkedIn](https://www.linkedin.com/in/bogo9/) · [andreasbogossian.com](https://andreasbogossian.com)
