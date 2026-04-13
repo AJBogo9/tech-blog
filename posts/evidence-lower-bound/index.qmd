@@ -53,7 +53,7 @@ $$
 p(\mathbf{x}) = \int p(\mathbf{x} \mid \mathbf{z}) p(\mathbf{z}) d \mathbf{z}
 $$
 
-is often intractable. When something is intractable, it means that it is theoretically solvable but can't be solved in a practical amount of time or with practical computational resources. 
+is often intractable [@bishop2006pattern]. When something is intractable, it means that it is theoretically solvable but can't be solved in a practical amount of time or with practical computational resources. 
 
 ## Variational Inference: Approximating the Posterior
 
