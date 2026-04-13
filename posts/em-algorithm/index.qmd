@@ -201,9 +201,9 @@ plt.show()
 There are 220 exam scores in the dataset sampled from two overlapping Gaussian distributions. After sampling the exam scores, we shuffle the scores so that the algorithm can't distinguish what scores come from what distribution. We include the original labels only for testing purposes to visualize how well the EM algorithm is able to find the correct labels. The EM algorithm follows roughly the following steps:
 
 1. Start with a rough guess at where the two groups are
-2. For each data point, calculate the probability it belongs to group 1 vs group 2 — don't commit to one, hold both simultaneously
-3. Use those probabilities as soft weights to refit the distributions — points clearly in one group pull hard on that group's mean, uncertain points contribute a little to both
-4. Now you have slightly better distributions, which give slightly better probabilities next time
+2. For each data point, calculate the probability it belongs to group 1 vs group 2
+3. Use those probabilities as soft weights to refit the distributions. Points clearly in one group pull hard on that group's mean, uncertain points contribute a little to both
+4. After this we have slightly better distributions, which give slightly better probabilities next time
 5. Repeat until both stabilize
 
 
@@ -250,7 +250,7 @@ def em_gmm(X, K=2, n_iter=30, seed=0):
             "sigma": sigma.tolist(),
             "pi":    pi.tolist(),
             "ll":    round(ll, 3),
-            "r":     r.tolist(),   # full responsibility matrix — used for rug colouring
+            "r":     r.tolist(),   # full responsibility matrix. Used for rug colouring
         })
 
     return history
@@ -258,7 +258,7 @@ def em_gmm(X, K=2, n_iter=30, seed=0):
 
 history = em_gmm(X, K=2, n_iter=30)
 
-# Bridge to OJS — these names become available in all ojs cells below
+# Bridge to OJS
 ojs_define(
     history     = history,
     X_data      = X.tolist(),
