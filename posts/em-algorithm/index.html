@@ -557,7 +557,7 @@ Q(\theta \mid \theta^{(t)}) = \sum_{i=1}^{n} \sum_{k=1}^{K}
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>true_labels <span class="op">=</span> true_labels[idx]</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(X)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="a836b731" class="cell" data-execution_count="2">
+<div id="e485b119" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -587,9 +587,9 @@ Q(\theta \mid \theta^{(t)}) = \sum_{i=1}^{n} \sum_{k=1}^{K}
 <p>There are 220 exam scores in the dataset sampled from two overlapping Gaussian distributions. After sampling the exam scores, we shuffle the scores so that the algorithm can’t distinguish what scores come from what distribution. We include the original labels only for testing purposes to visualize how well the EM algorithm is able to find the correct labels. The EM algorithm follows roughly the following steps:</p>
 <ol type="1">
 <li>Start with a rough guess at where the two groups are</li>
-<li>For each data point, calculate the probability it belongs to group 1 vs group 2 — don’t commit to one, hold both simultaneously</li>
-<li>Use those probabilities as soft weights to refit the distributions — points clearly in one group pull hard on that group’s mean, uncertain points contribute a little to both</li>
-<li>Now you have slightly better distributions, which give slightly better probabilities next time</li>
+<li>For each data point, calculate the probability it belongs to group 1 vs group 2</li>
+<li>Use those probabilities as soft weights to refit the distributions. Points clearly in one group pull hard on that group’s mean, uncertain points contribute a little to both</li>
+<li>After this we have slightly better distributions, which give slightly better probabilities next time</li>
 <li>Repeat until both stabilize</li>
 </ol>
 </section>
@@ -634,7 +634,7 @@ Q(\theta \mid \theta^{(t)}) = \sum_{i=1}^{n} \sum_{k=1}^{K}
 <span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>            <span class="st">"sigma"</span>: sigma.tolist(),</span>
 <span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>            <span class="st">"pi"</span>:    pi.tolist(),</span>
 <span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>            <span class="st">"ll"</span>:    <span class="bu">round</span>(ll, <span class="dv">3</span>),</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>            <span class="st">"r"</span>:     r.tolist(),   <span class="co"># full responsibility matrix — used for rug colouring</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>            <span class="st">"r"</span>:     r.tolist(),   <span class="co"># full responsibility matrix. Used for rug colouring</span></span>
 <span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>        })</span>
 <span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> history</span>
@@ -642,7 +642,7 @@ Q(\theta \mid \theta^{(t)}) = \sum_{i=1}^{n} \sum_{k=1}^{K}
 <span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>history <span class="op">=</span> em_gmm(X, K<span class="op">=</span><span class="dv">2</span>, n_iter<span class="op">=</span><span class="dv">30</span>)</span>
 <span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Bridge to OJS — these names become available in all ojs cells below</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Bridge to OJS</span></span>
 <span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>ojs_define(</span>
 <span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    history     <span class="op">=</span> history,</span>
 <span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    X_data      <span class="op">=</span> X.tolist(),</span>
