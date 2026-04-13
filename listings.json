@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
       "/posts/a-star/index.html",
       "/posts/KL-divergence/index.html"
@@ -10,6 +11,7 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
       "/posts/a-star/index.html",
       "/posts/KL-divergence/index.html"

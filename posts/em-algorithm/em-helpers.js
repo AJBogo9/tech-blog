@@ -23,8 +23,12 @@ export function makeCurve(xs, mu, sigma, pi, label) {
 /**
  * Build rug-mark data: one entry per data point with r0 for colour mapping.
  */
-export function makeResp(X_data, r_matrix) {
-  return X_data.map((x, i) => ({ x, r0: r_matrix[i][0] }));
+export function makeResp(X_data, r_matrix, true_labels = null) {
+  return X_data.map((x, i) => ({
+    x,
+    r0: r_matrix[i][0],
+    trueLabel: true_labels ? true_labels[i] : null,
+  }));
 }
 
 /**
