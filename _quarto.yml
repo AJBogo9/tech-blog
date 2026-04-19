@@ -16,7 +16,7 @@ website:
     background: "dark"
     foreground: "light"
     left: "© 2026 Andreas Bogossian"
-    center: "Built with [Quarto](https://quarto.org)"
+    center: "Built with [Quarto](https://quarto.org) · [Source](https://github.com/AJBogo9/tech-blog)"
     right:
       - icon: linkedin
         href: https://www.linkedin.com/in/andreas-bogossian/
