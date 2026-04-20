@@ -10,6 +10,9 @@ website:
   site-url: "https://andreasbogossian.com"
   favicon: bell-curve.svg
   search: true
+  page-navigation: false
+  back-to-top-navigation: false
+  404: 404.qmd
   open-graph: true
   page-footer:
     border: true
