@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#222831"/>
+
+  <!-- Subtle grid lines -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="#ffffff08" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="#ffffff08" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="#ffffff08" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="#ffffff08" stroke-width="1"/>
+
+  <!-- Bell curve (large, right side, decorative) -->
+  <g transform="translate(720, 80) scale(4.5)">
+    <path d="M 10,85 Q 20,85 25,75 Q 30,60 35,45 Q 40,25 50,20 Q 60,25 65,45 Q 70,60 75,75 Q 80,85 90,85"
+      fill="none"
+      stroke="#ffffff18"
+      stroke-width="4"
+      stroke-linecap="round"/>
+    <line x1="10" y1="85" x2="90" y2="85"
+      stroke="#ffffff18"
+      stroke-width="2"
+      stroke-linecap="round"/>
+  </g>
+
+  <!-- Name -->
+  <text x="80" y="260"
+    font-family="Georgia, serif"
+    font-size="80"
+    font-weight="bold"
+    fill="#ffffff">Andreas Bogossian</text>
+
+  <!-- Divider -->
+  <line x1="80" y1="300" x2="520" y2="300" stroke="#ffffff40" stroke-width="2"/>
+
+  <!-- Tagline -->
+  <text x="80" y="360"
+    font-family="Georgia, serif"
+    font-size="36"
+    fill="#ffffffaa">Notes on challenging technical things</text>
+
+  <!-- URL -->
+  <text x="80" y="500"
+    font-family="monospace"
+    font-size="26"
+    fill="#ffffff55">andreasbogossian.com</text>
+</svg>

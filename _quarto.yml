@@ -10,7 +10,8 @@ website:
   site-url: "https://andreasbogossian.com"
   favicon: bell-curve.svg
   search: true
-  open-graph: true
+  open-graph:
+    image: og-image.png
   page-footer:
     border: true
     background: "dark"
