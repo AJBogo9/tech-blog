@@ -10,7 +10,7 @@ categories:
 bibliography: references.bib
 ---
 
-Let's start from a practical example. Let's say that a teacher has their students choose between a difficult exam or an easier exam. When the exam papers are collected, the teacher accidentally messes up the pares and doesn't know which scores are from the difficult exam and which are from the easer one. Thus the teacher is left with a pile of 220 unlabelled exam scores. 
+Let's start from a practical example. Let's say that a teacher has their 220 students choose between a difficult exam or an easier exam. When the exam papers are collected, the teacher accidentally messes up the papers and doesn't know which scores are from the difficult exam and which are from the easer one. Thus the teacher is left with a pile of 220 unlabelled exam scores. 
 
 Now what would be the best way to distinguish which exam result comes from which exam? One solution would be to just draw a line where e.g. everyone under 67 points on the exam took the more difficult exam and everyone over took the easier one. The problem with this approach is that the point distributions overlap. This means that some students achieving great points on the more difficult exam would be incorrectly labelled as the worst performing people on the easier exam. 
 
