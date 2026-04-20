@@ -1,6 +1,6 @@
 [
   {
-    "listing": "/blog.html",
+    "listing": "/index.html",
     "items": [
       "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
@@ -9,7 +9,7 @@
     ]
   },
   {
-    "listing": "/index.html",
+    "listing": "/blog.html",
     "items": [
       "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
