@@ -10,3 +10,5 @@ listing:
 page-layout: full
 title-block-banner: false
 ---
+
+I write about concepts I'm working to understand, mostly machine learning, statistics, and algorithms.
