@@ -66,6 +66,9 @@ format:
       method: katex
       url: "katex/"
     lightbox: true
+    include-after-body:
+      text: |
+        <script src="https://instant.page/5.2.0/instantpage.js" type="module" defer></script>
 
 execute:
   freeze: auto
