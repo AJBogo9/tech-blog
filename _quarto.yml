@@ -3,7 +3,6 @@ project:
   output-dir: _site
   resources:
     - CNAME
-    - katex/
 
 website:
   title: "Andreas Bogossian"
@@ -62,9 +61,7 @@ format:
     link-external-newwindow: true
     fig-responsive: true
     fig-lazy-loading: true
-    html-math-method:
-      method: katex
-      url: "katex/"
+    html-math-method: katex
     lightbox: true
     include-after-body:
       text: |

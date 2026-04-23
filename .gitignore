@@ -14,15 +14,6 @@ __pycache__/
 *.pyc
 .venv/
 
-# KaTeX vendored dependency (keep only minified files and fonts)
-katex/katex.js
-katex/katex.mjs
-katex/katex.css
-katex/katex-swap.css
-katex/katex-swap.min.css
-katex/README.md
-katex/contrib/
-
 # Editor
 .DS_Store
 .vscode/
