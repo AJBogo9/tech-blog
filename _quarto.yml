@@ -4,6 +4,7 @@ project:
   resources:
     - CNAME
     - robots.txt
+    - instantpage.js
 
 website:
   title: "Andreas Bogossian"
@@ -64,9 +65,14 @@ format:
     fig-lazy-loading: true
     html-math-method: katex
     lightbox: true
+    include-in-header:
+      text: |
+        <link rel="preconnect" href="https://cdn.jsdelivr.net">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     include-after-body:
       text: |
-        <script src="https://instant.page/5.2.0/instantpage.js" type="module" defer></script>
+        <script src="/instantpage.js" type="module"></script>
 
 execute:
   freeze: auto
