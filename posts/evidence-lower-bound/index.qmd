@@ -3,7 +3,7 @@ title: "Variational Inference & the ELBO"
 description: A step-by-step derivation of the Evidence Lower Bound (ELBO), from intractable posteriors to the reconstruction-regularisation decomposition used in VAEs.
 date: "2026-04-02"
 bibliography: references.bib
-image: thumbnail.png
+image: thumbnail.webp
 categories:
   - variational inference
   - probabilistic ML
