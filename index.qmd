@@ -1,8 +1,10 @@
 ---
 title: "Andreas Bogossian"
+description: "MSc student in Machine Learning, Data Science and AI at Aalto University. I write about ML, statistics, and algorithms."
 about:
   template: jolla
   image: profile.webp
+  image-alt: "Andreas Bogossian"
   links:
     - icon: github
       text: GitHub
@@ -17,6 +19,9 @@ about:
 page-layout: article
 title-block-banner: false
 toc: false
+include-in-header:
+  text: |
+    <link rel="preload" as="image" href="profile.webp">
 listing:
   id: recent-posts
   contents: posts

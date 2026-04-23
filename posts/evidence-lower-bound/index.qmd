@@ -4,6 +4,7 @@ description: A step-by-step derivation of the Evidence Lower Bound (ELBO), from 
 date: "2026-04-02"
 bibliography: references.bib
 image: thumbnail.webp
+image-alt: "Diagram showing the relationship between the ELBO and the log-evidence in variational inference"
 categories:
   - variational inference
   - probabilistic ML

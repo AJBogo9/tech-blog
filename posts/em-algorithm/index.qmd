@@ -3,6 +3,7 @@ title: "The EM-algorithm"
 description: "A deep dive into the Expectation-Maximisation algorithm: The method behind clustering, missing data, and probabilistic models."
 date: 2026-04-14
 image: "thumbnail.webp"
+image-alt: "Visualisation of the EM-algorithm fitting two Gaussian distributions to unlabelled data"
 categories:
   - probabilistic ML
   - algorithms
