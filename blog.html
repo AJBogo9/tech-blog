@@ -107,22 +107,8 @@ ul.task-list li input[type="checkbox"] {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 
-  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
-  <script>document.addEventListener("DOMContentLoaded", function () {
- var mathElements = document.getElementsByClassName("math");
- var macros = [];
- for (var i = 0; i < mathElements.length; i++) {
-  var texText = mathElements[i].firstChild;
-  if (mathElements[i].tagName == "SPAN") {
-   katex.render(texText.data, mathElements[i], {
-    displayMode: mathElements[i].classList.contains('display'),
-    throwOnError: false,
-    macros: macros,
-    fleqn: false
-   });
-}}});
-  </script>
-  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -271,11 +257,11 @@ window.Quarto = {
     </div>
 </div>
 <div class="list grid quarto-listing-cols-3">
-<div class="g-col-1" data-index="0" data-categories="cHJvYmFiaWxpc3RpYyUyME1MJTJDYWxnb3JpdGhtcyUyQ3ZhcmlhdGlvbmFsJTIwaW5mZXJlbmNl" data-listing-date-sort="1776114000000" data-listing-file-modified-sort="1776967355600" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3129">
+<div class="g-col-1" data-index="0" data-categories="cHJvYmFiaWxpc3RpYyUyME1MJTJDYWxnb3JpdGhtcyUyQ3ZhcmlhdGlvbmFsJTIwaW5mZXJlbmNl" data-listing-date-sort="1776114000000" data-listing-file-modified-sort="1776977388887" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="16" data-listing-word-count-sort="3129">
 <a href="./posts/em-algorithm/index.html" class="quarto-grid-link">
 <div class="quarto-grid-item card h-100 card-left">
 <p class="card-img-top">
-<img loading="lazy" src="./posts/em-algorithm/thumbnail.webp" class="thumbnail-image card-img" style="height: 150px;">
+<img loading="lazy" src="./posts/em-algorithm/thumbnail.webp" class="thumbnail-image card-img" style="height: 150px;" alt="Visualisation of the EM-algorithm fitting two Gaussian distributions to unlabelled data">
 </p>
 <div class="card-body post-contents">
 <h5 class="no-anchor card-title listing-title">
@@ -304,11 +290,11 @@ Apr 14, 2026
 </div>
 </div></a>
 </div>
-<div class="g-col-1" data-index="1" data-categories="dmFyaWF0aW9uYWwlMjBpbmZlcmVuY2UlMkNwcm9iYWJpbGlzdGljJTIwTUwlMkNkZWVwJTIwbGVhcm5pbmc=" data-listing-date-sort="1775077200000" data-listing-file-modified-sort="1776967355604" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1602">
+<div class="g-col-1" data-index="1" data-categories="dmFyaWF0aW9uYWwlMjBpbmZlcmVuY2UlMkNwcm9iYWJpbGlzdGljJTIwTUwlMkNkZWVwJTIwbGVhcm5pbmc=" data-listing-date-sort="1775077200000" data-listing-file-modified-sort="1776977390051" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1602">
 <a href="./posts/evidence-lower-bound/index.html" class="quarto-grid-link">
 <div class="quarto-grid-item card h-100 card-left">
 <p class="card-img-top">
-<img loading="lazy" src="./posts/evidence-lower-bound/thumbnail.webp" class="thumbnail-image card-img" style="height: 150px;">
+<img loading="lazy" src="./posts/evidence-lower-bound/thumbnail.webp" class="thumbnail-image card-img" style="height: 150px;" alt="Diagram showing the relationship between the ELBO and the log-evidence in variational inference">
 </p>
 <div class="card-body post-contents">
 <h5 class="no-anchor card-title listing-title">
@@ -337,11 +323,11 @@ Apr 2, 2026
 </div>
 </div></a>
 </div>
-<div class="g-col-1" data-index="2" data-categories="YWxnb3JpdGhtcyUyQ3NlYXJjaCUyQ2dyYXBoJTIwdGhlb3J5" data-listing-date-sort="1773871200000" data-listing-file-modified-sort="1776967355608" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="23" data-listing-word-count-sort="4443">
+<div class="g-col-1" data-index="2" data-categories="YWxnb3JpdGhtcyUyQ3NlYXJjaCUyQ2dyYXBoJTIwdGhlb3J5" data-listing-date-sort="1773871200000" data-listing-file-modified-sort="1776977391380" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="23" data-listing-word-count-sort="4443">
 <a href="./posts/a-star/index.html" class="quarto-grid-link">
 <div class="quarto-grid-item card h-100 card-left">
 <p class="card-img-top">
-<img loading="lazy" src="./posts/a-star/astar.webp" class="thumbnail-image card-img" style="height: 150px;">
+<img loading="lazy" src="./posts/a-star/astar.webp" class="thumbnail-image card-img" style="height: 150px;" alt="Animated visualisation of the A* pathfinding algorithm navigating a grid">
 </p>
 <div class="card-body post-contents">
 <h5 class="no-anchor card-title listing-title">

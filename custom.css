@@ -73,6 +73,22 @@ table {
   max-width: 100%;
 }
 
+/* ── Accessibility: contrast fixes ──────────────────────────────────── */
+
+.listing-category {
+  color: #b0b8c4 !important;
+}
+
+.listing-date {
+  color: #b0b8c4 !important;
+}
+
+.nav-footer,
+.nav-footer a,
+.nav-footer p {
+  color: #b0b8c4 !important;
+}
+
 /* ── Blog listing card hover ─────────────────────────────────────────── */
 
 .quarto-grid-item {
