@@ -1,3 +1,10 @@
+/* ── Font display ────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: 'bootstrap-icons';
+  font-display: swap;
+}
+
 /* ── Mobile responsiveness ───────────────────────────────────────────── */
 
 /* KaTeX / MathJax: horizontal scroll like code blocks */
