@@ -179,10 +179,8 @@ window.Quarto = {
 <link rel="stylesheet" href="../../custom.css">
 <meta property="og:title" content="A* Pathfinding Algorithm – Andreas Bogossian">
 <meta property="og:description" content="A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.">
-<meta property="og:image" content="https://andreasbogossian.com/posts/a-star/astar.png">
+<meta property="og:image" content="https://andreasbogossian.com/posts/a-star/astar.webp">
 <meta property="og:site_name" content="Andreas Bogossian">
-<meta property="og:image:height" content="368">
-<meta property="og:image:width" content="637">
 <meta name="citation_title" content="A* Pathfinding Algorithm">
 <meta name="citation_author" content="Andreas Bogossian">
 <meta name="citation_publication_date" content="2026-03-19">
@@ -339,7 +337,7 @@ f(n) = g(n) + h(n)
 h(n) = |x_1 - x_2| + |y_1 - y_2|
 </span></p>
 <p>The geometric interpretation of this is amount of grid cells that need to be navigated to go from one point to another without moving diagonally.</p>
-<div id="17379f6f" class="cell" data-execution_count="1">
+<div id="f5d88cf7" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> heuristic(a: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], b: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]) <span class="op">-&gt;</span> <span class="bu">int</span>:</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">abs</span>(a[<span class="dv">0</span>] <span class="op">-</span> b[<span class="dv">0</span>]) <span class="op">+</span> <span class="bu">abs</span>(a[<span class="dv">1</span>] <span class="op">-</span> b[<span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -347,7 +345,7 @@ h(n) = |x_1 - x_2| + |y_1 - y_2|
 <section id="main-loop" class="level3">
 <h3 class="anchored" data-anchor-id="main-loop">Main loop</h3>
 <p>The open set is a min-heap keyed on <span class="math inline">f(n)</span>. At each iteration the node with the lowest <span class="math inline">f</span> is popped. Then check if the goal has been reached. Then the third step is to expand the neighbours:</p>
-<div id="9ea56313" class="cell" data-execution_count="2">
+<div id="70381aa3" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> heapq</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> astar(</span>
@@ -392,7 +390,7 @@ h(n) = |x_1 - x_2| + |y_1 - y_2|
 </section>
 <section id="path-reconstruction" class="level3">
 <h3 class="anchored" data-anchor-id="path-reconstruction">Path reconstruction</h3>
-<div id="6ad464a1" class="cell" data-execution_count="3">
+<div id="dfd426a7" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reconstruct_path(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    came_from: <span class="bu">dict</span>[<span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>], <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>]],</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    start: <span class="bu">tuple</span>[<span class="bu">int</span>, <span class="bu">int</span>],</span>
@@ -410,7 +408,7 @@ h(n) = |x_1 - x_2| + |y_1 - y_2|
 </section>
 <section id="running-the-algorithm-on-a-2d-grid" class="level3">
 <h3 class="anchored" data-anchor-id="running-the-algorithm-on-a-2d-grid">Running the algorithm on a 2D grid</h3>
-<div id="d194b7d3" class="cell" data-execution_count="4">
+<div id="ee06810d" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> [</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>],</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>],</span>
