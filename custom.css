@@ -76,17 +76,23 @@ table {
 /* ── Accessibility: contrast fixes ──────────────────────────────────── */
 
 .listing-category {
-  color: #b0b8c4 !important;
+  color: #c8d0d8 !important;
+  opacity: 1 !important;
 }
 
 .listing-date {
-  color: #b0b8c4 !important;
+  color: #c8d0d8 !important;
+  opacity: 1 !important;
 }
 
 .nav-footer,
 .nav-footer a,
-.nav-footer p {
-  color: #b0b8c4 !important;
+.nav-footer p,
+.nav-footer .nav-footer-left,
+.nav-footer .nav-footer-center,
+.nav-footer .nav-footer-right {
+  color: #c8d0d8 !important;
+  opacity: 1 !important;
 }
 
 /* ── Blog listing card hover ─────────────────────────────────────────── */
