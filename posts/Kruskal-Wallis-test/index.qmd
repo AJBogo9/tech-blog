@@ -10,7 +10,7 @@ categories:
 bibliography: references.bib
 ---
 
-Let's say that we want to test the effects of pain management protocols. We have 45 post-surgical patients randomized to three groups: opioid-only, NSAID + nerve block and multimodal. 48 hours after their operations, each patient marks their pain on a 0–10 visual analog scale (VAS) — a continuous slider, not discrete integers. The question that the clinic is interested in is whether the three different protocols produce different pain levels or not.
+Let's say that we want to test the effects of pain management protocols. We have 45 post-surgical patients randomized to three groups: opioid-only, NSAID + nerve block and multimodal. 48 hours after their operations, each patient marks their pain on a 0–10 visual analog scale (VAS). The question that the clinic is interested in is whether the three different protocols produce different pain levels or not.
 
 ANOVA [@wiki_anova] is a popular test for testing whether group means are equal. The problem with ANOVA in the pain scale example is that the pain scores are typically right-skewed (clustering around 2-4) and with small sample sizes, the within-group variance can be inflated by some observations being at the right tail (8-10). ANOVA computes an F-statistic as a ratio of between-group variance to within-group variance. If the within group variance is inflated, ANOVA needs a larger between-group variance to detect a difference.
 
