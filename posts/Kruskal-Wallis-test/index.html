@@ -321,7 +321,7 @@ window.Quarto = {
 </header>
 
 
-<p>Let’s say that we want to test the effects of pain management protocols. We have 45 post-surgical patients randomized to three groups: opioid-only, NSAID + nerve block and multimodal. 48 hours after their operations, each patient marks their pain on a 0–10 visual analog scale (VAS) — a continuous slider, not discrete integers. The question that the clinic is interested in is whether the three different protocols produce different pain levels or not.</p>
+<p>Let’s say that we want to test the effects of pain management protocols. We have 45 post-surgical patients randomized to three groups: opioid-only, NSAID + nerve block and multimodal. 48 hours after their operations, each patient marks their pain on a 0–10 visual analog scale (VAS). The question that the clinic is interested in is whether the three different protocols produce different pain levels or not.</p>
 <p>ANOVA <span class="citation" data-cites="wiki_anova"><a href="#ref-wiki_anova" role="doc-biblioref">[1]</a></span> is a popular test for testing whether group means are equal. The problem with ANOVA in the pain scale example is that the pain scores are typically right-skewed (clustering around 2-4) and with small sample sizes, the within-group variance can be inflated by some observations being at the right tail (8-10). ANOVA computes an F-statistic as a ratio of between-group variance to within-group variance. If the within group variance is inflated, ANOVA needs a larger between-group variance to detect a difference.</p>
 <p>The Kruskal-Wallis test solves this problem. The KW test replaces raw scores with their ranks in the pooled dataset (see <a href="#fig-rank-transform" class="quarto-xref">Figure&nbsp;2</a>) and tests whether the ranks cluster by treatment. Under the null hypothesis, the ranks should equally be distributed to the groups.</p>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -467,7 +467,7 @@ Figure&nbsp;1: VAS pain scores at 48 h post-surgery for three protocols. Dashed 
 </div>
 </div>
 </div>
-<div id="05e10605" class="cell" data-execution_count="2">
+<div id="642dbbbc" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display">
 <script type="ojs-define">{"contents": [{"name": "pain_groups", "value": [[1.77, 1.79, 2.19, 1.25, 7.63, 1.29, 1.22, 8.02, 3.42, 1.27, 1.61, 1.57, 2.06, 2.41, 1.11], [1.99, 1.84, 4.26, 2.13, 3.42, 4.16, 2.03, 2.81, 3.32, 3.97, 1.8, 6.73, 4.31, 3.56, 1.82], [3.83, 2.79, 4.54, 3.5, 10.0, 4.49, 3.08, 6.08, 2.6, 2.82, 2.81, 3.35, 3.22, 2.8, 3.03]]}, {"name": "pain_labels", "value": ["Multimodal", "NSAID + nerve block", "Opioid-only"]}]}</script>
 </div>
@@ -764,7 +764,7 @@ Figure&nbsp;2: Each dot is one of the 45 patients, coloured by protocol. Drag to
 <span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>H, p_kw <span class="op">=</span> stats.kruskal(<span class="op">*</span>groups)</span>
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>F, p_anova <span class="op">=</span> stats.f_oneway(<span class="op">*</span>groups)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0107de2f" class="cell" data-execution_count="5">
+<div id="181efe4a" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Table rendering</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> HTML</span>
