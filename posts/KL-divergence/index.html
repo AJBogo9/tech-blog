@@ -65,6 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
+  margin-bottom: 0em;
 }
 .hanging-indent div.csl-entry {
   margin-left:2em;
@@ -312,7 +313,7 @@ window.Quarto = {
 </header>
 
 
-<p>When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF <span class="citation" data-cites="ziegler2019 ouyang2022">(<a href="#ref-ziegler2019" role="doc-biblioref">Ziegler et al. 2019</a>; <a href="#ref-ouyang2022" role="doc-biblioref"><span class="nocase">Ouyang et al.</span> 2022</a>)</span>.</p>
+<p>When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF <span class="citation" data-cites="ziegler2019 ouyang2022"><a href="#ref-ziegler2019" role="doc-biblioref">[1]</a>, <a href="#ref-ouyang2022" role="doc-biblioref">[2]</a></span>.</p>
 <p>Large language models like GPTs output a probability distribution over tokens at each step. They assign a likelihood for each possible next word and then append the most likely next word to the output. During training the model outputs a predicted distribution <span class="math inline">Q</span> of the most likely next words. For ensuring correct output, the distribution <span class="math inline">Q</span> needs to be compared to the true distribution <span class="math inline">P</span>. This is exactly what KL-divergence does. KL-divergence takes the original distribution and compares it to a new generated distribution and outputs a value that tells how much the two distributions differ. The closer the value is to zero, the more similar the distributions are.</p>
 <section id="theory" class="level2">
 <h2 class="anchored" data-anchor-id="theory">Theory</h2>
@@ -326,7 +327,7 @@ D_{KL}(P||Q) = \sum_k \operatorname{log}p_k\frac{p_k}{q_k}
 <p><span class="math display">
 H(P) = - \sum_k p_k \operatorname{log}p_k
 </span></p>
-<p>This is the average number of bits needed to encode samples from P using an optimal code for <span class="math inline">P</span> <span class="citation" data-cites="goodfellow2016">(<a href="#ref-goodfellow2016" role="doc-biblioref">Goodfellow et al. 2016</a>)</span>.</p>
+<p>This is the average number of bits needed to encode samples from P using an optimal code for <span class="math inline">P</span> <span class="citation" data-cites="goodfellow2016"><a href="#ref-goodfellow2016" role="doc-biblioref">[3]</a></span>.</p>
 <p>If instead if a code optimized for <span class="math inline">Q</span> was used to encode samples that came form <span class="math inline">P</span>, the average code length is the <strong>cross-entropy</strong>:</p>
 <p><span class="math display">
 H(P, Q) = - \sum_k p_k \operatorname{log}q_k
@@ -429,15 +430,15 @@ Symmetric?   False</code></pre>
 
 </section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
-<div id="ref-goodfellow2016" class="csl-entry" role="listitem">
-Goodfellow, Ian, Yoshua Bengio, and Aaron Courville. 2016. <em>Deep Learning</em>. MIT Press. <a href="https://www.deeplearningbook.org">https://www.deeplearningbook.org</a>.
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body" data-entry-spacing="0" role="list">
+<div id="ref-ziegler2019" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[1] </div><div class="csl-right-inline">D. M. Ziegler <em>et al.</em>, <span>“Fine-tuning language models from human preferences,”</span> <em>arXiv preprint arXiv:1909.08593</em>, 2019, Available: <a href="https://arxiv.org/abs/1909.08593">https://arxiv.org/abs/1909.08593</a></div>
 </div>
 <div id="ref-ouyang2022" class="csl-entry" role="listitem">
-<span class="nocase">Ouyang, Long, Jeffrey Wu, Xu Jiang, et al.</span> 2022. <span>“Training Language Models to Follow Instructions with Human Feedback.”</span> <em>arXiv Preprint arXiv:2203.02155</em>. <a href="https://arxiv.org/abs/2203.02155">https://arxiv.org/abs/2203.02155</a>.
+<div class="csl-left-margin">[2] </div><div class="csl-right-inline"><span class="nocase">L. Ouyang <em>et al.</em></span>, <span>“Training language models to follow instructions with human feedback,”</span> <em>arXiv preprint arXiv:2203.02155</em>, 2022, Available: <a href="https://arxiv.org/abs/2203.02155">https://arxiv.org/abs/2203.02155</a></div>
 </div>
-<div id="ref-ziegler2019" class="csl-entry" role="listitem">
-Ziegler, Daniel M., Nisan Stiennon, Jeffrey Wu, et al. 2019. <span>“Fine-Tuning Language Models from Human Preferences.”</span> <em>arXiv Preprint arXiv:1909.08593</em>. <a href="https://arxiv.org/abs/1909.08593">https://arxiv.org/abs/1909.08593</a>.
+<div id="ref-goodfellow2016" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[3] </div><div class="csl-right-inline">I. Goodfellow, Y. Bengio, and A. Courville, <em>Deep learning</em>. MIT Press, 2016. Available: <a href="https://www.deeplearningbook.org">https://www.deeplearningbook.org</a></div>
 </div>
 </div></section><section class="quarto-appendix-contents" id="quarto-reuse"><h2 class="anchored quarto-appendix-heading">Reuse</h2><div class="quarto-appendix-contents"><div><a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></div></div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><div class="code-copy-outer-scaffold"><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{bogossian2026,
   author = {Bogossian, Andreas},
@@ -447,7 +448,8 @@ Ziegler, Daniel M., Nisan Stiennon, Jeffrey Wu, et al. 2019. <span>“Fine-Tunin
   langid = {en}
 }
 </code></pre><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-bogossian2026" class="csl-entry quarto-appendix-citeas" role="listitem">
-Bogossian, Andreas. 2026. <span>“KL Divergence.”</span> March 17. <a href="https://andreasbogossian.com/posts/KL-divergence/">https://andreasbogossian.com/posts/KL-divergence/</a>.
+<div class="">A.
+Bogossian, <span>“KL Divergence.”</span> [Online]. Available: <a href="https://andreasbogossian.com/posts/KL-divergence/">https://andreasbogossian.com/posts/KL-divergence/</a></div>
 </div></div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {

@@ -65,6 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
+  margin-bottom: 0em;
 }
 .hanging-indent div.csl-entry {
   margin-left:2em;
@@ -473,7 +474,7 @@ window.Quarto = {
   &amp;= \log \prod_{i=1}^{n} \sum_{k=1}^{K} \pi_k \, \mathcal{N}(x_i \mid \mu_k, \sigma_k^2) \\
   &amp;= \sum_{i=1}^{n} \log \sum_{k=1}^{K} \pi_k \, \mathcal{N}(x_i \mid \mu_k, \sigma_k^2)
 \end{align*}</span></p>
-<p>But there is a problem: The log of a sum has no tidy closed form derivative and this is why plain maximum likelihood fails <span class="citation" data-cites="bishop2006pattern">(<a href="#ref-bishop2006pattern" role="doc-biblioref">Bishop 2006</a>)</span>.</p>
+<p>But there is a problem: The log of a sum has no tidy closed form derivative and this is why plain maximum likelihood fails <span class="citation" data-cites="bishop2006pattern"><a href="#ref-bishop2006pattern" role="doc-biblioref">[1]</a></span>.</p>
 </section>
 <section id="the-em-fix-complete-data-log-likelihood" class="level2">
 <h2 class="anchored" data-anchor-id="the-em-fix-complete-data-log-likelihood">The EM fix: complete-data log-likelihood</h2>
@@ -520,7 +521,7 @@ Q(\theta \mid \theta^{(t)}) = \sum_{i=1}^{n} \sum_{k=1}^{K}
 </section>
 <section id="m-step-update-parameters" class="level2">
 <h2 class="anchored" data-anchor-id="m-step-update-parameters">M-step: update parameters</h2>
-<p>With responsibilities fixed, we maximize <span class="math inline">Q</span> over <span class="math inline">\theta</span> by differentiating with respect to each parameter, setting to zero and solving. The resulting updates are weighted statistics where each data point contributes to component <span class="math inline">k</span> in proportion to <span class="math inline">r_{ik}</span> <span class="citation" data-cites="bishop2006pattern">(<a href="#ref-bishop2006pattern" role="doc-biblioref">Bishop 2006, chap. 9</a>)</span>.</p>
+<p>With responsibilities fixed, we maximize <span class="math inline">Q</span> over <span class="math inline">\theta</span> by differentiating with respect to each parameter, setting to zero and solving. The resulting updates are weighted statistics where each data point contributes to component <span class="math inline">k</span> in proportion to <span class="math inline">r_{ik}</span> <span class="citation" data-cites="bishop2006pattern"><a href="#ref-bishop2006pattern" role="doc-biblioref">[1, Ch. 9]</a></span>.</p>
 <p><span class="math display">\hat{\mu}_k = \frac{\sum_i r_{ik}\,x_i}{\sum_i r_{ik}},
   \qquad
   \hat{\sigma}_k^2 = \frac{\sum_i r_{ik}(x_i - \hat{\mu}_k)^2}{\sum_i r_{ik}},
@@ -536,7 +537,7 @@ Q(\theta \mid \theta^{(t)}) = \sum_{i=1}^{n} \sum_{k=1}^{K}
 </section>
 <section id="convergence" class="level2">
 <h2 class="anchored" data-anchor-id="convergence">Convergence</h2>
-<p>Now to solve the optimal parameters, we iterate alternating the E and M steps until the change in the log-likelihood falls below a threshold <span class="math inline">\epsilon</span>. A thing to keep in mind with the EM algorithm is that it is guaranteed to reach a <em>local</em> maximum (or a saddle point) and not necessary the global one <span class="citation" data-cites="bishop2006pattern">(<a href="#ref-bishop2006pattern" role="doc-biblioref">Bishop 2006, chap. 9</a>)</span>. Also initialization matters because different starting points can lead to different local optima.</p>
+<p>Now to solve the optimal parameters, we iterate alternating the E and M steps until the change in the log-likelihood falls below a threshold <span class="math inline">\epsilon</span>. A thing to keep in mind with the EM algorithm is that it is guaranteed to reach a <em>local</em> maximum (or a saddle point) and not necessary the global one <span class="citation" data-cites="bishop2006pattern"><a href="#ref-bishop2006pattern" role="doc-biblioref">[1, Ch. 9]</a></span>. Also initialization matters because different starting points can lead to different local optima.</p>
 </section>
 </section>
 <section id="code-demo" class="level1">
@@ -872,9 +873,9 @@ Q(\theta \mid \theta^{(t)}) = \sum_{i=1}^{n} \sum_{k=1}^{K}
 </section>
 </section>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body" data-entry-spacing="0" role="list">
 <div id="ref-bishop2006pattern" class="csl-entry" role="listitem">
-Bishop, Christopher M. 2006. <em>Pattern Recognition and Machine Learning</em>. Springer.
+<div class="csl-left-margin">[1] </div><div class="csl-right-inline">C. M. Bishop, <em>Pattern recognition and machine learning</em>. Springer, 2006.</div>
 </div>
 </div></section><section class="quarto-appendix-contents" id="quarto-reuse"><h2 class="anchored quarto-appendix-heading">Reuse</h2><div class="quarto-appendix-contents"><div><a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></div></div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><div class="code-copy-outer-scaffold"><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{bogossian2026,
   author = {Bogossian, Andreas},
@@ -884,7 +885,8 @@ Bishop, Christopher M. 2006. <em>Pattern Recognition and Machine Learning</em>. 
   langid = {en}
 }
 </code></pre><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-bogossian2026" class="csl-entry quarto-appendix-citeas" role="listitem">
-Bogossian, Andreas. 2026. <span>“The EM-Algorithm.”</span> April 14. <a href="https://andreasbogossian.com/posts/em-algorithm/">https://andreasbogossian.com/posts/em-algorithm/</a>.
+<div class="">A.
+Bogossian, <span>“The EM-algorithm.”</span> [Online]. Available: <a href="https://andreasbogossian.com/posts/em-algorithm/">https://andreasbogossian.com/posts/em-algorithm/</a></div>
 </div></div></section></div></main> <!-- /main -->
 <script type="ojs-module-contents">
 eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6Ilxudmlld29mIGl0ZXIgPSBJbnB1dHMucmFuZ2UoXG4gIFsxLCBoaXN0b3J5Lmxlbmd0aF0sXG4gIHsgdmFsdWU6IDEsIHN0ZXA6IDEsIGxhYmVsOiBcIkVNIGl0ZXJhdGlvblwiIH1cbilcblxudmlld29mIHNob3dUcnVlID0gSW5wdXRzLnRvZ2dsZSh7IGxhYmVsOiBcIlJldmVhbCB0cnVlIGxhYmVsc1wiLCB2YWx1ZTogZmFsc2UgfSlcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMiIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IlxuaW1wb3J0IHsgZ2F1c3NQREYsIG1ha2VDdXJ2ZSwgbWFrZVJlc3AsIGxpbnNwYWNlIH0gZnJvbSBcIi4vZW0taGVscGVycy5qc1wiXG5cbi8vIFNuYXBzaG90IGZvciB0aGUgY3VycmVudCBzbGlkZXIgdmFsdWVcbnNuYXAgPSBoaXN0b3J5W2l0ZXIgLSAxXVxuXG4vLyB4LWF4aXMgZ3JpZCBmb3Igc21vb3RoIGRlbnNpdHkgY3VydmVzICgzMDAgcG9pbnRzLCBzY29yZSByYW5nZSAxMOKAkzEwMClcbnhzID0gbGluc3BhY2UoMTAsIDEwMCwgMzAwKVxuXG4vLyBXZWlnaHRlZCBHYXVzc2lhbiBjdXJ2ZXMgKGFyZWEgdW5kZXIgZWFjaCBjdXJ2ZSA9IHBpX2spXG5jdXJ2ZTAgPSBtYWtlQ3VydmUoeHMsIHNuYXAubXVbMF0sIHNuYXAuc2lnbWFbMF0sIHNuYXAucGlbMF0sIFwiQ29tcG9uZW50IDFcIilcbmN1cnZlMSA9IG1ha2VDdXJ2ZSh4cywgc25hcC5tdVsxXSwgc25hcC5zaWdtYVsxXSwgc25hcC5waVsxXSwgXCJDb21wb25lbnQgMlwiKVxuXG4vLyBSdWcgZGF0YTogb25lIGVudHJ5IHBlciBvYnNlcnZlZCBzY29yZSwgdGFnZ2VkIHdpdGggcjAgYW5kIHRydWUgbGFiZWxcbnJlc3AgPSBtYWtlUmVzcChYX2RhdGEsIHNuYXAuciwgdHJ1ZV9sYWJlbHMpXG5cblBsb3QucGxvdCh7XG4gIHdpZHRoOiA3MDAsXG4gIGhlaWdodDogMzYwLFxuICBtYXJnaW5MZWZ0OiA1MCxcbiAgeDogeyBsYWJlbDogXCJTY29yZVwiLCBkb21haW46IFsxMCwgMTAwXSB9LFxuICB5OiB7IGxhYmVsOiBcIkRlbnNpdHlcIiB9LFxuICBtYXJrczogW1xuICAgIFBsb3QubGluZShjdXJ2ZTAsIHsgeDogXCJ4XCIsIHk6IFwieVwiLCBzdHJva2U6IFwic3RlZWxibHVlXCIsICBzdHJva2VXaWR0aDogMi41IH0pLFxuICAgIFBsb3QubGluZShjdXJ2ZTEsIHsgeDogXCJ4XCIsIHk6IFwieVwiLCBzdHJva2U6IFwiZGFya29yYW5nZVwiLCBzdHJva2VXaWR0aDogMi41IH0pLFxuICAgIFBsb3QudGlja1gocmVzcCwge1xuICAgICAgeDogXCJ4XCIsXG4gICAgICBzdHJva2VXaWR0aDogMS4yLFxuICAgICAgc3Ryb2tlT3BhY2l0eTogMC42NSxcbiAgICAgIHN0cm9rZTogZCA9PiBzaG93VHJ1ZVxuICAgICAgICA/IChkLnRydWVMYWJlbCA9PT0gMCA/IFwic3RlZWxibHVlXCIgOiBcImRhcmtvcmFuZ2VcIilcbiAgICAgICAgOiBkMy5pbnRlcnBvbGF0ZVJkWWxCdShkLnIwKSxcbiAgICB9KSxcbiAgICBQbG90LnJ1bGVYKHRydWVfbXUsIHtcbiAgICAgIHN0cm9rZTogXCIjODg4XCIsXG4gICAgICBzdHJva2VEYXNoYXJyYXk6IFwiNCAzXCIsXG4gICAgICBzdHJva2VPcGFjaXR5OiAwLjYsXG4gICAgfSksXG4gICAgUGxvdC50ZXh0KFxuICAgICAgc25hcC5tdS5tYXAoKG0sIGspID0+ICh7IHg6IG0sIGxhYmVsOiBgzrwke2sgKyAxfSA9ICR7bS50b0ZpeGVkKDEpfWAgfSkpLFxuICAgICAge1xuICAgICAgICB4OiBcInhcIixcbiAgICAgICAgeTogMC4wNTgsXG4gICAgICAgIHRleHQ6IFwibGFiZWxcIixcbiAgICAgICAgZm9udFNpemU6IDEyLFxuICAgICAgICBmaWxsOiAoZCwgaSkgPT4gKGkgPT09IDAgPyBcInN0ZWVsYmx1ZVwiIDogXCJkYXJrb3JhbmdlXCIpLFxuICAgICAgfVxuICAgICksXG4gICAgUGxvdC50ZXh0KFxuICAgICAgc25hcC5tdS5tYXAoKG0sIGspID0+ICh7IHg6IG0sIGxhYmVsOiBgz4Mke2sgKyAxfSA9ICR7c25hcC5zaWdtYVtrXS50b0ZpeGVkKDEpfWAgfSkpLFxuICAgICAge1xuICAgICAgICB4OiBcInhcIixcbiAgICAgICAgeTogMC4wNTUsXG4gICAgICAgIHRleHQ6IFwibGFiZWxcIixcbiAgICAgICAgZm9udFNpemU6IDEyLFxuICAgICAgICBmaWxsOiAoZCwgaSkgPT4gKGkgPT09IDAgPyBcInN0ZWVsYmx1ZVwiIDogXCJkYXJrb3JhbmdlXCIpLFxuICAgICAgfVxuICAgICksXG4gIF0sXG59KVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0zIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiXG5pbXBvcnQgeyBtYWtlTExEYXRhIH0gZnJvbSBcIi4vZW0taGVscGVycy5qc1wiXG5cbmxsX2RhdGEgPSBtYWtlTExEYXRhKGhpc3RvcnkpXG5cblBsb3QucGxvdCh7XG4gIHdpZHRoOiA3MDAsXG4gIGhlaWdodDogMjAwLFxuICBtYXJnaW5MZWZ0OiA2MCxcbiAgeDogeyBsYWJlbDogXCJJdGVyYXRpb25cIiB9LFxuICB5OiB7IGxhYmVsOiBcIkxvZy1saWtlbGlob29kXCIgfSxcbiAgbWFya3M6IFtcbiAgICBQbG90LmxpbmUobGxfZGF0YSwgeyB4OiBcIml0ZXJcIiwgeTogXCJsbFwiLCBzdHJva2U6IFwic3RlZWxibHVlXCIsIHN0cm9rZVdpZHRoOiAyIH0pLFxuICAgIFBsb3QucnVsZVgoW2l0ZXJdLCB7XG4gICAgICBzdHJva2U6IFwiZGFya29yYW5nZVwiLFxuICAgICAgc3Ryb2tlT3BhY2l0eTogMC40LFxuICAgICAgc3Ryb2tlRGFzaGFycmF5OiBcIjQgMlwiLFxuICAgIH0pLFxuICAgIFBsb3QuZG90KFtsbF9kYXRhW2l0ZXIgLSAxXV0sIHtcbiAgICAgIHg6IFwiaXRlclwiLFxuICAgICAgeTogXCJsbFwiLFxuICAgICAgZmlsbDogXCJkYXJrb3JhbmdlXCIsXG4gICAgICByOiA1LFxuICAgIH0pLFxuICBdLFxufSlcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnaXRlcicpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdzaG93VHJ1ZScpIn1dfQ==

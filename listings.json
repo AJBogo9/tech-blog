@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/Kruskal-Wallis-test/index.html",
       "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
       "/posts/a-star/index.html",
@@ -11,6 +12,7 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/posts/Kruskal-Wallis-test/index.html",
       "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
       "/posts/a-star/index.html",
