@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/fourier-transform/index.html",
       "/posts/Kruskal-Wallis-test/index.html",
       "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
@@ -12,6 +13,7 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/posts/fourier-transform/index.html",
       "/posts/Kruskal-Wallis-test/index.html",
       "/posts/em-algorithm/index.html",
       "/posts/evidence-lower-bound/index.html",
