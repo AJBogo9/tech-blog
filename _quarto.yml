@@ -11,7 +11,7 @@ website:
   description: "Notes on challenging technical things"
   site-url: "https://andreasbogossian.com"
   favicon: bell-curve.svg
-  search: true
+  search: false
   open-graph:
     image: og-image.webp
   page-footer:
