@@ -1,3 +1,7 @@
+# Generated at publish time
+llms.txt
+llms-full.txt
+
 # Quarto output
 _site/
 .quarto/
@@ -13,6 +17,12 @@ _freeze/
 __pycache__/
 *.pyc
 .venv/
+
+# Terraform
+infra/.terraform/
+infra/terraform.tfvars
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
 
 # Editor
 .DS_Store
