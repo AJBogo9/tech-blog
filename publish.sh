@@ -11,3 +11,4 @@ git add -A
 git commit -m "deploy $(date)"
 git push -f origin cf-pages
 cd ..
+rm -rf _site/.git
