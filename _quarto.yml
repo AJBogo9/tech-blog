@@ -23,6 +23,9 @@ website:
     left: "© 2026 Andreas Bogossian"
     center: "Built with [Quarto](https://quarto.org) · [Source](https://github.com/AJBogo9/tech-blog)"
     right:
+      - icon: rss
+        href: /blog.xml
+        aria-label: RSS Feed
       - icon: linkedin
         href: https://www.linkedin.com/in/andreas-bogossian/
         aria-label: LinkedIn
@@ -40,6 +43,9 @@ website:
       - text: "CV"
         href: cv.qmd
     right:
+      - icon: rss
+        href: /blog.xml
+        aria-label: RSS Feed
       - icon: linkedin
         href: https://www.linkedin.com/in/andreas-bogossian/
         aria-label: LinkedIn
