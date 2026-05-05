@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+python generate_llms_full.py
 quarto render
 cd _site
 git init

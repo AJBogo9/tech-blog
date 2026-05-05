@@ -5,6 +5,8 @@ project:
     - CNAME
     - robots.txt
     - instantpage.js
+    - llms.txt
+    - llms-full.txt
 
 website:
   title: "Andreas Bogossian"
