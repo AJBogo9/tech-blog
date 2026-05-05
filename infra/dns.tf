@@ -3,7 +3,7 @@ resource "cloudflare_record" "apex" {
   zone_id = var.cloudflare_zone_id
   name    = "andreasbogossian.com"
   type    = "CNAME"
-  content = "tech-blog-bjx.pages.dev"
+  content = cloudflare_pages_project.blog.subdomain
   proxied = true
 }
 
@@ -11,7 +11,7 @@ resource "cloudflare_record" "www" {
   zone_id = var.cloudflare_zone_id
   name    = "www"
   type    = "CNAME"
-  content = "tech-blog-bjx.pages.dev"
+  content = cloudflare_pages_project.blog.subdomain
   proxied = true
 }
 
