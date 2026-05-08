@@ -29,6 +29,9 @@ website:
       - icon: github
         href: https://github.com/AJBogo9
         aria-label: GitHub
+      - icon: rss
+        href: /blog.xml
+        aria-label: RSS Feed
   navbar:
     left:
       - text: "Blog"
@@ -46,6 +49,9 @@ website:
       - icon: github
         href: https://github.com/AJBogo9
         aria-label: GitHub
+      - icon: rss
+        href: /blog.xml
+        aria-label: RSS Feed
 
 jupyter: python3
 
