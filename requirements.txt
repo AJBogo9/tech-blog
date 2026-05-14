@@ -3,5 +3,9 @@ matplotlib
 scipy
 scikit-learn
 torch
+torch_geometric
 jupyter
 pyyaml
+onnx
+onnxruntime
+rich

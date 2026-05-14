@@ -7,6 +7,7 @@ categories:
   - linear algebra
   - machine learning
   - geometry
+bibliography: references.bib
 ---
 
 An NBA scout records three measurements for every player he is scouting: height, wingspan and reach. The thing is that all these measures are highly correlated because
@@ -192,7 +193,6 @@ ax.set_xticklabels(feature_names, rotation=15, ha="right")
 ax.set_yticklabels(feature_names)
 ax.set_title("Sample covariance matrix Σ")
 plt.colorbar(im, ax=ax, shrink=0.8)
-plt.savefig("thumbnail.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
 
