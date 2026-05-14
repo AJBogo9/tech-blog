@@ -146,10 +146,10 @@ The benefit of using the weight is that fewer nodes are expanded because the sea
 
 Start with Dijkstra and then swap to A\* with the Manhattan heuristic. Also, test the weight slider to make the algorithm faster with the expense of accuracy.
 
-- **Blue-green cells** — open set: discovered, not yet expanded.
-- **Orange cell** — node currently being expanded.
-- **Dark green cells** — closed set: fully expanded.
-- **Yellow path** — the solution once the algorithm reaches the end node.
+- **Blue-green cells**: open set, discovered but not yet expanded.
+- **Orange cell**: node currently being expanded.
+- **Dark green cells**: closed set, fully expanded.
+- **Yellow path**: the solution once the algorithm reaches the end node.
 - Drag **S** or **E** to reposition start and goal. Paint walls by clicking and dragging on empty cells.
 
 ```{ojs}
