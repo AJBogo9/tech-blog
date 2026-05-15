@@ -1,7 +1,7 @@
 ---
 title: "The Fourier Transform"
 description: "How mathematics hears which notes are hidden in a chord."
-date: today
+date: 2026-05-15
 image: "thumbnail.png"
 categories:
   - signal processing
