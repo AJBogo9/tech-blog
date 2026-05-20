@@ -20,11 +20,11 @@ listing:
   fields: [image, title, description, date, categories]
 ---
 
-MSc student in ML, Data Science and AI at Aalto University. I write about technical concepts in machine learning, statistics, and algorithms to build deep understanding.
+MSc student in ML, Data Science and AI at Aalto University. I write about machine learning, statistics, and algorithms.
 
 ## Recent Posts
 
 ::: {#recent-posts}
 :::
 
-[View all posts →](blog.qmd){.btn .btn-outline-secondary}
+[View all posts →](blog.qmd){.btn .btn-outline-primary}
