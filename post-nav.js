@@ -139,7 +139,8 @@
 
 (() => {
   try {
-    if (!window.location.pathname.includes('/posts/')) return;
+    const path = window.location.pathname;
+    if (!path.includes('/posts/')) return;
 
     const btn = document.createElement('a');
     btn.className = 'back-to-top';

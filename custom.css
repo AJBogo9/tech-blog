@@ -112,55 +112,64 @@ table {
   }
 }
 
-/* ── Mobile category filter (blog listing page) ─────────────────────── */
+/* ── Category filter chips (blog listing page, all screen sizes) ─────── */
 
 .mobile-category-filter {
+  display: block;
+  margin-bottom: 1.25rem;
+}
+
+.mobile-category-filter .mobile-category-title {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.5rem;
+}
+
+.mobile-category-filter .quarto-listing-category {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-top: 0;
+  font-size: 1rem;
+}
+
+.mobile-category-filter .category {
+  padding: 0.2rem 0.65rem;
+  border: 1px solid #374151;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #c8d0d8;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.mobile-category-filter .category:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #6b7280;
+}
+
+.mobile-category-filter .category.active {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+
+.mobile-category-filter .quarto-category-count {
+  opacity: 0.55;
+  font-size: 0.75em;
+}
+
+/* On the blog listing page, collapse the now-empty sidebar and let the grid expand */
+#quarto-margin-sidebar:has(.quarto-listing-category) {
   display: none;
 }
 
-@media (max-width: 767px) {
-  .mobile-category-filter {
-    display: block;
-    margin-bottom: 1.25rem;
-  }
-
-  .mobile-category-filter .mobile-category-title {
-    font-size: 0.8rem;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin: 0 0 0.5rem;
-  }
-
-  .mobile-category-filter .quarto-listing-category {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    padding-top: 0;
-    font-size: 1rem;
-  }
-
-  .mobile-category-filter .category {
-    padding: 0.2rem 0.65rem;
-    border: 1px solid #374151;
-    border-radius: 100px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    color: #c8d0d8;
-    background: rgba(255, 255, 255, 0.05);
-    transition: background 0.15s ease, border-color 0.15s ease;
-  }
-
-  .mobile-category-filter .category.active {
-    background: var(--bs-primary);
-    border-color: var(--bs-primary);
-    color: #fff;
-  }
-
-  .mobile-category-filter .quarto-category-count {
-    opacity: 0.55;
-    font-size: 0.75em;
-  }
+#quarto-content:has(#quarto-margin-sidebar .quarto-listing-category) .content {
+  grid-column: page-start / page-end !important;
+  max-width: none;
 }
 
 /* ── Mobile TOC ──────────────────────────────────────────────────────── */
