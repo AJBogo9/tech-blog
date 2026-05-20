@@ -147,6 +147,7 @@ table {
     font-size: 0.8rem;
     cursor: pointer;
     color: #c8d0d8;
+    background: rgba(255, 255, 255, 0.05);
     transition: background 0.15s ease, border-color 0.15s ease;
   }
 
