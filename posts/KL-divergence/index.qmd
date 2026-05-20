@@ -1,6 +1,8 @@
 ---
 title: "KL Divergence"
 date: "2026-03-17"
+image: "thumbnail.webp"
+image-alt: "Two overlapping probability distributions P and Q on a dark background, illustrating KL divergence"
 bibliography: references.bib
 description: "KL divergence measures how much one probability distribution differs from another. KL-divergence is a foundational tool in information theory and the backbone of modern LLM alignment techniques like RLHF."
 categories:
