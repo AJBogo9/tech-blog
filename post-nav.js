@@ -66,3 +66,33 @@
     // progressive enhancement — fail silently
   }
 })();
+
+(() => {
+  try {
+    if (!window.location.pathname.includes('/posts/')) return;
+
+    const toc = document.getElementById('TOC');
+    const ul = toc?.querySelector('ul');
+    if (!ul) return;
+
+    const box = document.createElement('div');
+    box.className = 'mobile-toc';
+    box.setAttribute('role', 'navigation');
+    box.setAttribute('aria-label', 'Contents');
+
+    const label = document.createElement('p');
+    label.className = 'mobile-toc-label';
+    label.textContent = 'Contents';
+
+    const ulClone = ul.cloneNode(true);
+    ulClone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    ulClone.querySelectorAll('.collapse').forEach(el => el.classList.remove('collapse'));
+
+    box.append(label, ulClone);
+
+    const firstSection = document.querySelector('#quarto-document-content section');
+    firstSection?.before(box);
+  } catch (_) {
+    // progressive enhancement — fail silently
+  }
+})();
