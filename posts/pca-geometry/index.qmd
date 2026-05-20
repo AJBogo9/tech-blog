@@ -2,7 +2,8 @@
 title: "PCA: the shape hidden in your data"
 description: "The geometry behind principal component analysis: how the covariance matrix encodes the shape of your data, and why eigenvectors are the natural axes to read it from."
 date: 2026-05-08
-image: "thumbnail.png"
+image: "thumbnail.webp"
+image-alt: "3D scatter plot of NBA player measurements with three principal component vectors, PC1 capturing 80% of variance"
 categories:
   - linear algebra
   - machine learning

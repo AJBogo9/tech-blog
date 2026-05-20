@@ -2,7 +2,8 @@
 title: "The Fourier Transform"
 description: "How mathematics hears which notes are hidden in a chord."
 date: 2026-05-15
-image: "thumbnail.png"
+image: "thumbnail.webp"
+image-alt: "Circular Fourier series visualisation showing harmonic frequency components traced as an orbital path"
 categories:
   - signal processing
   - mathematics

@@ -24,6 +24,9 @@ infra/terraform.tfvars
 infra/terraform.tfstate
 infra/terraform.tfstate.backup
 
+# Playwright MCP
+.playwright-mcp/
+
 # Editor
 .DS_Store
 .vscode/
