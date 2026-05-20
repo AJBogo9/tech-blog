@@ -95,6 +95,20 @@ table {
   opacity: 1 !important;
 }
 
+/* Quarto wraps footer text links in <p> tags which add unwanted margins */
+.nav-footer p {
+  margin: 0;
+  display: inline;
+}
+
+/* nav-footer-center is flex: 1 1 100% so it wraps to its own row on mobile,
+   adding a blank row of height; it only contains &nbsp; so just hide it */
+@media (max-width: 767px) {
+  .nav-footer-center {
+    display: none;
+  }
+}
+
 /* ── Blog listing card hover ─────────────────────────────────────────── */
 
 .quarto-grid-item {
