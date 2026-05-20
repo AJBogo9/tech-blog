@@ -27,4 +27,4 @@ MSc student in ML, Data Science and AI at Aalto University. I write about techni
 ::: {#recent-posts}
 :::
 
-[View all posts →](blog.qmd)
+[View all posts →](blog.qmd){.btn .btn-outline-secondary}
