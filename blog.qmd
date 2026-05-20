@@ -4,8 +4,8 @@ listing:
   contents: posts
   sort: "date desc"
   type: grid
-  sort-ui: true
-  filter-ui: true
+  sort-ui: false
+  filter-ui: false
   categories: true
   feed: true
   fields: [image, title, description, date, categories]

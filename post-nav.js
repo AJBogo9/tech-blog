@@ -141,6 +141,28 @@
   try {
     if (!window.location.pathname.includes('/posts/')) return;
 
+    const btn = document.createElement('a');
+    btn.className = 'back-to-top';
+    btn.href = '#';
+    btn.setAttribute('aria-label', 'Back to top');
+    btn.innerHTML = '↑';
+    document.body.appendChild(btn);
+
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  } catch (_) {}
+})();
+
+(() => {
+  try {
+    if (!window.location.pathname.includes('/posts/')) return;
+
     const toc = document.getElementById('TOC');
     const ul = toc?.querySelector('ul');
     if (!ul) return;

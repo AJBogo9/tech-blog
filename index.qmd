@@ -20,11 +20,7 @@ listing:
   fields: [image, title, description, date, categories]
 ---
 
-ML, statistics, and algorithms, written to build understanding by explaining what I don't yet know.
-
-MSc student in Machine Learning, Data Science and Artificial Intelligence at Aalto University, with a minor in Operations Research. Previously completed a BSc in Computer Science with a minor in Mathematics.
-
-My research interests lie at the intersection of machine learning and mathematics. I write about technical concepts in ML, statistics and algorithms with the goal of building deep understanding through writing about concepts I don't yet understand.
+MSc student in ML, Data Science and AI at Aalto University. I write about technical concepts in machine learning, statistics, and algorithms to build deep understanding.
 
 ## Recent Posts
 

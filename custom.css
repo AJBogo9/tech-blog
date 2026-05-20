@@ -230,7 +230,7 @@ table {
   flex-direction: column;
   gap: 0.2rem;
   text-decoration: none;
-  max-width: 40%;
+  max-width: 45%;
   transition: opacity 0.15s ease;
 }
 
@@ -270,6 +270,47 @@ table {
 .post-nav-all:hover {
   color: var(--bs-link-color);
   text-decoration: none;
+}
+
+/* ── Back to top button ──────────────────────────────────────────────── */
+
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid #374151;
+  color: #9ca3af;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background 0.15s ease;
+  z-index: 999;
+  text-decoration: none;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.back-to-top:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #e5e7eb;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top {
+    transition: none;
+  }
 }
 
 /* ── Small screen tweaks (≤600px) ────────────────────────────────────── */
