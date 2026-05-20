@@ -69,6 +69,76 @@
 
 (() => {
   try {
+    const categoryList = document.querySelector('#quarto-margin-sidebar .quarto-listing-category');
+    if (!categoryList) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mobile-category-filter';
+
+    const title = document.createElement('p');
+    title.className = 'mobile-category-title';
+    title.textContent = 'Categories';
+
+    const clone = categoryList.cloneNode(true);
+    wrapper.append(title, clone);
+    document.querySelector('.quarto-listing')?.before(wrapper);
+
+    const selected = new Set();
+
+    const updateActive = () => {
+      clone.querySelectorAll('.category').forEach(pill => {
+        const cat = pill.getAttribute('data-category');
+        pill.classList.toggle('active',
+          cat === '' ? selected.size === 0 : selected.has(cat)
+        );
+      });
+    };
+
+    const applyFilter = () => {
+      const listingId = document.querySelector('[id^="listing-"]')?.id;
+      const list = window['quarto-listings']?.[listingId];
+      if (!list) return;
+
+      if (selected.size === 0) {
+        list.filter();
+      } else {
+        list.filter(item => {
+          const raw = item.values().categories;
+          if (!raw) return false;
+          const postCats = decodeURIComponent(atob(raw)).split(',');
+          return [...selected].some(s => postCats.includes(decodeURIComponent(atob(s))));
+        });
+      }
+    };
+
+    const setupPills = () => {
+      clone.querySelectorAll('.category').forEach(pill => {
+        pill.onclick = null;
+        pill.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          pill.onclick = null;
+          const cat = pill.getAttribute('data-category');
+          if (cat === '') {
+            selected.clear();
+          } else {
+            selected.has(cat) ? selected.delete(cat) : selected.add(cat);
+          }
+          updateActive();
+          applyFilter();
+        });
+      });
+      updateActive();
+    };
+
+    setTimeout(setupPills, 0);
+  } catch (_) {
+    // progressive enhancement — fail silently
+  }
+})();
+
+(() => {
+  try {
     if (!window.location.pathname.includes('/posts/')) return;
 
     const toc = document.getElementById('TOC');

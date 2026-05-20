@@ -112,6 +112,56 @@ table {
   }
 }
 
+/* ── Mobile category filter (blog listing page) ─────────────────────── */
+
+.mobile-category-filter {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobile-category-filter {
+    display: block;
+    margin-bottom: 1.25rem;
+  }
+
+  .mobile-category-filter .mobile-category-title {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 0.5rem;
+  }
+
+  .mobile-category-filter .quarto-listing-category {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-top: 0;
+    font-size: 1rem;
+  }
+
+  .mobile-category-filter .category {
+    padding: 0.2rem 0.65rem;
+    border: 1px solid #374151;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #c8d0d8;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .mobile-category-filter .category.active {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
+  }
+
+  .mobile-category-filter .quarto-category-count {
+    opacity: 0.55;
+    font-size: 0.75em;
+  }
+}
+
 /* ── Mobile TOC ──────────────────────────────────────────────────────── */
 
 .mobile-toc {
