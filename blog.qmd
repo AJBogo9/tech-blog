@@ -8,6 +8,7 @@ listing:
   filter-ui: true
   categories: true
   feed: true
+  fields: [image, title, description, date, categories]
 page-layout: full
 title-block-banner: false
 ---
