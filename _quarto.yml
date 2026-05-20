@@ -5,6 +5,7 @@ project:
     - CNAME
     - robots.txt
     - instantpage.js
+    - post-nav.js
     - llms.txt
     - llms-full.txt
 
@@ -82,6 +83,7 @@ format:
     include-after-body:
       text: |
         <script src="/instantpage.js" type="module"></script>
+        <script src="/post-nav.js" defer></script>
 
 execute:
   freeze: auto
