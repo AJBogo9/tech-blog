@@ -1,0 +1,459 @@
+---
+title: "Your Neural Network Doesn't Know What It Doesn't Know"
+description: Bayes by Backprop replaces a neural network's single weight vector with a distribution over weights, giving the model a principled way to express uncertainty. This post derives the algorithm from first principles.
+date: "2026-05-21"
+bibliography: references.bib
+image: thumbnail.png
+image-alt: "A Bayesian neural network's prediction interval widening outside the training range, showing uncertainty growing in unfamiliar territory"
+categories:
+  - probabilistic ML
+  - variational inference
+  - deep learning
+  - Bayesian methods
+draft: true
+---
+
+::: {.callout-note collapse="true"}
+## Notation Reference
+
+| Symbol | Meaning |
+|--------|---------|
+| $\mathbf{w}$ | Neural network weights (and biases) |
+| $\mathcal{D} = \{(x_i, y_i)\}$ | Training dataset |
+| $p(\mathbf{w})$ | Prior distribution over weights |
+| $p(\mathcal{D} \mid \mathbf{w})$ | Likelihood of data given weights |
+| $p(\mathbf{w} \mid \mathcal{D})$ | True posterior over weights |
+| $q_\lambda(\mathbf{w})$ | Variational approximation to the posterior |
+| $\lambda = \{\mu_d, \sigma_d\}$ | Variational parameters (one mean and std per weight) |
+| $\sigma_l$ | Likelihood noise standard deviation |
+| $\alpha$ | Prior standard deviation |
+:::
+
+## The Problem: Confidence Without Calibration
+
+- Picture a self-driving car trained for months on sunny California highways: thousands of kilometres of dry asphalt, clear lane markings, well-lit intersections.
+- Deploy it one winter morning on a Finnish road: black ice, snow-covered lines, a curve shape it has never seen.
+- The network outputs: *turn left, 94% confident*. That number is a lie -- not because the prediction is necessarily wrong, but because the network has no mechanism to express doubt.
+- Standard neural networks map every input to a single confident prediction, familiar or foreign. They collapse all uncertainty into a single weight vector and have no way to say "I have never seen anything like this."
+- **Bayes by Backprop** fixes this by replacing the single weight vector with a *distribution* over weights. A wide distribution means the model is uncertain; a tight one means it is confident.
+
+## What We Want (and Why We Can't Have It)
+
+- The ideal object is the posterior distribution over weights:
+
+$$p(\mathbf{w} \mid \mathcal{D}) = \frac{p(\mathcal{D} \mid \mathbf{w})\, p(\mathbf{w})}{p(\mathcal{D})}$$
+
+- If we had this, we would make predictions by averaging over all plausible weight vectors rather than committing to one. The car would output a *distribution* of predictions; the spread would reflect how unfamiliar the input is.
+- The problem is the denominator. Computing $p(\mathcal{D})$ requires integrating the likelihood over all possible weight vectors:
+
+$$p(\mathcal{D}) = \int p(\mathcal{D} \mid \mathbf{w})\, p(\mathbf{w})\, d\mathbf{w}$$
+
+- For a network with even a few thousand weights, this integral is completely intractable -- the search space is too large. The same problem appears in latent variable models, and the solution is the same one from the [ELBO post](../evidence-lower-bound/index.qmd): variational inference.
+- Without the posterior, the model must commit to one weight vector and output one confident prediction for every input, familiar or not. That is what forces the 94% on black ice.
+
+## Approximating the Posterior
+
+- Instead of computing the true posterior, we introduce a tractable family of distributions $q_\lambda(\mathbf{w})$ and find the member of that family closest to the true posterior.
+- We use the **mean-field Gaussian** approximation: each weight $w_d$ gets its own independent Gaussian:
+
+$$q_\lambda(\mathbf{w}) = \prod_d \mathcal{N}(w_d \mid \mu_d, \sigma_d^2)$$
+
+- The variational parameters $\lambda = \{\mu_d, \sigma_d\}$ are what we learn. Each $\mu_d$ is the most likely value for weight $d$; each $\sigma_d$ encodes our uncertainty about that weight.
+- The objective is to minimise the [KL divergence](../KL-divergence/index.qmd) between $q_\lambda$ and the true posterior, which (as shown in the [ELBO derivation](../evidence-lower-bound/index.qmd)) is equivalent to minimising the negative ELBO:
+
+$$\mathcal{L}(\lambda) = \underbrace{\text{KL}[q_\lambda(\mathbf{w}) \mid\mid p(\mathbf{w})]}_{\text{regularisation}} - \underbrace{\mathbb{E}_{q_\lambda(\mathbf{w})}[\log p(\mathcal{D} \mid \mathbf{w})]}_{\text{expected log-likelihood}}$$
+
+- The first term keeps the approximate posterior close to the prior (regularisation). The second rewards weight distributions that explain the data (fit). These two are in tension, and minimising their sum is the whole game.
+- Think of $\mu_d$ as where the model thinks weight $d$ should be, and $\sigma_d$ as how sure it is. Wide $\sigma_d$ means *I am not sure what this weight should be* -- which propagates forward into wide prediction bands wherever the model is uncertain about its inputs.
+
+## The Fit Term: Expected Log-Likelihood
+
+- This term measures how well the weight distribution explains the training data -- how closely the model's predictions match the roads it has actually driven.
+- For Bayesian linear regression with a Gaussian likelihood:
+
+$$y_i \mid \mathbf{w} \sim \mathcal{N}(w_0 + w_1 x_i,\; \sigma_l^2)$$
+
+the negative log-likelihood for a single datapoint is:
+
+$$-\log p(y_i \mid \mathbf{w}, x_i) = \frac{1}{2\sigma_l^2}(y_i - w_0 - w_1 x_i)^2 + \text{const}$$
+
+- Summing over the dataset and dropping constants:
+
+$$-\log p(\mathcal{D} \mid \mathbf{w}) = \frac{N}{2\sigma_l^2} \cdot \text{MSE}$$
+
+- So the expected negative log-likelihood is just the expected MSE, scaled by $\frac{N}{2\sigma_l^2}$.
+- In practice we estimate this expectation by sampling one weight vector per minibatch and computing the MSE with those weights. This is what anchors the model to the California roads: without data pulling back, this term contributes nothing, and only the KL term remains.
+
+## The Regularisation Term: KL Divergence
+
+- Since both the prior $p(\mathbf{w}) = \mathcal{N}(\mathbf{0}, \alpha^2 I)$ and the approximate posterior $q_\lambda$ are diagonal Gaussians, the KL decomposes into a sum over individual weights:
+
+$$\text{KL}[q_\lambda(\mathbf{w}) \mid\mid p(\mathbf{w})] = \sum_d \text{KL}[\mathcal{N}(\mu_d, \sigma_d^2) \mid\mid \mathcal{N}(0, \alpha^2)]$$
+
+- Starting from the definition $\text{KL}[q \mid\mid p] = \mathbb{E}_q[\log q(w)] - \mathbb{E}_q[\log p(w)]$, and computing each expectation for univariate Gaussians:
+
+$$\mathbb{E}_q[\log q(w)] = -\frac{1}{2}\log(2\pi\sigma^2) - \frac{1}{2}$$
+
+$$\mathbb{E}_q[\log p(w)] = -\frac{1}{2}\log(2\pi\alpha^2) - \frac{1}{2\alpha^2}\mathbb{E}_q[w^2]$$
+
+- Using $\mathbb{E}_q[w^2] = \sigma^2 + \mu^2$ and subtracting:
+
+$$\text{KL}[\mathcal{N}(\mu, \sigma^2) \mid\mid \mathcal{N}(0, \alpha^2)] = \log\frac{\alpha}{\sigma} - \frac{1}{2} + \frac{\sigma^2 + \mu^2}{2\alpha^2}$$
+
+- This closed-form expression is exact and cheap to compute. No sampling required for this term -- a key advantage over the likelihood term.
+- There is a key asymmetry: inside the training range the likelihood term dominates, pulling the posterior away from the prior and shrinking $\sigma_d$ -- the model becomes confident. Outside the training range no data pushes back, so the KL term forces the posterior back toward the prior and keeps $\sigma_d$ wide. This is the mechanism behind the widening uncertainty bands in the Finnish winter.
+
+## The Gradient Problem (and the Reparameterization Trick)
+
+- We have a loss function and need to minimise it with gradient descent. The KL term is closed-form, so its gradient is easy. The expected log-likelihood term is the problem:
+
+$$\frac{\partial}{\partial \lambda} \mathbb{E}_{q_\lambda(\mathbf{w})}[\log p(\mathcal{D} \mid \mathbf{w})]$$
+
+- Estimating this gradient requires differentiating through a sampling operation. But sampling is not differentiable -- the gradient cannot flow through a stochastic node.
+- The fix is the **reparameterization trick** [@kingma2014vae]: instead of sampling $w_d \sim \mathcal{N}(\mu_d, \sigma_d^2)$ directly, write:
+
+$$w_d = \mu_d + \sigma_d \cdot \varepsilon, \qquad \varepsilon \sim \mathcal{N}(0, 1)$$
+
+- Now $\varepsilon$ is sampled from a fixed, parameter-free distribution. The parameters $\mu_d$ and $\sigma_d$ enter as deterministic transformations, so the gradient flows through them cleanly.
+- One practical detail: we never store $\sigma_d$ directly. Instead we store a raw parameter $\rho_d$ and apply softplus:
+
+$$\sigma_d = \log(1 + \exp(\rho_d))$$
+
+This keeps $\sigma_d$ strictly positive throughout training without constrained optimisation.
+
+## The Algorithm
+
+Everything comes together into a simple training loop [@blundell2015weight]:
+
+1. **Sample noise:** draw $\varepsilon_d \sim \mathcal{N}(0, 1)$ for each weight.
+2. **Form weights:** $w_d = \mu_d + \sigma_d \cdot \varepsilon_d$, where $\sigma_d = \log(1 + \exp(\rho_d))$.
+3. **Forward pass:** compute predictions using the sampled weight vector.
+4. **Compute loss:**
+
+$$\mathcal{L} = \frac{N}{2\sigma_l^2} \cdot \text{MSE}(\mathbf{w}) + \sum_d \left(\log\frac{\alpha}{\sigma_d} - \frac{1}{2} + \frac{\sigma_d^2 + \mu_d^2}{2\alpha^2}\right)$$
+
+5. **Backpropagate** through $\mu_d$ and $\rho_d$ and update with Adam.
+
+At test time: run the forward pass multiple times with different sampled weights, then take the mean and standard deviation of the predictions. The spread is the uncertainty.
+
+Here is the full algorithm for a linear model in PyTorch, with each step matching the derivation above:
+
+```{python}
+#| eval: false
+
+import torch
+import numpy as np
+
+torch.manual_seed(42)
+
+# Synthetic 1D training data (y = 0.5x + sin(x) + noise, x in [-3, 3])
+x_np = np.linspace(-3, 3, 30)
+y_np = 0.5 * x_np + np.sin(x_np) + 0.3 * np.random.randn(30)
+x_t  = torch.tensor(x_np, dtype=torch.float32)
+y_t  = torch.tensor(y_np, dtype=torch.float32)
+
+# Variational parameters: one mu and one rho per weight (linear model: bias + slope)
+mu  = torch.zeros(2, requires_grad=True)
+rho = torch.full((2,), -3.0, requires_grad=True)  # sigma = softplus(rho)
+
+alpha, sigma_l, N = 1.5, 0.3, len(x_t)
+opt = torch.optim.Adam([mu, rho], lr=0.05)
+
+for _ in range(2000):
+    opt.zero_grad()
+
+    sigma = torch.log1p(torch.exp(rho))           # softplus keeps sigma > 0
+    w     = mu + sigma * torch.randn_like(mu)      # reparameterization trick
+
+    y_hat = w[0] + w[1] * x_t                     # forward pass
+    mse   = ((y_t - y_hat) ** 2).mean()
+    kl    = (torch.log(torch.tensor(alpha) / sigma)
+             - 0.5 + (sigma**2 + mu**2) / (2 * alpha**2)).sum()
+    loss  = N / (2 * sigma_l**2) * mse + kl       # ELBO loss
+
+    loss.backward()                                # gradients flow through mu and rho
+    opt.step()
+
+# Test time: average T forward passes to get mean and uncertainty
+with torch.no_grad():
+    sigma  = torch.log1p(torch.exp(rho))
+    x_test = torch.linspace(-6, 6, 400)
+    preds  = torch.stack([
+        mu[0] + sigma[0] * torch.randn(1) +
+        (mu[1] + sigma[1] * torch.randn(1)) * x_test
+        for _ in range(300)
+    ])
+pred_mean = preds.mean(0)   # posterior predictive mean
+pred_std  = preds.std(0)    # posterior predictive uncertainty
+
+# pred_mean ± 1.96 * pred_std gives 95% credible intervals
+# wide intervals outside [-3, 3] indicate the model knows it doesn't know
+```
+
+## What the Model Learns
+
+- We model road friction ($\mu$, the coefficient that determines stopping distance) as a function of ambient temperature. Training data: 45 noisy measurements from California conditions, 8 to 38°C. The BNN learns this relationship -- then we ask what it predicts for a Finnish road at $-15°$C.
+- Inside the training range the likelihood term dominates: data pulls the posterior away from the prior and $\sigma_d$ shrinks toward confident values. Outside it, no data pushes back, and the KL term pulls the posterior toward the prior, keeping $\sigma_d$ wide. That asymmetry is what you see in the plot below.
+
+```{python}
+#| label: demo-bnn
+#| output: false
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+
+torch.manual_seed(0)
+np.random.seed(0)
+
+# True friction as a function of temperature (full physical range)
+# Warm/dry regime (California) blends into ice regime below ~3 °C
+def true_friction(T):
+    T    = np.asarray(T, dtype=float)
+    warm = 0.72 + 0.08 * np.tanh((T - 20) / 12)
+    ice  = 0.08 + 0.20 * np.exp(np.clip(T, -30, 3) / 7)
+    w    = 1 / (1 + np.exp(-2.5 * (T - 3)))   # sigmoid blend at ~3 °C
+    return w * warm + (1 - w) * ice
+
+# Training data: California only (8 to 38 °C)
+T_ca = np.concatenate([
+    np.random.uniform(22, 38, 15),
+    np.random.uniform(13, 24, 15),
+    np.random.uniform( 8, 15, 15),
+])
+mu_ca = true_friction(T_ca) + 0.04 * np.random.randn(len(T_ca))
+
+# Normalise inputs to zero mean, unit std
+T_c, T_s = T_ca.mean(), T_ca.std()
+
+# Evaluation grid: -22 to 42 °C
+T_grid   = np.linspace(-22, 42, 300)
+T_grid_n = (T_grid - T_c) / T_s
+
+x_tr = torch.tensor((T_ca   - T_c) / T_s, dtype=torch.float32).unsqueeze(1)
+y_tr = torch.tensor(mu_ca,                 dtype=torch.float32).unsqueeze(1)
+x_ev = torch.tensor(T_grid_n,             dtype=torch.float32).unsqueeze(1)
+
+# Bayesian linear layer -- same mu/rho/softplus/KL as the derivation above
+class BayesLinear(nn.Module):
+    def __init__(self, in_f, out_f, alpha=1.0):
+        super().__init__()
+        self.alpha = alpha
+        self.w_mu  = nn.Parameter(torch.zeros(out_f, in_f))
+        self.w_rho = nn.Parameter(torch.full((out_f, in_f), -4.0))
+        self.b_mu  = nn.Parameter(torch.zeros(out_f))
+        self.b_rho = nn.Parameter(torch.full((out_f,), -4.0))
+
+    def forward(self, x):
+        ws = torch.log1p(torch.exp(self.w_rho))
+        bs = torch.log1p(torch.exp(self.b_rho))
+        return F.linear(x,
+            self.w_mu + ws * torch.randn_like(self.w_mu),
+            self.b_mu + bs * torch.randn_like(self.b_mu))
+
+    def kl(self):
+        a  = self.alpha
+        ws = torch.log1p(torch.exp(self.w_rho))
+        bs = torch.log1p(torch.exp(self.b_rho))
+        return (
+            (torch.log(torch.tensor(a)/ws) - 0.5 + (ws**2 + self.w_mu**2)/(2*a**2)).sum() +
+            (torch.log(torch.tensor(a)/bs) - 0.5 + (bs**2 + self.b_mu**2)/(2*a**2)).sum()
+        )
+
+class FrictionBNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.l1 = BayesLinear(1, 32)
+        self.l2 = BayesLinear(32, 1)
+
+    def forward(self, x):
+        return self.l2(torch.tanh(self.l1(x)))
+
+    def kl(self):
+        return self.l1.kl() + self.l2.kl()
+
+# Train with the ELBO loss from the derivation
+bnn_model = FrictionBNN()
+opt_bnn   = torch.optim.Adam(bnn_model.parameters(), lr=0.015)
+sl_d, N_d = 0.045, len(x_tr)
+
+for _ in range(4000):
+    opt_bnn.zero_grad()
+    y_hat = bnn_model(x_tr)
+    mse   = ((y_tr - y_hat) ** 2).mean()
+    loss  = N_d / (2 * sl_d**2) * mse + bnn_model.kl()
+    loss.backward()
+    opt_bnn.step()
+```
+
+```{python}
+#| label: demo-inference
+#| output: false
+
+# Posterior predictive: average 500 sampled weight vectors
+with torch.no_grad():
+    ca_samples = torch.stack([
+        bnn_model(x_ev).squeeze() for _ in range(500)
+    ]).numpy()
+
+ca_mean = ca_samples.mean(0)
+ca_std  = ca_samples.std(0)
+```
+
+```{python}
+#| echo: false
+#| output: false
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+ojs_define(
+    demo_T    = T_grid.tolist(),
+    demo_true = true_friction(T_grid).tolist(),
+    demo_mean = ca_mean.tolist(),
+    demo_u95  = (ca_mean + 1.96 * ca_std).tolist(),
+    demo_l95  = (ca_mean - 1.96 * ca_std).tolist(),
+    demo_u68  = (ca_mean + ca_std).tolist(),
+    demo_l68  = (ca_mean - ca_std).tolist(),
+    demo_u95n = (ca_mean + 1.96 * sl_d).tolist(),
+    demo_l95n = (ca_mean - 1.96 * sl_d).tolist(),
+    demo_Ttr  = T_ca.tolist(),
+    demo_mtr  = mu_ca.tolist(),
+    demo_samp = ca_samples[:30].tolist(),
+)
+
+# Thumbnail
+fig, ax = plt.subplots(figsize=(8, 4.5))
+fig.patch.set_facecolor("#1e1e2e")
+ax.set_facecolor("#1e1e2e")
+
+ax.axvspan(-22, 3,  alpha=0.12, color="#ff6b6b")
+ax.axvspan(8,  42,  alpha=0.09, color="#4a90d9")
+
+ax.fill_between(T_grid, ca_mean - 1.96 * ca_std, ca_mean + 1.96 * ca_std,
+                color="#4a90d9", alpha=0.25)
+ax.fill_between(T_grid, ca_mean - ca_std, ca_mean + ca_std,
+                color="#4a90d9", alpha=0.35)
+
+ax.plot(T_grid, true_friction(T_grid), color="#ff6b6b",
+        linewidth=1.8, linestyle="--")
+ax.plot(T_grid, ca_mean, color="#4a90d9", linewidth=2.5)
+
+ax.scatter(T_ca, mu_ca, color="white", s=22, zorder=5, alpha=0.85)
+
+ax.axvline(0, color="#888888", linewidth=0.8, linestyle=":")
+
+ax.set_xlim(-22, 42)
+ax.set_ylim(-0.05, 1.05)
+ax.set_xlabel("Temperature (°C)", color="#cccccc", fontsize=11)
+ax.set_ylabel("Friction coefficient μ", color="#cccccc", fontsize=11)
+ax.tick_params(colors="#aaaaaa")
+for spine in ax.spines.values():
+    spine.set_edgecolor("#444444")
+
+plt.tight_layout()
+plt.savefig("thumbnail.png", dpi=150, bbox_inches="tight",
+            facecolor=fig.get_facecolor())
+plt.close()
+```
+
+Toggle **Show sample functions** to see the weight uncertainty directly: each line is one draw from the posterior, a plausible friction function consistent with the California data. Inside the training zone they agree. In the Finnish winter they scatter.
+
+```{ojs}
+//| echo: false
+viewof demo_mode = Inputs.radio(
+  ["Bayesian BNN", "Standard NN"],
+  { value: "Bayesian BNN", label: "Model" }
+)
+```
+
+```{ojs}
+//| echo: false
+viewof demo_samples_on = Inputs.checkbox(["Show sample functions"])
+```
+
+```{ojs}
+//| echo: false
+//| label: fig-demo
+//| fig-cap: "Road friction vs temperature. White dots: California training data (8–38 °C). Dashed red line: true friction, including the Finnish ice regime the BNN never saw. Blue band: posterior predictive uncertainty. Toggle **Standard NN** to see flat, constant confidence; toggle **Show sample functions** to visualise the distribution over plausible weight configurations."
+
+{
+  const isBNN   = demo_mode === "Bayesian BNN"
+  const showSamp = demo_samples_on.includes("Show sample functions")
+
+  const upper  = isBNN ? demo_u95 : demo_u95n
+  const lower  = isBNN ? demo_l95 : demo_l95n
+
+  const band95    = demo_T.map((t, i) => ({ t, y1: lower[i],    y2: upper[i]    }))
+  const band68    = isBNN
+    ? demo_T.map((t, i) => ({ t, y1: demo_l68[i], y2: demo_u68[i] }))
+    : []
+  const meanLine  = demo_T.map((t, i) => ({ t, y: demo_mean[i]  }))
+  const trueLine  = demo_T.map((t, i) => ({ t, y: demo_true[i]  }))
+  const pts       = demo_Ttr.map((t, i) => ({ t, y: demo_mtr[i] }))
+  const sampLines = (showSamp && isBNN)
+    ? demo_samp.flatMap((s, si) => demo_T.map((t, i) => ({ t, y: s[i], g: si })))
+    : []
+
+  return Plot.plot({
+    width: 700,
+    height: 390,
+    marginLeft: 60,
+    x: { label: "Temperature (°C)", domain: [-22, 42] },
+    y: { label: "Friction coefficient μ", domain: [-0.05, 1.05] },
+    marks: [
+      Plot.rect(
+        [{ x1: -22, x2: 3,  y1: -0.05, y2: 1.05 }],
+        { x1:"x1", x2:"x2", y1:"y1", y2:"y2", fill:"#ff6b6b", fillOpacity: 0.07 }
+      ),
+      Plot.rect(
+        [{ x1: 8, x2: 42, y1: -0.05, y2: 1.05 }],
+        { x1:"x1", x2:"x2", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.06 }
+      ),
+      Plot.text(
+        [{ t: -11, y: 1.00, label: "Finnish winter" }],
+        { x:"t", y:"y", text:"label", fill:"#ff9f9f", fontSize: 11 }
+      ),
+      Plot.text(
+        [{ t: 26, y: 1.00, label: "California training" }],
+        { x:"t", y:"y", text:"label", fill:"#7fb3d3", fontSize: 11 }
+      ),
+      Plot.ruleX([0], { stroke:"#888", strokeDasharray:"3 3", strokeOpacity: 0.6 }),
+      Plot.text(
+        [{ t: 0.6, y: -0.04, label: "0 °C" }],
+        { x:"t", y:"y", text:"label", fill:"#aaa", fontSize: 10, textAnchor:"start" }
+      ),
+      Plot.line(sampLines, {
+        x:"t", y:"y", z:"g",
+        stroke:"steelblue", strokeWidth: 0.8, strokeOpacity: 0.18,
+      }),
+      Plot.areaY(band95, { x:"t", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.20 }),
+      Plot.areaY(band68, { x:"t", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.28 }),
+      Plot.line(trueLine, {
+        x:"t", y:"y", stroke:"#ff6b6b", strokeWidth: 1.8, strokeDasharray:"6 3",
+      }),
+      Plot.line(meanLine, { x:"t", y:"y", stroke:"steelblue", strokeWidth: 2.5 }),
+      Plot.dot(pts, {
+        x:"t", y:"y", fill:"white", stroke:"steelblue", r: 4, strokeWidth: 1.5,
+      }),
+    ],
+  })
+}
+```
+
+- In the California zone the BNN tracks the true friction (dashed red) closely and is confident: it knows these roads.
+- In the Finnish zone the BNN's mean prediction follows the California trend, extrapolating to around $\hat{\mu} \approx 0.55$ -- more than five times higher than the true ice friction of ~0.09. The model has no idea ice exists.
+- But the uncertainty bands are wide enough to flag the problem. A system using this BNN would see a large confidence interval and know it cannot trust this prediction. Compare that to **Standard NN**: the bands stay narrow, the car gets a confident number, and nothing raises an alarm.
+- This is the core value of Bayes by Backprop: not just better predictions, but honest accounting of when predictions cannot be trusted.
+
+## Summary
+
+- **The problem:** standard neural networks have a single weight vector and no way to express uncertainty.
+- **The approach:** replace the weight vector with a Gaussian distribution $q_\lambda(\mathbf{w})$ and minimise the KL divergence from the true posterior via the ELBO.
+- **The two loss terms:** (1) expected negative log-likelihood, estimated by sampling one weight vector per minibatch and computing MSE; (2) the closed-form KL between two Gaussians, which acts as a regulariser for free.
+- **The gradient trick:** the reparameterization trick moves randomness out of the computation graph, so gradients can flow through $\mu_d$ and $\sigma_d$.
+- **The result:** a model that is confident where it has data and honest where it does not -- one that would have flagged the Finnish road before turning.
+- **The cost:** BbB requires two parameters per weight ($\mu_d$ and $\rho_d$) instead of one, uses noisy single-sample gradient estimates, and introduces two extra hyperparameters ($\alpha$ and $\sigma_l$). Calibrated uncertainty is not free.
