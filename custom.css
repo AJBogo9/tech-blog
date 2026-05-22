@@ -176,6 +176,25 @@ table {
   font-size: 0.75em;
 }
 
+/* ── Homepage recent posts: category tags are decorative only ────────── */
+
+#listing-recent-posts .listing-category {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* ── Card category tag highlights ───────────────────────────────────── */
+
+.listing-category {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.listing-category.active {
+  background: var(--bs-primary) !important;
+  color: #fff !important;
+  border-color: var(--bs-primary) !important;
+}
+
 /* On the blog listing page, collapse the now-empty sidebar and let the grid expand */
 #quarto-margin-sidebar:has(.quarto-listing-category) {
   display: none;

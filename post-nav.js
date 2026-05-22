@@ -94,6 +94,15 @@
       });
     };
 
+    const updateCardHighlights = () => {
+      document.querySelectorAll('.listing-category').forEach(div => {
+        const match = div.getAttribute('onclick')?.match(/'([^']+)'/);
+        if (!match) return;
+        const active = selected.size > 0 && selected.has(match[1]);
+        div.classList.toggle('active', active);
+      });
+    };
+
     const applyFilter = () => {
       const listingId = document.querySelector('[id^="listing-"]')?.id;
       const list = window['quarto-listings']?.[listingId];
@@ -112,6 +121,10 @@
     };
 
     const setupPills = () => {
+      const listingId = document.querySelector('[id^="listing-"]')?.id;
+      const list = window['quarto-listings']?.[listingId];
+      list?.on('updated', updateCardHighlights);
+
       clone.querySelectorAll('.category').forEach(pill => {
         pill.onclick = null;
         pill.addEventListener('click', e => {
@@ -125,9 +138,26 @@
             selected.has(cat) ? selected.delete(cat) : selected.add(cat);
           }
           updateActive();
+          updateCardHighlights();
           applyFilter();
         });
       });
+
+      document.querySelectorAll('.listing-category').forEach(div => {
+        div.onclick = e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const match = div.getAttribute('onclick')?.match(/'([^']+)'/);
+          if (!match) return;
+          const cat = match[1];
+          selected.has(cat) ? selected.delete(cat) : selected.add(cat);
+          updateActive();
+          updateCardHighlights();
+          applyFilter();
+          wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+      });
+
       updateActive();
     };
 
