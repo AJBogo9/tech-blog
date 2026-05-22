@@ -1,0 +1,519 @@
+---
+title: "Gaussian Processes"
+description: "A Gaussian Process is a distribution over functions. Given a few observations, it predicts not just the most likely value at any new point, but a calibrated uncertainty around it — wider where data is sparse, narrower where it is dense."
+date: 2026-05-22
+image: "thumbnail.png"
+image-alt: "A Gaussian Process posterior showing a mean curve and shaded uncertainty band fitted to a handful of observations"
+bibliography: references.bib
+categories:
+  - probabilistic ML
+  - Bayesian methods
+  - regression
+---
+
+- [Hook: the Finland weather station problem — you have measurements at a few locations, you want to predict everywhere else]
+- [What's wrong with plain interpolation: it gives one number, no sense of confidence]
+- [What a GP gives instead: a distribution over all plausible functions — wider uncertainty where data is absent, narrower where it is dense]
+
+::: {.callout-note collapse="true"}
+## Notation used in this post
+
+| Symbol | Name | Description |
+|--------|------|-------------|
+| $f$ | Latent function | The unknown function we want to model |
+| $\mathbf{x}, x_*$ | Input | A location or set of locations where we query $f$ |
+| $X$ | Training inputs | Matrix of $n$ observed input locations, shape $(n, d)$ |
+| $X_*$ | Test inputs | Locations where we want predictions |
+| $\mathbf{y}$ | Training outputs | Noisy observations $y_i = f(x_i) + \varepsilon_i$ |
+| $\mathbf{f}_*$ | Test function values | The (unobserved) true function values at $X_*$ |
+| $m(\mathbf{x})$ | Mean function | Prior expectation of $f$ at $\mathbf{x}$; usually set to zero |
+| $k(\mathbf{x}, \mathbf{x}')$ | Kernel / covariance function | Encodes how similar $f(\mathbf{x})$ and $f(\mathbf{x}')$ are expected to be |
+| $K_{XX}$ | Training covariance matrix | $[k(x_i, x_j)]_{ij}$, shape $(n \times n)$ |
+| $K_{*X}$ | Cross-covariance | $[k(x_{*,i}, x_j)]_{ij}$, shape $(m \times n)$ |
+| $K_{**}$ | Test covariance | $[k(x_{*,i}, x_{*,j})]_{ij}$, shape $(m \times m)$ |
+| $l$ | Lengthscale | Controls how quickly the kernel decays with distance |
+| $\sigma_f$ | Signal standard deviation | Controls the overall scale of function variation |
+| $\sigma_n$ | Noise standard deviation | Standard deviation of observation noise |
+| $\boldsymbol{\mu}_*$ | Posterior mean | Expected value of $\mathbf{f}_*$ given the training data |
+| $\boldsymbol{\Sigma}_*$ | Posterior covariance | Uncertainty over $\mathbf{f}_*$ given the training data |
+:::
+
+# Theory
+
+## The GP prior
+
+- [A GP is a distribution over functions, not just a distribution over numbers — analogy with Gaussian (mean + variance) vs GP (mean function + kernel)]
+- [Key property: evaluate the GP at any finite set of inputs and you get a multivariate Gaussian]
+
+$$f \sim \mathcal{GP}(m, k)$$
+
+$$\mathbf{f} \sim \mathcal{N}(\mathbf{m}(X),\, K_{XX})$$
+
+- [We set $m \equiv 0$ throughout — explain why this is standard practice]
+
+$$\mathbf{f} \sim \mathcal{N}(\mathbf{0},\, K_{XX})$$
+
+- [Everything about the GP's character — smoothness, amplitude, shape — is encoded in the kernel]
+
+## The kernel function
+
+- [The kernel $k(x,x')$ encodes our prior belief: how similar should $f(x)$ and $f(x')$ be, given how far apart $x$ and $x'$ are?]
+- [The most common choice is the squared exponential (RBF) kernel:]
+
+$$k(x, x') = \sigma_f^2 \exp\!\left(-\frac{(x - x')^2}{2 l^2}\right)$$
+
+- **Lengthscale $l$**: [explain what it controls — large $l$ = smooth functions, small $l$ = rough functions]
+- **Signal variance $\sigma_f^2$**: [explain what it controls — the overall amplitude of variation]
+- [The kernel equals $\sigma_f^2$ at $x = x'$ and decays to zero as distance grows]
+
+## GP prior samples
+
+- [Before any data: prior samples show what functions the model considers plausible]
+- [How to sample: draw from $\mathcal{N}(\mathbf{0}, K_{XX})$ using the Cholesky decomposition of $K_{XX}$]
+
+```{python}
+#| label: prior-samples
+#| message: false
+
+import numpy as np
+
+rng = np.random.default_rng(42)
+
+def rbf_kernel(X1, X2, l=1.0, sf=1.0):
+    X1 = np.asarray(X1)[:, None]
+    X2 = np.asarray(X2)[None, :]
+    return sf ** 2 * np.exp(-0.5 * ((X1 - X2) / l) ** 2)
+
+N_GRID  = 300
+N_SAMP  = 7
+x_grid  = np.linspace(-4, 4, N_GRID)
+
+lengthscales = [0.4, 1.0, 2.5]
+prior_samples = {}
+
+for l in lengthscales:
+    K  = rbf_kernel(x_grid, x_grid, l=l, sf=1.0)
+    K += 1e-6 * np.eye(N_GRID)
+    L  = np.linalg.cholesky(K)
+    S  = (L @ rng.standard_normal((N_GRID, N_SAMP))).T   # (N_SAMP, N_GRID)
+    prior_samples[str(l)] = S.tolist()
+
+ojs_define(
+    x_grid        = x_grid.tolist(),
+    prior_samples = prior_samples,
+    l_values      = lengthscales,
+)
+```
+
+```{ojs}
+//| label: ojs-imports
+//| echo: false
+
+import { linspace, gpPosterior } from "./gp-helpers.js"
+```
+
+```{ojs}
+//| label: ojs-prior
+//| echo: false
+//| fig-cap: "Seven samples from the GP prior for three different lengthscale values. A larger lengthscale forces smoother functions; a smaller one allows faster variation."
+
+viewof l_choice = Inputs.radio(
+  new Map([
+    ["l = 0.4  (rough)", "0.4"],
+    ["l = 1.0  (default)", "1.0"],
+    ["l = 2.5  (smooth)", "2.5"],
+  ]),
+  { value: "1.0", label: "Lengthscale" }
+)
+
+sampleCurves = prior_samples[l_choice].flatMap((s, si) =>
+  x_grid.map((x, i) => ({ x, y: s[i], id: si }))
+)
+
+Plot.plot({
+  width:      700,
+  height:     280,
+  marginLeft: 50,
+  x: { label: "x", domain: [-4, 4] },
+  y: { label: "f(x)", domain: [-3, 3] },
+  marks: [
+    Plot.ruleY([0], { stroke: "#555", strokeDasharray: "4 2" }),
+    Plot.line(sampleCurves, {
+      x: "x",
+      y: "y",
+      z: "id",
+      stroke:        "steelblue",
+      strokeOpacity: 0.55,
+      strokeWidth:   1.8,
+    }),
+  ],
+})
+```
+
+## Posterior conditioning
+
+- [Observations are noisy: $y_i = f(x_i) + \varepsilon_i$, the noise lets us avoid overfitting to exact values]
+
+$$y_i = f(x_i) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma_n^2)$$
+
+- [Key trick: write the joint distribution of training outputs $\mathbf{y}$ and test values $\mathbf{f}_*$ as a single big Gaussian, then condition]
+
+$$\begin{bmatrix} \mathbf{y} \\ \mathbf{f}_* \end{bmatrix} \sim \mathcal{N}\!\left(\mathbf{0},\; \begin{bmatrix} K_{XX} + \sigma_n^2 I & K_{X*} \\ K_{*X} & K_{**} \end{bmatrix}\right)$$
+
+- [Explain the blocks: $K_{XX} + \sigma_n^2 I$ is training covariance plus noise; $K_{X*}$ links training and test points]
+- [Conditioning on $\mathbf{y}$ gives the posterior [@rasmussen2006gaussian, chap. 2]:]
+
+$$\mathbf{f}_* \mid \mathbf{y},\, X,\, X_* \sim \mathcal{N}(\boldsymbol{\mu}_*,\, \boldsymbol{\Sigma}_*)$$
+
+$$\boldsymbol{\mu}_* = K_{*X}\underbrace{(K_{XX} + \sigma_n^2 I)^{-1} \mathbf{y}}_{\boldsymbol{\alpha}}$$
+
+$$\boldsymbol{\Sigma}_* = K_{**} - K_{*X}(K_{XX} + \sigma_n^2 I)^{-1}K_{X*}$$
+
+- **Posterior mean**: [interpret $\boldsymbol{\alpha}$ — a linear combination of training outputs; closer training points have more influence]
+- **Posterior variance**: [prior variance minus a correction that grows with data; collapses to zero at exact observations, returns to prior far from data]
+- [Computational cost: $\mathcal{O}(n^3)$ from the linear solve — why GPs don't scale to large datasets]
+
+# Interactive posterior
+
+- [Click anywhere on the plot to place an observation — the posterior updates immediately]
+- [Drag any orange dot to move it and watch the uncertainty band reshape in real time]
+- [Click an existing point to remove it]
+- [Use the ℓ and σₙ sliders to see how the lengthscale and noise level affect the posterior]
+
+```{ojs}
+//| label: ojs-interactive
+//| echo: false
+//| fig-cap: "GP posterior. Blue band: μ* ± 2σ* (95% credible interval). Blue curve: posterior mean. Orange dots: observations. The band collapses near observations and expands in data-sparse regions."
+
+viewof obs = {
+  /* ── state ───────────────────────────────────────────────────────────── */
+  let points   = [];
+  let selected = new Set();
+  let l        = 1.0;
+  let noise    = 0.2;
+
+  /* ── layout ──────────────────────────────────────────────────────────── */
+  const W  = 700, H  = 340;
+  const m  = { top: 15, right: 20, bottom: 42, left: 46 };
+  const pw = W - m.left - m.right;
+  const ph = H - m.top  - m.bottom;
+  const xSc = d3.scaleLinear([-4, 4], [0, pw]);
+  const ySc = d3.scaleLinear([-3, 3], [ph, 0]);
+  const Xs  = linspace(-4, 4, 250);
+
+  /* ── root container ──────────────────────────────────────────────────── */
+  const wrap = d3.create("div");
+
+  /* ── control bar ─────────────────────────────────────────────────────── */
+  const bar = wrap.append("div")
+    .style("display",       "flex")
+    .style("align-items",   "center")
+    .style("gap",           "12px")
+    .style("margin-bottom", "6px")
+    .style("font-size",     "13px");
+
+  function addSlider(label, min, max, step, init, fmt, cb) {
+    const lbl = bar.append("label")
+      .style("display",     "flex")
+      .style("align-items", "center")
+      .style("gap",         "6px");
+    lbl.append("span").text(label);
+    const inp = lbl.append("input")
+      .attr("type", "range")
+      .attr("min",  min).attr("max",  max)
+      .attr("step", step).attr("value", init)
+      .style("width",  "90px")
+      .style("cursor", "pointer");
+    const val = lbl.append("span").style("width", "34px").text(fmt(init));
+    inp.on("input", function () {
+      const v = +this.value;
+      val.text(fmt(v));
+      cb(v);
+      render();
+    });
+  }
+
+  addSlider("ℓ",  0.2, 3.0, 0.1,  l,     v => v.toFixed(1), v => { l     = v; });
+  addSlider("σₙ", 0.05, 1.0, 0.05, noise, v => v.toFixed(2), v => { noise = v; });
+
+  /* ── right-side action buttons ───────────────────────────────────────── */
+  const rightBtns = bar.append("div")
+    .style("margin-left", "auto")
+    .style("display",     "flex")
+    .style("gap",         "8px");
+
+  const delBtn = rightBtns.append("button")
+    .style("display",          "none")
+    .style("cursor",           "pointer")
+    .style("color",            "white")
+    .style("background-color", "#c0392b")
+    .style("border",           "none")
+    .style("border-radius",    "4px")
+    .style("padding",          "2px 10px")
+    .on("click", () => deleteSelected());
+
+  rightBtns.append("button")
+    .text("Clear")
+    .style("cursor", "pointer")
+    .on("click", () => { points = []; selected = new Set(); render(); });
+
+  /* ── SVG ─────────────────────────────────────────────────────────────── */
+  const svg = wrap.append("svg")
+    .attr("width",  W)
+    .attr("height", H)
+    .style("display", "block");
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${m.left},${m.top})`);
+
+  const clipId = "gp-clip-" + Math.random().toString(36).slice(2);
+  svg.append("defs")
+    .append("clipPath").attr("id", clipId)
+    .append("rect").attr("width", pw).attr("height", ph);
+
+  /* background rect */
+  g.append("rect")
+    .attr("width",  pw)
+    .attr("height", ph)
+    .attr("fill",   "transparent");
+
+  /* GP layers */
+  const gpLayer = g.append("g")
+    .attr("clip-path", `url(#${clipId})`)
+    .style("pointer-events", "none");
+  const band2 = gpLayer.append("path").attr("fill", "steelblue").attr("fill-opacity", 0.13);
+  const band1 = gpLayer.append("path").attr("fill", "steelblue").attr("fill-opacity", 0.22);
+  const meanL = gpLayer.append("path")
+    .attr("fill", "none").attr("stroke", "steelblue")
+    .attr("stroke-width", 2.5).attr("stroke-linejoin", "round");
+
+  const zeroL = g.append("line")
+    .attr("x1", 0).attr("x2", pw)
+    .attr("stroke", "#666").attr("stroke-dasharray", "4 3").attr("stroke-width", 1)
+    .style("pointer-events", "none");
+
+  /* axes */
+  function styleAx(sel) {
+    sel.selectAll(".domain").style("stroke", "#555");
+    sel.selectAll(".tick text").style("fill", "#999").style("font-size", "12px");
+    sel.selectAll(".tick line").style("stroke", "#555");
+  }
+  g.append("g").attr("transform", `translate(0,${ph})`)
+    .call(d3.axisBottom(xSc).ticks(8)).call(styleAx);
+  g.append("g").call(d3.axisLeft(ySc).ticks(6)).call(styleAx);
+  g.append("text")
+    .attr("x", pw / 2).attr("y", ph + 34)
+    .attr("text-anchor", "middle").attr("fill", "#999").attr("font-size", 12).text("x");
+  g.append("text")
+    .attr("transform", "rotate(-90)").attr("x", -ph / 2).attr("y", -34)
+    .attr("text-anchor", "middle").attr("fill", "#999").attr("font-size", 12).text("f(x)");
+
+  /* ── brush — always active on empty space ─────────────────────────────
+     Click on background  → add point  (event.selection is null)
+     Drag on background   → rubber-band select                           */
+  const brushG = g.append("g");
+  const brush = d3.brush()
+    .extent([[0, 0], [pw, ph]])
+    .on("end", event => {
+      if (!event.sourceEvent) return;   /* programmatic brush.move — ignore */
+      if (!event.selection) {
+        /* click on empty space: deselect if anything is selected, else add a point */
+        if (selected.size > 0) {
+          selected = new Set();
+          render();
+          return;
+        }
+        const [mx, my] = d3.pointer(event.sourceEvent, g.node());
+        points.push({
+          x: Math.max(-4, Math.min(4, xSc.invert(mx))),
+          y: Math.max(-3, Math.min(3, ySc.invert(my))),
+        });
+        render();
+        return;
+      }
+      /* rubber-band drag → select enclosed points */
+      const [[x0, y0], [x1, y1]] = event.selection;
+      selected = new Set(points.filter(p => {
+        const cx = xSc(p.x), cy = ySc(p.y);
+        return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1;
+      }));
+      brush.move(brushG, null);
+      render();
+    });
+  brushG.call(brush);
+  brushG.select(".overlay").style("cursor", "crosshair");
+  brushG.select(".selection")
+    .attr("fill", "steelblue").attr("fill-opacity", 0.10)
+    .attr("stroke", "steelblue").attr("stroke-dasharray", "4 2");
+
+  /* points layer — on top of brush so mousedown reaches the circles first */
+  const ptG = g.append("g");
+
+  /* ── hint text ───────────────────────────────────────────────────────── */
+  wrap.append("p")
+    .style("font-size", "11px").style("color", "#777").style("margin", "4px 0 0 0")
+    .text("Click to add  ·  Drag to multi-select  ·  Click point to select  ·  Drag point to move  ·  Delete / ⌫ to remove");
+
+  /* ── path generators ─────────────────────────────────────────────────── */
+  const mkArea = (lo, hi) => d3.area()
+    .x((_, i) => xSc(Xs[i])).y0(d => ySc(d[lo])).y1(d => ySc(d[hi]))
+    .curve(d3.curveCatmullRom);
+  const mkLine = d3.line()
+    .x((_, i) => xSc(Xs[i])).y(d => ySc(d)).curve(d3.curveCatmullRom);
+  const a2 = mkArea("lo2", "hi2");
+  const a1 = mkArea("lo1", "hi1");
+
+  /* ── drag ────────────────────────────────────────────────────────────── */
+  let dragMoved = false;
+  const drag = d3.drag()
+    .subject((event, d) => ({ x: xSc(d.x), y: ySc(d.y) }))
+    .on("start", () => { dragMoved = false; })
+    .on("drag", (event, d) => {
+      if (!dragMoved) {
+        /* first movement: if this point isn't in the selection, select it alone */
+        if (!selected.has(d)) selected = new Set([d]);
+        dragMoved = true;
+      }
+      const newX = Math.max(-4, Math.min(4, xSc.invert(event.x)));
+      const newY = Math.max(-3, Math.min(3, ySc.invert(event.y)));
+      const ddx = newX - d.x, ddy = newY - d.y;
+      d.x = newX; d.y = newY;
+      for (const p of selected) {
+        if (p === d) continue;
+        p.x = Math.max(-4, Math.min(4, p.x + ddx));
+        p.y = Math.max(-3, Math.min(3, p.y + ddy));
+      }
+      render();
+    })
+    .on("end", (event, d) => {
+      if (!dragMoved) {
+        /* no movement → was a click: toggle this point's selection */
+        if (selected.has(d)) selected.delete(d); else selected.add(d);
+        render();
+      }
+    });
+
+  /* ── delete + keyboard ───────────────────────────────────────────────── */
+  function deleteSelected() {
+    if (selected.size === 0) return;
+    points   = points.filter(p => !selected.has(p));
+    selected = new Set();
+    render();
+  }
+  const onKey = e => {
+    if ((e.key === "Delete" || e.key === "Backspace") && selected.size > 0) {
+      e.preventDefault();
+      deleteSelected();
+    }
+  };
+  document.addEventListener("keydown", onKey);
+  if (typeof invalidation !== "undefined")
+    invalidation.then(() => document.removeEventListener("keydown", onKey));
+
+  /* ── render ──────────────────────────────────────────────────────────── */
+  function render() {
+    /* GP computation */
+    const post = gpPosterior(points.map(p => p.x), points.map(p => p.y),
+                             Xs, { l, sf: 1.0, noise });
+    const bd = Xs.map((_, i) => ({
+      lo2: post.mean[i] - 2 * post.std[i], hi2: post.mean[i] + 2 * post.std[i],
+      lo1: post.mean[i] -     post.std[i], hi1: post.mean[i] +     post.std[i],
+    }));
+    band2.datum(bd).attr("d", a2);
+    band1.datum(bd).attr("d", a1);
+    meanL.datum(post.mean).attr("d", mkLine);
+    zeroL.attr("y1", ySc(0)).attr("y2", ySc(0))
+      .attr("stroke-opacity", points.length === 0 ? 0.6 : 0.2);
+
+    /* delete button */
+    const n = selected.size;
+    delBtn
+      .style("display", n > 0 ? null : "none")
+      .text(n > 1 ? `Delete ${n} points` : "Delete point");
+
+    /* circles */
+    const sel = ptG.selectAll("circle").data(points);
+    sel.enter().append("circle")
+      .call(drag)
+      .merge(sel)
+      .attr("cx", d => xSc(d.x))
+      .attr("cy", d => ySc(d.y))
+      .attr("r",            d => selected.has(d) ? 9   : 7)
+      .attr("fill",         d => selected.has(d) ? "#ffb347" : "darkorange")
+      .attr("stroke",       d => selected.has(d) ? "#fff"    : "white")
+      .attr("stroke-width", d => selected.has(d) ? 3         : 1.5)
+      .style("cursor",      d => selected.has(d) ? "grab"    : "pointer");
+    sel.exit().remove();
+
+    wrap.node().value = [...points];
+    wrap.node().dispatchEvent(new CustomEvent("input"));
+  }
+
+  render();
+  wrap.node().value = [];
+  return wrap.node();
+}
+```
+
+# Marginal likelihood and hyperparameter learning
+
+- [Rather than picking $l$, $\sigma_f$, $\sigma_n$ by hand, we can learn them by maximizing the log marginal likelihood — the probability of the data after integrating out $f$ [@rasmussen2006gaussian, chap. 5]]
+
+$$\log p(\mathbf{y} \mid X) = -\frac{1}{2}\mathbf{y}^\top (K_{XX} + \sigma_n^2 I)^{-1}\mathbf{y} - \frac{1}{2}\log |K_{XX} + \sigma_n^2 I| - \frac{n}{2}\log 2\pi$$
+
+- **Data fit** $-\frac{1}{2}\mathbf{y}^\top K^{-1}\mathbf{y}$: [rewards models that assign high prior probability to the observed outputs]
+- **Complexity penalty** $-\frac{1}{2}\log|K|$: [penalizes overly expressive models through the log determinant — automatic Occam's razor]
+- **Constant** $-\frac{n}{2}\log 2\pi$: [does not depend on hyperparameters]
+- [Maximizing over $l$, $\sigma_f$, $\sigma_n$ via gradient descent is called Type II maximum likelihood or empirical Bayes; `GaussianProcessRegressor` does this automatically]
+
+```{python}
+#| label: sklearn-demo
+#| code-fold: true
+#| code-summary: "Show sklearn GP demo"
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+
+rng = np.random.default_rng(0)
+
+# Six observations from a noisy sinusoid
+X_train = np.array([-3.0, -1.5, -0.5, 0.8, 2.0, 3.2])[:, None]
+y_train = np.sin(X_train.ravel()) + rng.normal(0, 0.15, len(X_train))
+
+kernel = 1.0 * RBF(length_scale=1.0) + WhiteKernel(noise_level=0.05)
+gp     = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5)
+gp.fit(X_train, y_train)
+
+X_test = np.linspace(-4, 4, 200)[:, None]
+mu, sigma = gp.predict(X_test, return_std=True)
+
+fig, ax = plt.subplots(figsize=(8, 3.8))
+ax.fill_between(X_test.ravel(), mu - 2 * sigma, mu + 2 * sigma,
+                alpha=0.2, color="steelblue", label="95% credible interval")
+ax.plot(X_test.ravel(), mu, color="steelblue", lw=2, label="Posterior mean")
+ax.scatter(X_train.ravel(), y_train, color="darkorange", zorder=5,
+           s=60, label="Observations")
+ax.plot(X_test.ravel(), np.sin(X_test.ravel()),
+        color="#888", lw=1.5, ls="--", label="True function")
+ax.set_xlabel("x")
+ax.set_ylabel("f(x)")
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.show()
+
+print(f"Learned kernel: {gp.kernel_}")
+```
+
+# Summary
+
+- [A GP is a prior over functions, specified by a mean function and a kernel]
+- [Conditioning on noisy observations gives a closed-form posterior:]
+
+$$\boldsymbol{\mu}_* = K_{*X}(K_{XX} + \sigma_n^2 I)^{-1}\mathbf{y}$$
+
+$$\boldsymbol{\Sigma}_* = K_{**} - K_{*X}(K_{XX} + \sigma_n^2 I)^{-1}K_{X*}$$
+
+- [Key advantage over standard regression: the posterior variance $\boldsymbol{\Sigma}_*$ is calibrated and spatially varying]
+- [Hyperparameters are learned by maximizing the marginal likelihood, which balances fit against complexity automatically [@rasmussen2006gaussian]]
