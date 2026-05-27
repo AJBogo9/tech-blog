@@ -7,7 +7,6 @@ image-alt: "3D scatter plot of NBA player measurements with three principal comp
 categories:
   - linear algebra
   - machine learning
-  - geometry
 bibliography: references.bib
 ---
 

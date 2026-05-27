@@ -8,7 +8,6 @@ image-alt: "Diagram showing the relationship between the ELBO and the log-eviden
 categories:
   - variational inference
   - probabilistic ML
-  - deep learning
 ---
 
 

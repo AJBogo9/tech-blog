@@ -8,7 +8,6 @@ description: "How to measure the difference between two probability distribution
 categories:
   - information theory
   - probabilistic ML
-  - llms
 ---
 
 When you fine-tune a large language model, how do you measure whether its output distribution is actually moving closer to the desired distribution? This question is a central to modern alignment techniques like RLHF [@ziegler2019; @ouyang2022].

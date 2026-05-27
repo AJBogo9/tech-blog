@@ -7,7 +7,6 @@ image-alt: "Animated visualisation of the A* pathfinding algorithm navigating a 
 bibliography: references.bib
 categories:
   - algorithms
-  - search
   - graph theory
 ---
 
