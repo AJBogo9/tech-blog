@@ -23,7 +23,7 @@ Python dependencies are managed via a `.venv` and listed in `requirements.txt`. 
 
 ## Architecture
 
-This is a [Quarto](https://quarto.org) static website hosted on GitHub Pages (CNAME → `andreasbogossian.com`). The built output goes to `_site/`, which is what gets deployed.
+This is a [Quarto](https://quarto.org) static website hosted on Cloudflare Pages (CNAME → `andreasbogossian.com`). The built output goes to `_site/`, which is what gets deployed. Infra is managed with Terraform in `infra/`.
 
 **Key config files:**
 - `_quarto.yml` — site-wide config: theme (`darkly`), navbar, footer, math (`katex`), code execution (`freeze: auto`)
