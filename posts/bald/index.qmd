@@ -223,6 +223,7 @@ for it in range(N_ITER):
     x_tr = torch.tensor(x_pool_np[labeled], dtype=torch.float32).unsqueeze(1)
     y_tr = torch.tensor(y_pool_np[labeled], dtype=torch.float32).unsqueeze(1)
 
+    print(f"  BALD {it + 1}/{N_ITER}", flush=True)
     model      = train_bnn(x_tr, y_tr, init_model=prev_model)
     prev_model = model
 
@@ -280,6 +281,7 @@ for rseed in range(N_RAND_SEEDS):
     prev_rand = None
 
     for it in range(N_ITER):
+        print(f"  Random seed {rseed + 1}/{N_RAND_SEEDS}, iter {it + 1}/{N_ITER}", flush=True)
         x_tr_r = torch.tensor(x_pool_np[r_labeled], dtype=torch.float32).unsqueeze(1)
         y_tr_r = torch.tensor(y_pool_np[r_labeled], dtype=torch.float32).unsqueeze(1)
 
