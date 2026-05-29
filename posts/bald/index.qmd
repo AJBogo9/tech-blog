@@ -149,6 +149,14 @@ N_POOL    = len(x_pool_np)   # 60
 y_pool_np = true_fn(x_pool_np) + 0.12 * np.random.randn(N_POOL)
 x_eval_np = np.linspace(-5.5, 5.5, 300)
 
+# DEV_MODE: coarse settings for fast iteration during writing.
+# Flip to False for the final render -- freeze:auto caches the result so it only runs once.
+DEV_MODE   = True
+N_EPOCHS_B = 150 if DEV_MODE else 800   # BALD training epochs per iteration
+N_EPOCHS_R = 100 if DEV_MODE else 500   # random baseline epochs
+T_EVAL     =  20 if DEV_MODE else 100   # MC samples for eval/learning-curve
+T_POOL     =  10 if DEV_MODE else  30   # MC samples for pool scoring (rough ranking)
+
 class BayesLinear(nn.Module):
     def __init__(self, in_f, out_f, alpha=1.0):
         super().__init__()
@@ -213,7 +221,7 @@ y_eval_true = true_fn(x_eval_np)
 # Seed at the far edges so the middle cluster is initially unknown
 seed_x  = [-3.5, 0.5]  # seeds in the sparse left region; right cluster starts unknown
 labeled = [int(np.argmin(np.abs(x_pool_np - sx))) for sx in seed_x]
-N_ITER  = N_POOL - len(labeled)  # label all remaining points
+N_ITER  = 12 if DEV_MODE else N_POOL - len(labeled)  # dev: quick preview; full: all points
 
 al_iters   = []
 prev_model = None  # carry weights across iterations
@@ -223,11 +231,11 @@ for it in range(N_ITER):
     y_tr = torch.tensor(y_pool_np[labeled], dtype=torch.float32).unsqueeze(1)
 
     print(f"  BALD {it + 1}/{N_ITER}", flush=True)
-    model      = train_bnn(x_tr, y_tr, init_model=prev_model)
+    model      = train_bnn(x_tr, y_tr, epochs=N_EPOCHS_B, init_model=prev_model)
     prev_model = model
 
-    mean_c, std_c = mc_predict(model, x_eval_t)
-    _,      p_std = mc_predict(model, x_pool_t, T=30)  # rough ranking only needs low T
+    mean_c, std_c = mc_predict(model, x_eval_t, T=T_EVAL)
+    _,      p_std = mc_predict(model, x_pool_t, T=T_POOL)
 
     p_std_masked = p_std.copy()
     for idx in labeled:
@@ -257,24 +265,22 @@ for it in range(N_ITER):
 #| label: bald-random-baseline
 #| output: false
 
-# Random sampling baseline -- same seed points, shuffled random order
-torch.manual_seed(99)
-np.random.seed(99)
+# Random baseline: 3 seeds run in parallel using threads.
+# PyTorch releases the GIL during compute, so CPU cores are genuinely shared.
+# np.random.default_rng gives each thread its own independent RNG state.
+from concurrent.futures import ThreadPoolExecutor
 
-# Average over 3 independent random orderings to smooth out single-seed noise
 # Recompute initial seeds -- labeled was fully consumed by the BALD loop above
 seed_labeled = [int(np.argmin(np.abs(x_pool_np - sx))) for sx in seed_x]
-
 N_RAND_SEEDS = 3
-rand_mse_all = []
 
-for rseed in range(N_RAND_SEEDS):
+def run_random_seed(rseed):
     torch.manual_seed(rseed * 17 + 5)
-    np.random.seed(rseed * 17 + 5)
+    rng = np.random.default_rng(rseed * 17 + 5)  # thread-safe; avoids shared global state
 
     r_labeled   = seed_labeled.copy()
     r_remaining = [i for i in range(N_POOL) if i not in r_labeled]
-    np.random.shuffle(r_remaining)
+    rng.shuffle(r_remaining)
 
     r_mse     = []
     prev_rand = None
@@ -284,14 +290,17 @@ for rseed in range(N_RAND_SEEDS):
         x_tr_r = torch.tensor(x_pool_np[r_labeled], dtype=torch.float32).unsqueeze(1)
         y_tr_r = torch.tensor(y_pool_np[r_labeled], dtype=torch.float32).unsqueeze(1)
 
-        model_r   = train_bnn(x_tr_r, y_tr_r, epochs=500, init_model=prev_rand)
+        model_r   = train_bnn(x_tr_r, y_tr_r, epochs=N_EPOCHS_R, init_model=prev_rand)
         prev_rand = model_r
-        mean_r, _ = mc_predict(model_r, x_eval_t, T=50)
+        mean_r, _ = mc_predict(model_r, x_eval_t, T=T_EVAL)
         r_mse.append(float(np.mean((mean_r - y_eval_true) ** 2)))
 
         r_labeled.append(r_remaining[it])
 
-    rand_mse_all.append(r_mse)
+    return r_mse
+
+with ThreadPoolExecutor(max_workers=N_RAND_SEEDS) as pool:
+    rand_mse_all = list(pool.map(run_random_seed, range(N_RAND_SEEDS)))
 
 rand_mse = np.mean(rand_mse_all, axis=0).tolist()
 ```
