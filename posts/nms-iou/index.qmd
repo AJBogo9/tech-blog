@@ -1,0 +1,362 @@
+---
+title: "How Object Detectors Filter Their Own Guesses"
+description: Every object detector produces hundreds of overlapping candidate boxes. Non-Maximum Suppression and Intersection over Union are the two-line algorithm that turns that chaos into clean detections -- and you can test it live on your own camera.
+date: "2026-07-01"
+bibliography: references.bib
+image: thumbnail.png
+image-alt: "Overlapping bounding boxes being pruned by Non-Maximum Suppression into clean object detections"
+categories:
+  - computer vision
+  - object detection
+  - deep learning
+draft: true
+---
+
+## The Problem: Too Many Boxes
+
+- Object detectors do not output one box per object. They output hundreds or thousands of candidate boxes, each with a confidence score: *I think there is a dog here, confidence 0.94*.
+- Many of these boxes overlap heavily -- the same dog detected by dozens of slightly shifted, slightly resized anchors all firing at once.
+- Without post-processing the output is unusable: every object is buried under a pile of near-duplicate detections.
+- **Non-Maximum Suppression (NMS)** is the algorithm that prunes this pile. It keeps the most confident box for each object and discards any other box that overlaps with it too much.
+- NMS is not a neural network component. It is a simple geometric rule applied after the network finishes. Every major detector -- YOLO [@redmon2016yolo], Faster R-CNN [@ren2015faster], RetinaNet [@lin2017focal] -- runs NMS as the final step before returning results.
+
+## Intersection over Union
+
+- Before NMS can decide whether two boxes overlap "too much," it needs a number that measures overlap. That number is **Intersection over Union (IoU)**.
+- Given two boxes $A$ and $B$, IoU is the area of their overlap divided by the area of their union:
+
+$$\text{IoU}(A, B) = \frac{|A \cap B|}{|A \cup B|}$$
+
+- IoU is always in $[0, 1]$. Zero means the boxes do not touch at all. One means they are identical. Around $0.5$ means roughly half the combined area is shared.
+- The union term in the denominator penalises large boxes that enclose a small intersection -- two boxes can share a large absolute overlap but still have a low IoU if they are both enormous.
+- IoU is symmetric: $\text{IoU}(A, B) = \text{IoU}(B, A)$.
+- A useful identity for computing IoU without explicitly intersecting polygons: for axis-aligned rectangles, the intersection is itself an axis-aligned rectangle whose corners are the component-wise max of the top-left corners and the component-wise min of the bottom-right corners. If this rectangle has negative width or height, the boxes do not overlap.
+
+## The NMS Algorithm
+
+- NMS takes as input a list of boxes, each with a confidence score, and a threshold $\tau$ (typically $0.4$--$0.6$).
+- It outputs a pruned list of boxes with no two overlapping by more than $\tau$.
+
+```
+Input: boxes B, scores s, threshold τ
+Output: kept ⊆ B
+
+Sort B by s descending
+kept = []
+while B is not empty:
+    b* = B[0]           # highest-scoring remaining box
+    kept.append(b*)
+    B = [b for b in B[1:] if IoU(b*, b) < τ]
+return kept
+```
+
+- The algorithm is greedy: the highest-confidence box always wins. Any box that overlaps the winner by more than $\tau$ is deleted, regardless of its own score.
+- The threshold $\tau$ controls the trade-off: low $\tau$ is aggressive (only very separated boxes survive, may miss crowded objects), high $\tau$ is permissive (more boxes survive, may include duplicates).
+- NMS runs in $\mathcal{O}(n^2)$ in the number of candidate boxes. For modern detectors with thousands of anchors this is fast enough -- $n$ is large but the sort and early exits keep it manageable in practice.
+
+## Interactive Demo: IoU
+
+- Drag the two boxes below. The IoU updates live.
+- Notice how IoU drops faster than you expect as you pull boxes apart -- the union grows even as the intersection shrinks.
+
+```{ojs}
+//| echo: false
+//| label: fig-iou-demo
+//| fig-cap: "Drag either box. Blue: intersection. IoU = intersection area / union area."
+
+{
+  const W = 600, H = 400
+
+  let boxA = { x: 120, y: 100, w: 180, h: 140 }
+  let boxB = { x: 220, y: 150, w: 180, h: 140 }
+  let dragging = null, dragOff = { x: 0, y: 0 }
+
+  const iou = (a, b) => {
+    const ix1 = Math.max(a.x, b.x), iy1 = Math.max(a.y, b.y)
+    const ix2 = Math.min(a.x + a.w, b.x + b.w)
+    const iy2 = Math.min(a.y + a.h, b.y + b.h)
+    const inter = Math.max(0, ix2 - ix1) * Math.max(0, iy2 - iy1)
+    const union = a.w * a.h + b.w * b.h - inter
+    return union > 0 ? inter / union : 0
+  }
+
+  const svg = d3.create("svg")
+    .attr("width", W).attr("height", H)
+    .style("background", "#1e1e2e").style("border-radius", "6px")
+    .style("cursor", "default")
+
+  const rectA = svg.append("rect").attr("fill", "steelblue").attr("fill-opacity", 0.35)
+    .attr("stroke", "steelblue").attr("stroke-width", 2).style("cursor", "grab")
+  const rectB = svg.append("rect").attr("fill", "#ff9f3f").attr("fill-opacity", 0.35)
+    .attr("stroke", "#ff9f3f").attr("stroke-width", 2).style("cursor", "grab")
+  const inter = svg.append("rect").attr("fill", "#ffffff").attr("fill-opacity", 0.25)
+    .attr("pointer-events", "none")
+  const label = svg.append("text").attr("x", 12).attr("y", 28)
+    .attr("fill", "#ffffff").attr("font-size", 16).attr("font-family", "monospace")
+
+  const draw = () => {
+    rectA.attr("x", boxA.x).attr("y", boxA.y).attr("width", boxA.w).attr("height", boxA.h)
+    rectB.attr("x", boxB.x).attr("y", boxB.y).attr("width", boxB.w).attr("height", boxB.h)
+    const ix1 = Math.max(boxA.x, boxB.x), iy1 = Math.max(boxA.y, boxB.y)
+    const ix2 = Math.min(boxA.x + boxA.w, boxB.x + boxB.w)
+    const iy2 = Math.min(boxA.y + boxA.h, boxB.y + boxB.h)
+    const iw = Math.max(0, ix2 - ix1), ih = Math.max(0, iy2 - iy1)
+    inter.attr("x", ix1).attr("y", iy1).attr("width", iw).attr("height", ih)
+    label.text(`IoU = ${iou(boxA, boxB).toFixed(3)}`)
+  }
+
+  const inside = (box, px, py) =>
+    px >= box.x && px <= box.x + box.w && py >= box.y && py <= box.y + box.h
+
+  svg.on("mousedown", (e) => {
+    const [px, py] = d3.pointer(e)
+    if (inside(boxB, px, py))      { dragging = "B"; dragOff = { x: px - boxB.x, y: py - boxB.y } }
+    else if (inside(boxA, px, py)) { dragging = "A"; dragOff = { x: px - boxA.x, y: py - boxA.y } }
+  })
+  svg.on("mousemove", (e) => {
+    if (!dragging) return
+    const [px, py] = d3.pointer(e)
+    if (dragging === "A") { boxA.x = px - dragOff.x; boxA.y = py - dragOff.y }
+    if (dragging === "B") { boxB.x = px - dragOff.x; boxB.y = py - dragOff.y }
+    draw()
+  })
+  svg.on("mouseup", () => dragging = null)
+
+  draw()
+  return svg.node()
+}
+```
+
+## Interactive Demo: NMS
+
+- Below is a simulated detector output: many overlapping boxes with confidence scores.
+- Drag the threshold slider to watch NMS prune the pile. Low threshold: aggressive, few boxes survive. High threshold: permissive, near-duplicates survive.
+
+```{ojs}
+//| echo: false
+viewof nms_tau = Inputs.range([0.1, 0.9], {
+  step: 0.05, value: 0.45, label: "IoU threshold τ"
+})
+```
+
+```{ojs}
+//| echo: false
+//| label: fig-nms-demo
+//| fig-cap: "Simulated detector output. Drag τ to control NMS aggressiveness. Kept boxes: solid border. Suppressed boxes: faded. Number in corner: confidence score."
+
+{
+  // Fixed set of overlapping candidate boxes (x, y, w, h, score)
+  const candidates = [
+    { x: 80,  y: 80,  w: 160, h: 120, s: 0.97 },
+    { x: 92,  y: 88,  w: 155, h: 118, s: 0.91 },
+    { x: 74,  y: 75,  w: 165, h: 125, s: 0.85 },
+    { x: 110, y: 95,  w: 145, h: 110, s: 0.72 },
+    { x: 300, y: 100, w: 170, h: 130, s: 0.95 },
+    { x: 312, y: 108, w: 165, h: 128, s: 0.88 },
+    { x: 295, y: 95,  w: 175, h: 135, s: 0.79 },
+    { x: 150, y: 220, w: 140, h: 110, s: 0.93 },
+    { x: 160, y: 228, w: 138, h: 108, s: 0.86 },
+    { x: 142, y: 215, w: 145, h: 115, s: 0.74 },
+  ]
+
+  const iou = (a, b) => {
+    const ix1 = Math.max(a.x, b.x), iy1 = Math.max(a.y, b.y)
+    const ix2 = Math.min(a.x + a.w, b.x + b.w)
+    const iy2 = Math.min(a.y + a.h, b.y + b.h)
+    const inter = Math.max(0, ix2 - ix1) * Math.max(0, iy2 - iy1)
+    const union = a.w * a.h + b.w * b.h - inter
+    return union > 0 ? inter / union : 0
+  }
+
+  // Run NMS
+  const sorted = [...candidates].sort((a, b) => b.s - a.s)
+  const kept = []
+  const suppressed = new Set()
+  for (let i = 0; i < sorted.length; i++) {
+    if (suppressed.has(i)) continue
+    kept.push(sorted[i])
+    for (let j = i + 1; j < sorted.length; j++) {
+      if (iou(sorted[i], sorted[j]) >= nms_tau) suppressed.add(j)
+    }
+  }
+  const keptSet = new Set(kept.map(b => b.s))
+
+  const W = 600, H = 400
+  const svg = d3.create("svg")
+    .attr("width", W).attr("height", H)
+    .style("background", "#1e1e2e").style("border-radius", "6px")
+
+  // Draw suppressed first (behind)
+  sorted.filter(b => !keptSet.has(b.s)).forEach(b => {
+    svg.append("rect")
+      .attr("x", b.x).attr("y", b.y).attr("width", b.w).attr("height", b.h)
+      .attr("fill", "none").attr("stroke", "#ff6b6b")
+      .attr("stroke-width", 1).attr("stroke-dasharray", "4 3").attr("opacity", 0.35)
+    svg.append("text")
+      .attr("x", b.x + 4).attr("y", b.y + 14)
+      .attr("fill", "#ff6b6b").attr("font-size", 11).attr("opacity", 0.45)
+      .text(b.s.toFixed(2))
+  })
+
+  // Draw kept on top
+  kept.forEach(b => {
+    svg.append("rect")
+      .attr("x", b.x).attr("y", b.y).attr("width", b.w).attr("height", b.h)
+      .attr("fill", "steelblue").attr("fill-opacity", 0.2)
+      .attr("stroke", "steelblue").attr("stroke-width", 2.5)
+    svg.append("text")
+      .attr("x", b.x + 4).attr("y", b.y + 16)
+      .attr("fill", "white").attr("font-size", 13).attr("font-weight", "bold")
+      .text(b.s.toFixed(2))
+  })
+
+  svg.append("text").attr("x", 12).attr("y", H - 12)
+    .attr("fill", "#aaa").attr("font-size", 13)
+    .text(`τ = ${nms_tau.toFixed(2)} · kept: ${kept.length} / ${candidates.length}`)
+
+  return svg.node()
+}
+```
+
+## Live Camera Demo
+
+- Everything above runs as a closed simulation. Below, a real object detector runs on your camera in real time.
+- The model is **COCO-SSD** [@redmon2016yolo], a MobileNet-based detector trained on 80 object classes. It runs entirely in your browser via TensorFlow.js -- no data leaves your device.
+- Drag the threshold slider to see NMS in action on live detections. Pull it down and near-duplicate boxes flood the frame. Push it up and only the most confident, well-separated boxes survive.
+
+```{ojs}
+//| echo: false
+viewof cam_tau = Inputs.range([0.1, 0.9], {
+  step: 0.05, value: 0.45, label: "IoU threshold τ (live)"
+})
+```
+
+```{ojs}
+//| echo: false
+viewof cam_score = Inputs.range([0.1, 0.9], {
+  step: 0.05, value: 0.4, label: "Min confidence score"
+})
+```
+
+```{ojs}
+//| echo: false
+//| label: fig-camera-demo
+//| fig-cap: "Live object detection via COCO-SSD running in your browser. No data is sent to any server. Drag the IoU threshold to control NMS aggressiveness."
+
+{
+  // Load TF.js and COCO-SSD from CDN
+  const tf      = await require("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js")
+  const cocoSsd = await require("https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js")
+
+  const W = 640, H = 480
+  const container = html`<div style="position:relative; width:${W}px;">
+    <video width="${W}" height="${H}" autoplay playsinline muted
+      style="border-radius:6px; display:block;"></video>
+    <canvas width="${W}" height="${H}"
+      style="position:absolute; top:0; left:0; border-radius:6px;"></canvas>
+    <div id="cam-status" style="position:absolute; top:8px; left:8px;
+      background:rgba(0,0,0,0.6); color:#fff; font-size:13px;
+      padding:4px 10px; border-radius:4px;">Loading model...</div>
+  </div>`
+
+  const video  = container.querySelector("video")
+  const canvas = container.querySelector("canvas")
+  const status = container.querySelector("#cam-status")
+  const ctx    = canvas.getContext("2d")
+
+  const iou = (a, b) => {
+    const [ax, ay, aw, ah] = a.bbox, [bx, by, bw, bh] = b.bbox
+    const ix1 = Math.max(ax, bx), iy1 = Math.max(ay, by)
+    const ix2 = Math.min(ax + aw, bx + bw), iy2 = Math.min(ay + ah, by + bh)
+    const inter = Math.max(0, ix2 - ix1) * Math.max(0, iy2 - iy1)
+    const union = aw * ah + bw * bh - inter
+    return union > 0 ? inter / union : 0
+  }
+
+  const nms = (dets, tau) => {
+    const sorted = [...dets].sort((a, b) => b.score - a.score)
+    const kept = []
+    const seen = new Set()
+    for (let i = 0; i < sorted.length; i++) {
+      if (seen.has(i)) continue
+      kept.push(sorted[i])
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (iou(sorted[i], sorted[j]) >= tau) seen.add(j)
+      }
+    }
+    return kept
+  }
+
+  const colors = ["steelblue","#ff9f3f","#50fa7b","#ff79c6","#bd93f9","#8be9fd","#ffb86c"]
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:"environment" } })
+    video.srcObject = stream
+    await new Promise(r => video.onloadedmetadata = r)
+
+    status.textContent = "Loading COCO-SSD..."
+    const model = await cocoSsd.load()
+    status.textContent = "Running"
+
+    const classColor = {}
+    let colorIdx = 0
+
+    const detect = async () => {
+      const raw  = await model.detect(video)
+      const filt = raw.filter(d => d.score >= cam_score)
+      const kept = nms(filt, cam_tau)
+
+      ctx.clearRect(0, 0, W, H)
+
+      kept.forEach(d => {
+        if (!classColor[d.class]) classColor[d.class] = colors[colorIdx++ % colors.length]
+        const col = classColor[d.class]
+        const [x, y, w, h] = d.bbox
+
+        ctx.strokeStyle = col
+        ctx.lineWidth   = 2.5
+        ctx.strokeRect(x, y, w, h)
+
+        ctx.fillStyle = col
+        ctx.globalAlpha = 0.15
+        ctx.fillRect(x, y, w, h)
+        ctx.globalAlpha = 1
+
+        const label = `${d.class} ${(d.score * 100).toFixed(0)}%`
+        ctx.font      = "bold 13px sans-serif"
+        const tw      = ctx.measureText(label).width
+        ctx.fillStyle = col
+        ctx.fillRect(x, y - 20, tw + 8, 20)
+        ctx.fillStyle = "#fff"
+        ctx.fillText(label, x + 4, y - 5)
+      })
+
+      status.textContent = `${kept.length} object${kept.length !== 1 ? "s" : ""} · τ=${cam_tau.toFixed(2)} · min score=${cam_score.toFixed(2)}`
+      requestAnimationFrame(detect)
+    }
+
+    detect()
+  } catch (e) {
+    status.textContent = e.name === "NotAllowedError"
+      ? "Camera permission denied -- allow camera access and reload."
+      : `Camera error: ${e.message}`
+  }
+
+  return container
+}
+```
+
+## Why NMS Is Not Perfect
+
+- **Crowded scenes.** If two objects of the same class are close together (pedestrians in a crowd, cars in a parking lot), their ground-truth boxes may have IoU above $\tau$. NMS suppresses one of them. Soft-NMS addresses this by decaying scores rather than hard-deleting.
+- **Threshold sensitivity.** There is no universally correct $\tau$. Object detection benchmarks (COCO mAP) average over multiple IoU thresholds precisely because no single threshold works best for all object sizes and classes.
+- **Class-agnostic vs per-class.** Standard NMS runs per class: a box suppresses only other boxes of the same class. Class-agnostic NMS suppresses across all classes, which is more aggressive but avoids duplicates when the classifier is uncertain between similar classes.
+- **Speed at scale.** For detectors outputting 100k+ anchors, even $\mathcal{O}(n^2)$ NMS is a bottleneck. YOLO uses a pre-filter (score threshold) to reduce $n$ before NMS, and modern inference engines implement NMS as a CUDA kernel.
+
+## Summary
+
+- **The problem:** object detectors output hundreds of overlapping candidate boxes; NMS prunes them to one box per object.
+- **IoU:** measures overlap as intersection area divided by union area. Ranges from 0 (no overlap) to 1 (identical boxes). The core primitive for all detection evaluation.
+- **NMS:** greedy algorithm -- sort by confidence, keep the top box, suppress anything that overlaps it by more than threshold $\tau$, repeat.
+- **Threshold $\tau$:** the single hyperparameter. Lower is more aggressive. Typically $0.4$--$0.6$ depending on how densely objects appear.
+- **In production:** NMS runs after every detector as a post-processing step, often on GPU for speed. It is not learned -- it is a geometric rule applied to the network's raw output.
