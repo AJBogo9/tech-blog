@@ -10,7 +10,6 @@ categories:
   - active learning
   - Bayesian methods
   - information theory
-draft: true
 ---
 
 *Prerequisite: [Bayes by Backprop](../bayes-by-backprop/index.qmd) -- this post builds on the weight distributions and uncertainty estimates derived there.*
@@ -181,10 +180,12 @@ class BNN(nn.Module):
     def kl(self):
         return self.l1.kl() + self.l2.kl()
 
-def train_bnn(x_tr, y_tr, epochs=1500, alpha=1.0, sigma_l=0.12):
+def train_bnn(x_tr, y_tr, epochs=800, alpha=1.0, sigma_l=0.12, init_model=None):
     model = BNN()
-    opt   = torch.optim.Adam(model.parameters(), lr=0.02)
-    N     = len(x_tr)
+    if init_model is not None:
+        model.load_state_dict(init_model.state_dict())  # warm-start from last iteration
+    opt = torch.optim.Adam(model.parameters(), lr=0.02)
+    N   = len(x_tr)
     for _ in range(epochs):
         opt.zero_grad()
         y_hat = model(x_tr)
@@ -194,7 +195,7 @@ def train_bnn(x_tr, y_tr, epochs=1500, alpha=1.0, sigma_l=0.12):
         opt.step()
     return model
 
-def mc_predict(model, x_t, T=300):
+def mc_predict(model, x_t, T=100):
     with torch.no_grad():
         samps = torch.stack([model(x_t).squeeze() for _ in range(T)])
     return samps.mean(0).numpy(), samps.std(0).numpy()
@@ -203,18 +204,20 @@ x_eval_t    = torch.tensor(x_eval_np, dtype=torch.float32).unsqueeze(1)
 x_pool_t    = torch.tensor(x_pool_np, dtype=torch.float32).unsqueeze(1)
 y_eval_true = true_fn(x_eval_np)
 
-labeled  = [5, 34]
-N_ITER   = 38  # label all remaining pool points to show full convergence
-al_iters = []
+labeled    = [5, 34]
+N_ITER     = 38  # label all remaining pool points to show full convergence
+al_iters   = []
+prev_model = None  # carry weights across iterations
 
 for it in range(N_ITER):
     x_tr = torch.tensor(x_pool_np[labeled], dtype=torch.float32).unsqueeze(1)
     y_tr = torch.tensor(y_pool_np[labeled], dtype=torch.float32).unsqueeze(1)
 
-    model = train_bnn(x_tr, y_tr)
+    model      = train_bnn(x_tr, y_tr, init_model=prev_model)
+    prev_model = model
 
     mean_c, std_c = mc_predict(model, x_eval_t)
-    _,      p_std = mc_predict(model, x_pool_t)
+    _,      p_std = mc_predict(model, x_pool_t, T=30)  # rough ranking only needs low T
 
     p_std_masked = p_std.copy()
     for idx in labeled:
@@ -257,8 +260,8 @@ for it in range(N_ITER):
     x_tr_r = torch.tensor(x_pool_np[rand_labeled], dtype=torch.float32).unsqueeze(1)
     y_tr_r = torch.tensor(y_pool_np[rand_labeled], dtype=torch.float32).unsqueeze(1)
 
-    model_r   = train_bnn(x_tr_r, y_tr_r, epochs=1000)
-    mean_r, _ = mc_predict(model_r, x_eval_t, T=100)
+    model_r   = train_bnn(x_tr_r, y_tr_r, epochs=500)
+    mean_r, _ = mc_predict(model_r, x_eval_t, T=50)
     rand_mse.append(float(np.mean((mean_r - y_eval_true) ** 2)))
 
     rand_labeled.append(rand_remaining[it])
