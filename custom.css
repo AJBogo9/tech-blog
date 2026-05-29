@@ -205,55 +205,73 @@ table {
   max-width: none;
 }
 
-/* ── Mobile TOC ──────────────────────────────────────────────────────── */
+/* ── Inline TOC (mobile: #TOC moved into content flow) ───────────────── */
 
-.mobile-toc {
-  display: none;
+/* #TOC.toc-inline is the same element as the desktop sidebar TOC,
+   physically moved into the content area on narrow viewports.
+   Rules below mirror .sidebar nav[role=doc-toc] from Quarto's CSS,
+   replacing ".sidebar" with "#TOC.toc-inline" so values stay in sync. */
+#TOC.toc-inline {
+  display: block !important;
+  margin-bottom: 2rem;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-@media (max-width: 991px) {
-  .mobile-toc {
-    display: block;
-    margin-bottom: 2rem;
-    border: 1px solid #374151;
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.03);
-  }
+/* mirrors: .sidebar nav[role=doc-toc]>h2 { font-size:.875rem } + reset h2 defaults */
+#TOC.toc-inline > h2 {
+  font-size: .875rem;
+  border: none;
+  padding: 0;
+  margin: 0 0 .3rem;
+}
 
-  .mobile-toc-label {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin: 0 0 0.5rem;
-  }
+/* mirrors: .sidebar nav[role=doc-toc] ul { list-style:none; padding-left:0 } */
+#TOC.toc-inline ul {
+  list-style: none;
+  padding-left: 0;
+}
 
-  .mobile-toc ul {
-    margin: 0.6rem 0 0;
-    padding-left: 0;
-    list-style: none;
-  }
+/* mirrors: .sidebar nav[role=doc-toc]>ul { font-size:.875rem; margin-left:.45em } */
+#TOC.toc-inline > ul {
+  font-size: .875rem;
+  margin-left: .45em;
+  margin-top: .3rem;
+}
 
-  .mobile-toc ul ul {
-    padding-left: 1rem;
-  }
+/* mirrors: .sidebar nav[role=doc-toc] a { text-decoration:none } */
+/* mirrors: .sidebar nav[role=doc-toc]>ul a { border-left:1px solid #ebebeb; padding-left:.6rem } */
+#TOC.toc-inline > ul a {
+  text-decoration: none;
+  border-left: 1px solid #ebebeb;
+  padding-left: .6rem;
+}
 
-  .mobile-toc li {
-    padding: 0.25rem 0;
-  }
+/* mirrors: .sidebar nav[role=doc-toc]>ul li a { line-height:1.1rem; padding-bottom:.2rem; padding-top:.2rem } */
+#TOC.toc-inline > ul li a {
+  line-height: 1.1rem;
+  padding-bottom: .2rem;
+  padding-top: .2rem;
+}
 
-  .mobile-toc a {
-    color: #c8d0d8;
-    text-decoration: none;
-    font-size: 0.875rem;
-    line-height: 1.4;
-  }
+/* mirrors: .sidebar nav[role=doc-toc] ul>li>ul>li>a { padding-left:1.2em } */
+#TOC.toc-inline ul > li > ul > li > a {
+  padding-left: 1.2em;
+}
 
-  .mobile-toc a:hover {
-    color: var(--bs-link-color);
-  }
+/* mirrors: .sidebar nav[role=doc-toc] ul>li>a.active, ...ul>li>ul>li>a.active */
+#TOC.toc-inline ul > li > a.active,
+#TOC.toc-inline ul > li > ul > li > a.active {
+  border-left: 1px solid #00bc8c;
+  color: #00bc8c !important;
+}
+
+/* mirrors: .sidebar nav[role=doc-toc] ul>li>a:hover, ...ul>li>ul>li>a:hover */
+#TOC.toc-inline ul > li > a:hover,
+#TOC.toc-inline ul > li > ul > li > a:hover {
+  color: #00bc8c !important;
 }
 
 /* ── Post navigation (prev / next) ──────────────────────────────────── */

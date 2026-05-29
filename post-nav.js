@@ -195,26 +195,29 @@
     if (!window.location.pathname.includes('/posts/')) return;
 
     const toc = document.getElementById('TOC');
-    const ul = toc?.querySelector('ul');
-    if (!ul) return;
-
-    const box = document.createElement('div');
-    box.className = 'mobile-toc';
-    box.setAttribute('role', 'navigation');
-    box.setAttribute('aria-label', 'Contents');
-
-    const label = document.createElement('p');
-    label.className = 'mobile-toc-label';
-    label.textContent = 'Contents';
-
-    const ulClone = ul.cloneNode(true);
-    ulClone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-    ulClone.querySelectorAll('.collapse').forEach(el => el.classList.remove('collapse'));
-
-    box.append(label, ulClone);
+    const sidebar = document.getElementById('quarto-margin-sidebar');
+    if (!toc || !sidebar) return;
 
     const firstSection = document.querySelector('#quarto-document-content section');
-    firstSection?.before(box);
+    if (!firstSection) return;
+
+    // On mobile, physically move #TOC into the content flow so Bootstrap's
+    // scroll-spy works on it directly (no clone needed).
+    const mq = window.matchMedia('(max-width: 767.98px)');
+
+    const moveToContent = () => {
+      toc.classList.add('toc-inline');
+      firstSection.before(toc);
+    };
+
+    const moveToSidebar = () => {
+      toc.classList.remove('toc-inline');
+      sidebar.prepend(toc);
+    };
+
+    const update = () => mq.matches ? moveToContent() : moveToSidebar();
+    mq.addEventListener('change', update);
+    update();
   } catch (_) {
     // progressive enhancement — fail silently
   }
