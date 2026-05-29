@@ -287,55 +287,127 @@ ojs_define(
 
 ```{ojs}
 //| echo: false
-viewof bald_iter = Inputs.range([0, bald_iters.length - 1], {
-  step: 1, value: 0,
-  label: "Iteration"
-})
+viewof bald_iter = {
+  let val = 0;
+  const n = bald_iters.length;
+
+  const container = html`<div style="display:flex; align-items:center; gap:10px; padding:6px 0; font-size:13px;">
+    <button style="padding:4px 14px; border-radius:4px; border:1px solid #555; background:#1e1e2e; color:#ccc; cursor:pointer;">← Prev</button>
+    <input type="range" min="0" max="${n - 1}" step="1" value="0" style="flex:1; cursor:pointer;">
+    <button style="padding:4px 14px; border-radius:4px; border:1px solid #555; background:#1e1e2e; color:#ccc; cursor:pointer;">Next →</button>
+  </div>`;
+
+  const els     = container.querySelectorAll('button, input');
+  const prevBtn = els[0], slider = els[1], nextBtn = els[2];
+
+  const update = (v) => {
+    val = Math.max(0, Math.min(n - 1, v));
+    slider.value = val;
+    container.value = val;
+    container.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+
+  prevBtn.onclick = () => update(val - 1);
+  nextBtn.onclick = () => update(val + 1);
+  slider.oninput  = () => update(+slider.value);
+
+  container.value = val;
+  return container;
+}
 ```
 
 ```{ojs}
 //| echo: false
-md`**Iteration ${bald_iter + 1} / ${bald_iters.length}** — ${bald_iters[bald_iter].labeled.length} labeled points, querying point ${bald_iter + 3}`
+{
+  const it = bald_iters[bald_iter];
+  return html`<p style="margin:4px 0 8px; font-size:13px; color:#aaa;">
+    <strong style="color:#ddd;">Iteration ${bald_iter + 1} / ${bald_iters.length}</strong>
+    &nbsp;·&nbsp; ${it.labeled.length} labeled
+    &nbsp;·&nbsp; querying x&nbsp;=&nbsp;${bald_pool_x[it.next].toFixed(2)}
+    &nbsp;·&nbsp; <span style="color:#ff9f3f;">&#9679;</span> orange bar is the BALD winner
+  </p>`;
+}
 ```
 
 ```{ojs}
 //| echo: false
 //| label: fig-bald-demo
-//| fig-cap: "Active learning loop on a noisy 1D function. Orange dot: BALD's next query (highest epistemic uncertainty). White dots: already-labeled points. Gray dots: unlabeled pool, sized by current epistemic uncertainty. Blue band: 95% posterior predictive interval. Dashed red: true function. Step through iterations to watch BALD fill in the most informative gaps."
+//| fig-cap: "Top: posterior predictive fit. Unlabeled pool dots are colored and sized by epistemic uncertainty (gray = low, steelblue = high). Orange dot with halo: BALD's next query. White dots: already labeled. Dashed red: true function. Bottom: BALD score (epistemic std) at each pool point -- orange bar is the selected maximum, dark bars are already-labeled points with score zeroed out."
 
 {
-  const it     = bald_iters[bald_iter]
-  const maxSig = Math.max(...bald_pool_x.map((_, i) => it.pool_std[i]))
+  const it     = bald_iters[bald_iter];
+  const maxSig = Math.max(...bald_pool_x.map((_, i) => it.pool_std[i]));
 
-  const band95   = bald_x_eval.map((x, i) => ({ x, y1: it.l95[i], y2: it.u95[i] }))
-  const band68   = bald_x_eval.map((x, i) => ({ x, y1: it.l68[i], y2: it.u68[i] }))
-  const meanLine = bald_x_eval.map((x, i) => ({ x, y: it.mean[i] }))
-  const trueLine = bald_x_eval.map((x, i) => ({ x, y: bald_true[i] }))
+  // Lerp from gray #888888 to steelblue #4a90d9 based on normalised uncertainty
+  const lerp  = (a, b, t) => Math.round(a + t * (b - a));
+  const sigColor = (sig) => {
+    const t = maxSig > 0 ? sig / maxSig : 0;
+    return `rgb(${lerp(136,74,t)},${lerp(136,144,t)},${lerp(136,217,t)})`;
+  };
 
-  const labeledPts   = it.labeled.map(i   => ({ x: bald_pool_x[i], y: bald_pool_y[i] }))
-  const unlabeledPts = it.unlabeled.map(i  => ({
-    x: bald_pool_x[i],
-    y: bald_pool_y[i],
-    r: 3 + 8 * (maxSig > 0 ? it.pool_std[i] / maxSig : 0),
-  }))
-  const nextPt = [{ x: bald_pool_x[it.next], y: bald_pool_y[it.next] }]
+  const band95   = bald_x_eval.map((x, i) => ({ x, y1: it.l95[i], y2: it.u95[i] }));
+  const band68   = bald_x_eval.map((x, i) => ({ x, y1: it.l68[i], y2: it.u68[i] }));
+  const meanLine = bald_x_eval.map((x, i) => ({ x, y: it.mean[i] }));
+  const trueLine = bald_x_eval.map((x, i) => ({ x, y: bald_true[i] }));
 
-  return Plot.plot({
+  const labeledPts   = it.labeled.map(i  => ({ x: bald_pool_x[i], y: bald_pool_y[i] }));
+  const unlabeledPts = it.unlabeled.map(i => ({
+    x:     bald_pool_x[i],
+    y:     bald_pool_y[i],
+    color: sigColor(it.pool_std[i]),
+    r:     3 + 8 * (maxSig > 0 ? it.pool_std[i] / maxSig : 0),
+  }));
+  const nextPt = [{ x: bald_pool_x[it.next], y: bald_pool_y[it.next] }];
+
+  // BALD score bars
+  const barData = bald_pool_x.map((x, i) => ({
+    x,
+    sigma: it.pool_std[i],
+    color: it.labeled.includes(i) ? "#2a2a3e"
+         : i === it.next          ? "#ff9f3f"
+         :                          "#4a90d9",
+  }));
+
+  const mainPlot = Plot.plot({
     width:      700,
-    height:     380,
+    height:     340,
     marginLeft: 55,
-    x: { label: "x", domain: [-5.5, 5.5] },
+    marginBottom: 10,
+    x: { label: null, domain: [-5.5, 5.5], ticks: [] },
     y: { label: "y", domain: [-2.4, 2.4] },
     marks: [
-      Plot.areaY(band95, { x:"x", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.18 }),
-      Plot.areaY(band68, { x:"x", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.26 }),
-      Plot.line(trueLine,  { x:"x", y:"y", stroke:"#ff6b6b", strokeWidth:1.6, strokeDasharray:"5 3" }),
-      Plot.line(meanLine,  { x:"x", y:"y", stroke:"steelblue", strokeWidth:2.5 }),
-      Plot.dot(unlabeledPts, { x:"x", y:"y", fill:"#aaaaaa", fillOpacity:0.55, r:"r" }),
+      Plot.areaY(band95, { x:"x", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.16 }),
+      Plot.areaY(band68, { x:"x", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.24 }),
+      Plot.line(trueLine, { x:"x", y:"y", stroke:"#ff6b6b", strokeWidth:1.6, strokeDasharray:"5 3" }),
+      Plot.line(meanLine, { x:"x", y:"y", stroke:"steelblue", strokeWidth:2.5 }),
+      Plot.dot(unlabeledPts, { x:"x", y:"y", fill: d => d.color, fillOpacity:0.8, r: d => d.r }),
       Plot.dot(labeledPts,   { x:"x", y:"y", fill:"white", stroke:"steelblue", r:5, strokeWidth:1.5 }),
-      Plot.dot(nextPt,       { x:"x", y:"y", fill:"#ff9f3f", stroke:"white", r:9, strokeWidth:2 }),
+      Plot.dot(nextPt, { x:"x", y:"y", fill:"none", stroke:"#ff9f3f", r:14, strokeWidth:1.5, strokeOpacity:0.45 }),
+      Plot.dot(nextPt, { x:"x", y:"y", fill:"#ff9f3f", stroke:"white", r:8, strokeWidth:2 }),
     ],
-  })
+  });
+
+  const barChart = Plot.plot({
+    width:      700,
+    height:     120,
+    marginLeft: 55,
+    marginTop:  4,
+    x: { label: "x", domain: [-5.5, 5.5] },
+    y: { label: "Epistemic std", grid: true, nice: true },
+    marks: [
+      Plot.rectY(barData, {
+        x1: d => d.x - 0.1,
+        x2: d => d.x + 0.1,
+        y1: 0,
+        y2: d => d.sigma,
+        fill: d => d.color,
+        fillOpacity: 0.9,
+      }),
+      Plot.ruleY([0], { stroke: "#555" }),
+    ],
+  });
+
+  return html`<div>${mainPlot}${barChart}</div>`;
 }
 ```
 
