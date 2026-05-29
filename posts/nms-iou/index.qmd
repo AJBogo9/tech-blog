@@ -260,10 +260,12 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
       <p style="font-size:12px; color:#555; margin:0;">Camera activates only when you press Start. No data leaves your device.</p>
     </div>
 
-    <video id="cam-video" width="${W}" height="${H}" autoplay playsinline muted
-      style="display:none; transform:scaleX(-1);"></video>
-    <canvas id="cam-canvas" width="${W}" height="${H}"
-      style="display:none; position:absolute; top:0; left:0;"></canvas>
+    <div id="cam-inner" style="position:absolute; top:0; left:0; width:${W}px; height:${H}px;">
+      <video id="cam-video" width="${W}" height="${H}" autoplay playsinline muted
+        style="display:none; transform:scaleX(-1);"></video>
+      <canvas id="cam-canvas" width="${W}" height="${H}"
+        style="display:none; position:absolute; top:0; left:0;"></canvas>
+    </div>
     <div id="cam-status" style="display:none; position:absolute; top:8px; left:8px;
       background:rgba(0,0,0,0.6); color:#fff; font-size:13px; padding:4px 10px; border-radius:4px;"></div>
     <button id="stop-btn" style="display:none; position:absolute; bottom:14px; left:50%;
@@ -278,6 +280,7 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
 
   const placeholder = container.querySelector("#cam-placeholder")
   const startBtn    = container.querySelector("#start-btn")
+  const inner       = container.querySelector("#cam-inner")
   const video       = container.querySelector("#cam-video")
   const canvas      = container.querySelector("#cam-canvas")
   const status      = container.querySelector("#cam-status")
@@ -388,8 +391,24 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
     if (!document.fullscreenElement) container.requestFullscreen().catch(() => {})
     else document.exitFullscreen()
   }
+
   document.addEventListener("fullscreenchange", () => {
-    fsBtn.textContent = document.fullscreenElement ? "✕" : "⛶"
+    const isFs = !!document.fullscreenElement
+    fsBtn.textContent = isFs ? "✕" : "⛶"
+
+    if (isFs) {
+      // Scale the inner wrapper (video + canvas together) to fill the screen.
+      // Targeting the wrapper -- not the video -- preserves the video's scaleX(-1) mirror.
+      // The internal 640x480 coordinate system stays intact so detection coords are correct.
+      const scale = Math.min(window.innerWidth / W, window.innerHeight / H)
+      const tx    = (window.innerWidth  - W * scale) / 2
+      const ty    = (window.innerHeight - H * scale) / 2
+      inner.style.transformOrigin = "top left"
+      inner.style.transform       = `translate(${tx}px, ${ty}px) scale(${scale})`
+    } else {
+      inner.style.transform       = ""
+      inner.style.transformOrigin = ""
+    }
   })
 
   return container
