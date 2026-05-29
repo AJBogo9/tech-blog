@@ -248,7 +248,7 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
 
   const W = 640, H = 480
 
-  const container = html`<div style="position:relative; width:${W}px; border-radius:6px; overflow:hidden; background:#000;">
+  const container = html`<div style="border-radius:6px; overflow:hidden; background:#000; width:${W}px;">
 
     <div id="cam-placeholder" style="width:${W}px; height:${H}px; background:#111827;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
@@ -260,11 +260,11 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
       <p style="font-size:12px; color:#555; margin:0;">Camera activates only when you press Start. No data leaves your device.</p>
     </div>
 
-    <div id="cam-inner" style="position:absolute; top:0; left:0; width:${W}px; height:${H}px;">
+    <div id="cam-inner" style="display:none; width:${W}px; height:${H}px;">
       <video id="cam-video" width="${W}" height="${H}" autoplay playsinline muted
-        style="display:none; transform:scaleX(-1);"></video>
+        style="display:block; transform:scaleX(-1);"></video>
       <canvas id="cam-canvas" width="${W}" height="${H}"
-        style="display:none; position:absolute; top:0; left:0;"></canvas>
+        style="display:block; position:absolute; top:0; left:0;"></canvas>
     </div>
     <div id="cam-status" style="display:none; position:absolute; top:8px; left:8px;
       background:rgba(0,0,0,0.6); color:#fff; font-size:13px; padding:4px 10px; border-radius:4px;"></div>
@@ -287,6 +287,11 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
   const stopBtn     = container.querySelector("#stop-btn")
   const fsBtn       = container.querySelector("#fs-btn")
   const ctx         = canvas.getContext("2d")
+
+  // Observable's html sanitizer strips position/display/z-index from inline styles -- set via JS
+  container.style.position = "relative"
+  inner.style.position     = "relative"
+  inner.style.display      = "none"
 
   // Load model eagerly in background so Start is instant when clicked
   const model = await cocoSsd.load()
@@ -320,8 +325,7 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
 
   const showCamera = () => {
     placeholder.style.display = "none"
-    video.style.display       = "block"
-    canvas.style.display      = "block"
+    inner.style.display       = "block"
     status.style.display      = "block"
     stopBtn.style.display     = "block"
     fsBtn.style.display       = "block"
@@ -329,8 +333,7 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
 
   const showPlaceholder = () => {
     placeholder.style.display = "flex"
-    video.style.display       = "none"
-    canvas.style.display      = "none"
+    inner.style.display       = "none"
     status.style.display      = "none"
     stopBtn.style.display     = "none"
     fsBtn.style.display       = "none"
