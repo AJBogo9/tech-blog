@@ -1,0 +1,27 @@
+---
+title: "Let the Model Pick Its Own Training Data"
+description: Bayesian Active Learning by Disagreement (BALD) uses a neural network's epistemic uncertainty to choose the most informative data points to label next, learning more from fewer examples.
+date: "2026-06-01"
+image: thumbnail.png
+image-alt: "A Bayesian neural network's uncertainty shrinking as it selects the most informative data points to label"
+categories:
+  - probabilistic ML
+  - active learning
+  - Bayesian methods
+  - information theory
+draft: true
+---
+
+*Prerequisite: [Bayes by Backprop](../bayes-by-backprop/index.qmd) -- this post builds directly on the weight uncertainty and uncertainty quantification ideas introduced there.*
+
+## TODO
+
+- [ ] Motivation: labeling data is expensive; random sampling ignores what the model already knows
+- [ ] Epistemic vs aleatoric uncertainty distinction (set up the BALD score)
+- [ ] The BALD objective: I(Y; θ | x) = H[Y | x] - E_θ[H[Y | θ, x]]
+- [ ] Derive the two entropy terms and what each captures
+- [ ] Connect to BbB: how the weight distribution gives you both terms for free (MC sampling)
+- [ ] Interactive demo: 1D regression, model picks next point, uncertainty shrinks live
+- [ ] Real-world applications: medical imaging, materials science, NLP annotation
+- [ ] BatchBALD: extending to selecting a batch rather than one point at a time
+- [ ] Limitations and when BALD fails (model misspecification, distribution shift)
