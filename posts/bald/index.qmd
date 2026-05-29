@@ -1,9 +1,10 @@
 ---
 title: "Let the Model Pick Its Own Training Data"
-description: Bayesian Active Learning by Disagreement (BALD) uses a neural network's epistemic uncertainty to choose the most informative data points to label next, learning more from fewer examples.
+description: Bayesian Active Learning by Disagreement (BALD) uses a Bayesian neural network's epistemic uncertainty to choose the most informative data points to label next, learning more from fewer examples.
 date: "2026-06-01"
+bibliography: references.bib
 image: thumbnail.png
-image-alt: "A Bayesian neural network's uncertainty shrinking as it selects the most informative data points to label"
+image-alt: "An active learning loop where a Bayesian neural network selects the most uncertain data point from an unlabeled pool"
 categories:
   - probabilistic ML
   - active learning
@@ -12,16 +13,365 @@ categories:
 draft: true
 ---
 
-*Prerequisite: [Bayes by Backprop](../bayes-by-backprop/index.qmd) -- this post builds directly on the weight uncertainty and uncertainty quantification ideas introduced there.*
+*Prerequisite: [Bayes by Backprop](../bayes-by-backprop/index.qmd) -- this post builds on the weight distributions and uncertainty estimates derived there.*
 
-## TODO
+::: {.callout-note collapse="true"}
+## Notation Reference
 
-- [ ] Motivation: labeling data is expensive; random sampling ignores what the model already knows
-- [ ] Epistemic vs aleatoric uncertainty distinction (set up the BALD score)
-- [ ] The BALD objective: I(Y; θ | x) = H[Y | x] - E_θ[H[Y | θ, x]]
-- [ ] Derive the two entropy terms and what each captures
-- [ ] Connect to BbB: how the weight distribution gives you both terms for free (MC sampling)
-- [ ] Interactive demo: 1D regression, model picks next point, uncertainty shrinks live
-- [ ] Real-world applications: medical imaging, materials science, NLP annotation
-- [ ] BatchBALD: extending to selecting a batch rather than one point at a time
-- [ ] Limitations and when BALD fails (model misspecification, distribution shift)
+| Symbol | Meaning |
+|--------|---------|
+| $\mathcal{D}_L$ | Labeled dataset used for training |
+| $\mathcal{D}_U$ | Unlabeled pool of candidate points |
+| $x^*$ | Query point: the next candidate selected for labeling |
+| $\theta$ | Neural network weights (treated as a random variable) |
+| $q(\theta)$ | Variational posterior over weights (from Bayes by Backprop) |
+| $\sigma_{al}^2$ | Aleatoric variance: irreducible noise in the data |
+| $\sigma_{ep}^2(x)$ | Epistemic variance at $x$: uncertainty due to limited data |
+| $I(Y;\, \theta \mid x)$ | Mutual information between the label $Y$ and weights $\theta$, given input $x$ |
+| $H[\cdot]$ | Shannon entropy |
+| $T$ | Number of Monte Carlo weight samples |
+:::
+
+## The Problem: Labeling Is Expensive
+
+- Every labeled data point costs something: a radiologist reviewing a scan, a chemist running an experiment, a lawyer reading a document.
+- Standard supervised learning treats all labels as equally valuable: collect as many as the budget allows, sample uniformly at random, train, repeat.
+- That ignores what the model already knows. After 200 examples, the model is already confident in the dense parts of the distribution. Labeling another typical example adds almost no information.
+- The question is not *how many* labels to collect, but *which* points are worth labeling.
+- A model that can identify which unlabeled points would teach it the most, and query those first, can match the performance of random sampling with a fraction of the labels.
+- This is **active learning**: the model participates in its own training by selecting the data it wants to see next.
+
+## Two Kinds of Uncertainty
+
+- [Bayes by Backprop](../bayes-by-backprop/index.qmd) introduced a neural network that outputs a *distribution* over predictions rather than a single point. That distribution reflects two fundamentally different sources of noise.
+- **Aleatoric uncertainty** is irreducible. It comes from genuine randomness in the data: measurement noise, stochastic processes, or information that was never captured. No amount of additional data removes it. A sensor with physical jitter is aleatoric.
+- **Epistemic uncertainty** is reducible. It comes from limited data: the model has not seen enough examples in some region of the input space to be confident about the function there. More data in that region shrinks it.
+- Formally, the **law of total variance** decomposes the total predictive variance into these two components:
+
+$$\underbrace{\operatorname{Var}[Y \mid x]}_{\text{total}} = \underbrace{\mathbb{E}_{q(\theta)}[\operatorname{Var}[Y \mid x, \theta]]}_{\text{aleatoric}} + \underbrace{\operatorname{Var}_{q(\theta)}[\mathbb{E}[Y \mid x, \theta]]}_{\text{epistemic}}$$
+
+- For a BNN with Gaussian likelihood $p(y \mid x, \theta) = \mathcal{N}(f_\theta(x), \sigma_{al}^2)$, the aleatoric term is the fixed noise $\sigma_{al}^2$. The epistemic term is the variance of predictions *across different weight samples*: do different plausible weight configurations disagree about what $y$ should be at this input?
+- **Active learning should target epistemic uncertainty, not aleatoric.** A region with high aleatoric noise is inherently hard to predict -- labeling more points there does not help. A region with high epistemic uncertainty is hard to predict only because the model has not seen it yet -- labeling one point there can sharply reduce uncertainty across the whole region.
+
+## The BALD Objective
+
+- The information-theoretic formulation of this intuition is the **mutual information** between the model's weights $\theta$ and the label $Y$ at a candidate point $x^*$:
+
+$$I(Y;\, \theta \mid x^*) = H[Y \mid x^*] - \mathbb{E}_{q(\theta)}\bigl[H[Y \mid x^*, \theta]\bigr]$$
+
+- This is called **Bayesian Active Learning by Disagreement (BALD)** [@houlsby2011bald].
+- The first term, $H[Y \mid x^*]$, is the entropy of the *marginal* prediction: overall, how uncertain is the model at this input?
+- The second term, $\mathbb{E}_{q(\theta)}[H[Y \mid x^*, \theta]]$, is the entropy of the prediction *given a single weight vector*, averaged over the posterior. For each individual set of weights, how uncertain is the output?
+- The difference isolates *epistemic* uncertainty. A noisy region has a large first term -- but also a large second term, because each individual weight configuration is already uncertain due to label noise. The two cancel. A region where different weight configurations *disagree* has a large first term but a small second term -- the BALD score is high.
+- Put differently: BALD finds points where *weight uncertainty*, not label noise, is responsible for the model's uncertainty. These are the points where a new label would force the posterior to update.
+- **Regression simplification.** For a Gaussian likelihood with fixed noise $\sigma_{al}^2$, the per-sample entropy $H[Y \mid x^*, \theta] = \frac{1}{2}\log(2\pi e\, \sigma_{al}^2)$ is a constant, independent of both $x^*$ and $\theta$. The second term is therefore the same for all candidates, and:
+
+$$I(Y;\, \theta \mid x^*) \;\propto\; H[Y \mid x^*] \;\approx\; \sigma_{ep}^2(x^*)$$
+
+- Maximising the BALD score reduces to maximising **epistemic variance**: the variance of predictions across weight samples. This is both cheap to compute and directly interpretable.
+
+## Computing BALD with a BNN
+
+- A BNN trained with Bayes by Backprop [@blundell2015weight] gives direct access to the epistemic variance with no extra components needed.
+- Draw $T$ weight vectors from the variational posterior $q(\theta) = \prod_d \mathcal{N}(w_d \mid \mu_d, \sigma_d^2)$ using the reparameterization trick, run each through the network, and compute the sample variance of the outputs:
+
+$$\hat{\sigma}_{ep}^2(x^*) = \frac{1}{T-1}\sum_{t=1}^T\bigl(f_{\theta_t}(x^*) - \bar{f}(x^*)\bigr)^2, \qquad \theta_t \sim q(\theta)$$
+
+- Since each sample is an independent draw and the reparameterization trick makes sampling fast ($w_d = \mu_d + \sigma_d \varepsilon$, $\varepsilon \sim \mathcal{N}(0,1)$), computing BALD scores over an unlabeled pool of size $|\mathcal{D}_U|$ costs $T \cdot |\mathcal{D}_U|$ forward passes.
+- $T = 20$--$50$ samples is usually sufficient; the variance estimate stabilises quickly.
+- The BALD score naturally grows in regions the model has not seen and shrinks as labeled data accumulates there -- exactly the behaviour you want from a query strategy.
+
+## The Algorithm
+
+```{python}
+#| eval: false
+
+# Active learning loop with BALD (regression)
+# Assumes: x_pool, y_pool (unlabeled pool), labeled_idx (seed labels)
+
+T = 30  # MC weight samples per candidate
+
+for iteration in range(n_iterations):
+
+    # 1. Train a fresh BNN on the current labeled set
+    model = train_bnn(x_pool[labeled_idx], y_pool[labeled_idx])
+
+    # 2. Compute epistemic std at every unlabeled candidate
+    unlabeled_idx = [i for i in range(len(x_pool)) if i not in labeled_idx]
+    x_cand = x_pool[unlabeled_idx]
+
+    with torch.no_grad():
+        samples = torch.stack([model(x_cand) for _ in range(T)])  # (T, N_cand, 1)
+    epistemic_std = samples.squeeze().std(dim=0)  # variance of preds across weight samples
+
+    # 3. Query the point with the highest BALD score (epistemic variance)
+    best_local  = epistemic_std.argmax()
+    best_global = unlabeled_idx[best_local]
+
+    # 4. Obtain the label (in practice: send to annotator; here ground truth is known)
+    labeled_idx.append(best_global)
+```
+
+- Each iteration has four steps: train, score, query, label.
+- Step 2 is the only BALD-specific part. Steps 1, 3, and 4 are standard supervised training bookkeeping.
+- The BNN is retrained from scratch each iteration to ensure the posterior reflects the full labeled set. In practice, warm-starting from the previous model is common but can introduce subtle posterior bias.
+- In a real deployment, step 4 pauses the loop and waits for a human oracle to return the label.
+
+## What the Model Learns
+
+- The demo below runs the active learning loop on a noisy 1D regression problem: learn $y = \sin(x) + 0.4\cos(2.5x)$ from a pool of 40 candidate points, starting from 2 seed labels.
+- Use the slider to step through iterations. The **orange dot** is the point BALD selects next, the one with highest epistemic uncertainty. **White dots** are already labeled. **Gray dots** are the remaining unlabeled pool, sized by their current epistemic uncertainty -- larger means more uncertain.
+- Notice that BALD does not sample uniformly: it targets the edges of the labeled region first (where the model has no data at all), then fills in gaps where the uncertainty band remains wide even between labeled points.
+
+```{python}
+#| label: bald-training
+#| output: false
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+
+torch.manual_seed(7)
+np.random.seed(7)
+
+def true_fn(x):
+    return np.sin(x) + 0.4 * np.cos(2.5 * x)
+
+N_POOL    = 40
+x_pool_np = np.linspace(-4.5, 4.5, N_POOL)
+y_pool_np = true_fn(x_pool_np) + 0.12 * np.random.randn(N_POOL)
+x_eval_np = np.linspace(-5.5, 5.5, 300)
+
+class BayesLinear(nn.Module):
+    def __init__(self, in_f, out_f, alpha=1.0):
+        super().__init__()
+        self.alpha = alpha
+        self.w_mu  = nn.Parameter(torch.zeros(out_f, in_f))
+        self.w_rho = nn.Parameter(torch.full((out_f, in_f), -4.0))
+        self.b_mu  = nn.Parameter(torch.zeros(out_f))
+        self.b_rho = nn.Parameter(torch.full((out_f,), -4.0))
+
+    def forward(self, x):
+        ws = torch.log1p(torch.exp(self.w_rho))
+        bs = torch.log1p(torch.exp(self.b_rho))
+        return F.linear(x,
+            self.w_mu + ws * torch.randn_like(self.w_mu),
+            self.b_mu + bs * torch.randn_like(self.b_mu))
+
+    def kl(self):
+        a  = self.alpha
+        ws = torch.log1p(torch.exp(self.w_rho))
+        bs = torch.log1p(torch.exp(self.b_rho))
+        return (
+            (torch.log(torch.tensor(a) / ws) - 0.5 + (ws**2 + self.w_mu**2) / (2*a**2)).sum() +
+            (torch.log(torch.tensor(a) / bs) - 0.5 + (bs**2 + self.b_mu**2) / (2*a**2)).sum()
+        )
+
+class BNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.l1 = BayesLinear(1, 32)
+        self.l2 = BayesLinear(32, 1)
+
+    def forward(self, x):
+        return self.l2(torch.tanh(self.l1(x)))
+
+    def kl(self):
+        return self.l1.kl() + self.l2.kl()
+
+def train_bnn(x_tr, y_tr, epochs=1500, alpha=1.0, sigma_l=0.12):
+    model = BNN()
+    opt   = torch.optim.Adam(model.parameters(), lr=0.02)
+    N     = len(x_tr)
+    for _ in range(epochs):
+        opt.zero_grad()
+        y_hat = model(x_tr)
+        mse   = ((y_tr - y_hat) ** 2).mean()
+        loss  = N / (2 * sigma_l**2) * mse + model.kl()
+        loss.backward()
+        opt.step()
+    return model
+
+def mc_predict(model, x_t, T=300):
+    with torch.no_grad():
+        samps = torch.stack([model(x_t).squeeze() for _ in range(T)])
+    return samps.mean(0).numpy(), samps.std(0).numpy()
+
+x_eval_t = torch.tensor(x_eval_np, dtype=torch.float32).unsqueeze(1)
+x_pool_t = torch.tensor(x_pool_np, dtype=torch.float32).unsqueeze(1)
+
+labeled  = [5, 34]
+N_ITER   = 9
+al_iters = []
+
+for it in range(N_ITER):
+    x_tr = torch.tensor(x_pool_np[labeled], dtype=torch.float32).unsqueeze(1)
+    y_tr = torch.tensor(y_pool_np[labeled], dtype=torch.float32).unsqueeze(1)
+
+    model = train_bnn(x_tr, y_tr)
+
+    mean_c, std_c = mc_predict(model, x_eval_t)
+    _,      p_std = mc_predict(model, x_pool_t)
+
+    p_std_masked = p_std.copy()
+    for idx in labeled:
+        p_std_masked[idx] = 0.0
+
+    next_idx     = int(np.argmax(p_std_masked))
+    unlabeled_ex = [i for i in range(N_POOL) if i not in labeled and i != next_idx]
+
+    al_iters.append({
+        "labeled":   labeled.copy(),
+        "next":      next_idx,
+        "unlabeled": unlabeled_ex,
+        "mean":      mean_c.tolist(),
+        "u95":       (mean_c + 1.96 * std_c).tolist(),
+        "l95":       (mean_c - 1.96 * std_c).tolist(),
+        "u68":       (mean_c + std_c).tolist(),
+        "l68":       (mean_c - std_c).tolist(),
+        "pool_std":  p_std_masked.tolist(),
+    })
+
+    labeled.append(next_idx)
+```
+
+```{python}
+#| echo: false
+#| output: false
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+final  = al_iters[-1]
+mean_f = np.array(final["mean"])
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+fig.patch.set_facecolor("#1e1e2e")
+ax.set_facecolor("#1e1e2e")
+
+ax.fill_between(x_eval_np, final["l95"], final["u95"], color="#4a90d9", alpha=0.22)
+ax.fill_between(x_eval_np, final["l68"], final["u68"], color="#4a90d9", alpha=0.32)
+ax.plot(x_eval_np, true_fn(x_eval_np), color="#ff6b6b", linewidth=1.8, linestyle="--")
+ax.plot(x_eval_np, mean_f, color="#4a90d9", linewidth=2.5)
+ax.scatter(
+    [x_pool_np[i] for i in final["labeled"]],
+    [y_pool_np[i] for i in final["labeled"]],
+    color="white", s=28, zorder=5, alpha=0.9
+)
+ax.scatter(
+    [x_pool_np[final["next"]]], [y_pool_np[final["next"]]],
+    color="#ff9f3f", s=80, zorder=6, edgecolors="white", linewidths=1.5
+)
+
+ax.set_xlim(-5.5, 5.5)
+ax.set_xlabel("x", color="#cccccc", fontsize=11)
+ax.set_ylabel("y", color="#cccccc", fontsize=11)
+ax.tick_params(colors="#aaaaaa")
+for spine in ax.spines.values():
+    spine.set_edgecolor("#444444")
+
+plt.tight_layout()
+plt.savefig("thumbnail.png", dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+plt.close()
+
+ojs_define(
+    bald_x_eval = x_eval_np.tolist(),
+    bald_true   = true_fn(x_eval_np).tolist(),
+    bald_pool_x = x_pool_np.tolist(),
+    bald_pool_y = y_pool_np.tolist(),
+    bald_iters  = al_iters,
+)
+```
+
+```{ojs}
+//| echo: false
+viewof bald_iter = Inputs.range([0, bald_iters.length - 1], {
+  step: 1, value: 0,
+  label: "Iteration"
+})
+```
+
+```{ojs}
+//| echo: false
+md`**Iteration ${bald_iter + 1} / ${bald_iters.length}** — ${bald_iters[bald_iter].labeled.length} labeled points, querying point ${bald_iter + 3}`
+```
+
+```{ojs}
+//| echo: false
+//| label: fig-bald-demo
+//| fig-cap: "Active learning loop on a noisy 1D function. Orange dot: BALD's next query (highest epistemic uncertainty). White dots: already-labeled points. Gray dots: unlabeled pool, sized by current epistemic uncertainty. Blue band: 95% posterior predictive interval. Dashed red: true function. Step through iterations to watch BALD fill in the most informative gaps."
+
+{
+  const it     = bald_iters[bald_iter]
+  const maxSig = Math.max(...bald_pool_x.map((_, i) => it.pool_std[i]))
+
+  const band95   = bald_x_eval.map((x, i) => ({ x, y1: it.l95[i], y2: it.u95[i] }))
+  const band68   = bald_x_eval.map((x, i) => ({ x, y1: it.l68[i], y2: it.u68[i] }))
+  const meanLine = bald_x_eval.map((x, i) => ({ x, y: it.mean[i] }))
+  const trueLine = bald_x_eval.map((x, i) => ({ x, y: bald_true[i] }))
+
+  const labeledPts   = it.labeled.map(i   => ({ x: bald_pool_x[i], y: bald_pool_y[i] }))
+  const unlabeledPts = it.unlabeled.map(i  => ({
+    x: bald_pool_x[i],
+    y: bald_pool_y[i],
+    r: 3 + 8 * (maxSig > 0 ? it.pool_std[i] / maxSig : 0),
+  }))
+  const nextPt = [{ x: bald_pool_x[it.next], y: bald_pool_y[it.next] }]
+
+  return Plot.plot({
+    width:      700,
+    height:     380,
+    marginLeft: 55,
+    x: { label: "x", domain: [-5.5, 5.5] },
+    y: { label: "y", domain: [-2.4, 2.4] },
+    marks: [
+      Plot.areaY(band95, { x:"x", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.18 }),
+      Plot.areaY(band68, { x:"x", y1:"y1", y2:"y2", fill:"steelblue", fillOpacity: 0.26 }),
+      Plot.line(trueLine,  { x:"x", y:"y", stroke:"#ff6b6b", strokeWidth:1.6, strokeDasharray:"5 3" }),
+      Plot.line(meanLine,  { x:"x", y:"y", stroke:"steelblue", strokeWidth:2.5 }),
+      Plot.dot(unlabeledPts, { x:"x", y:"y", fill:"#aaaaaa", fillOpacity:0.55, r:"r" }),
+      Plot.dot(labeledPts,   { x:"x", y:"y", fill:"white", stroke:"steelblue", r:5, strokeWidth:1.5 }),
+      Plot.dot(nextPt,       { x:"x", y:"y", fill:"#ff9f3f", stroke:"white", r:9, strokeWidth:2 }),
+    ],
+  })
+}
+```
+
+## Real-World Applications
+
+- **Medical imaging.** Labeling a radiology scan requires an expert clinician -- scarce and expensive. BALD selects the scans the model is most uncertain about: unusual presentations, rare pathologies, edge-of-distribution cases that matter most for model reliability. Studies report 50--80% label reduction to match passive-learning performance on standard benchmarks.
+- **Drug discovery and materials science.** Each "label" is a physical experiment: synthesising a compound, measuring a binding affinity, running a simulation. The oracle is a laboratory, not a person. Active learning selects the experiments expected to reduce posterior uncertainty fastest, exploring chemical space with a fraction of the experimental budget.
+- **NLP annotation.** Sequence labeling tasks (named entity recognition, relation extraction) require skilled annotators. BALD outperforms plain uncertainty sampling (entropy only) because it avoids querying sentences that are inherently ambiguous -- those have high aleatoric uncertainty, not high epistemic uncertainty, so labeling them does not improve the model.
+- **Robotics and exploration.** A robot exploring an unknown environment can score candidate states or transitions by their BALD value, directing exploration toward regions where the dynamics model is most uncertain about the world.
+- **Scientific experiment design.** Anywhere the oracle is a physical measurement rather than a human label, BALD-style active learning applies directly: telescope scheduling, sensor placement, parameter estimation in climate models.
+
+## BatchBALD: Selecting a Whole Batch
+
+- Real annotation pipelines send data to labelers in batches, not one point at a time.
+- Greedy BALD (select the single top-scoring point, re-score, repeat) fails for batches: if the two highest-scoring candidates are neighbors in input space they carry nearly identical information, and selecting both wastes one query.
+- **BatchBALD** [@kirsch2019batchbald] generalises the objective to select a batch $\mathcal{B}$ *jointly*:
+
+$$I(Y_\mathcal{B};\, \theta \mid \mathcal{B}) = H[Y_\mathcal{B} \mid \mathcal{B}] - \mathbb{E}_{q(\theta)}\bigl[H[Y_\mathcal{B} \mid \mathcal{B}, \theta]\bigr]$$
+
+- This requires estimating the joint entropy over the whole batch, which is exponential in $|\mathcal{B}|$. BatchBALD makes it tractable with a greedy submodular approximation running in $\mathcal{O}(b \cdot |\mathcal{D}_U| \cdot T)$ for batch size $b$.
+- For small batches ($b \leq 10$) the gain over greedy BALD is measurable; for larger batches the approximation still outperforms random by a wide margin.
+
+## Limitations
+
+- **Model misspecification.** BALD measures where the *model* disagrees with itself, not where the *true function* is most uncertain. If the prior or variational family is wrong, the model's uncertainty may not align with the regions that actually need more data.
+- **Cold-start problem.** With only 1--2 seed labels, the BNN's posterior is dominated by the prior and uncertainty is high almost everywhere. The first few BALD queries are barely better than random; seeding with a small diverse batch before activating BALD is common practice.
+- **Retraining cost.** Each iteration requires retraining the BNN from scratch on the growing labeled set. For large networks or large labeled sets this is non-trivial, though still far cheaper than acquiring unnecessary labels.
+- **Covariate shift.** BALD selects points that are informative under the *current training distribution*. If the test distribution differs from the unlabeled pool, epistemic uncertainty may not track what actually matters at test time.
+- **Aleatoric noise confusion.** If $\sigma_{al}$ is not constant (e.g., heteroscedastic noise), the regression simplification breaks down and the raw epistemic variance no longer perfectly isolates the informative term. Heteroscedastic BALD extensions exist but add complexity.
+
+## Summary
+
+- **The problem:** labeling data uniformly ignores what the model already knows; most labels in a random sample add little information.
+- **Two uncertainties:** aleatoric uncertainty is irreducible noise; epistemic uncertainty is reducible uncertainty from limited data. Only the epistemic component can be reduced by acquiring more labels.
+- **BALD:** $I(Y;\, \theta \mid x) = H[Y \mid x] - \mathbb{E}_{q(\theta)}[H[Y \mid x, \theta]]$ measures how much a label at $x$ would update the model's *weights*, not just its *output*. It cancels out aleatoric noise automatically.
+- **Regression simplification:** with Gaussian likelihood, BALD reduces to maximising epistemic variance -- the variance of predictions across MC weight samples from the posterior.
+- **BNN connection:** a BNN trained with Bayes by Backprop provides the weight distribution $q(\theta)$ needed to compute BALD at no extra structural cost, via $T = 20$--$50$ forward passes per candidate.
+- **Real-world impact:** medical imaging, drug discovery, NLP annotation -- anywhere labels are expensive and an unlabeled pool exists.
+- **Extensions:** BatchBALD generalises to batch queries; classification BALD uses full entropy rather than variance; heteroscedastic extensions handle non-constant noise.
