@@ -243,37 +243,52 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
 //| fig-cap: "Live object detection via COCO-SSD running in your browser. No data is sent to any server. Drag the IoU threshold to control NMS aggressiveness."
 
 {
-  // Load TF.js and COCO-SSD from CDN
   const tf      = await require("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js")
   const cocoSsd = await require("https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js")
 
   const W = 640, H = 480
-  const container = html`<div style="position:relative; width:${W}px; background:#000; border-radius:6px;">
-    <video width="${W}" height="${H}" autoplay playsinline muted
-      style="border-radius:6px; display:block; transform:scaleX(-1);"></video>
-    <canvas width="${W}" height="${H}"
-      style="position:absolute; top:0; left:0; border-radius:6px;"></canvas>
-    <div id="cam-status" style="position:absolute; top:8px; left:8px;
-      background:rgba(0,0,0,0.6); color:#fff; font-size:13px;
-      padding:4px 10px; border-radius:4px;">Loading model...</div>
-    <button id="fs-btn" title="Fullscreen" style="position:absolute; top:8px; right:8px;
+
+  const container = html`<div style="position:relative; width:${W}px; border-radius:6px; overflow:hidden; background:#000;">
+
+    <div id="cam-placeholder" style="width:${W}px; height:${H}px; background:#111827;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+      <div style="font-size:52px;">📷</div>
+      <button id="start-btn" style="padding:10px 32px; font-size:15px; font-weight:600;
+        border:none; border-radius:6px; background:steelblue; color:#fff; cursor:pointer;">
+        Loading model...
+      </button>
+      <p style="font-size:12px; color:#555; margin:0;">Camera activates only when you press Start. No data leaves your device.</p>
+    </div>
+
+    <video id="cam-video" width="${W}" height="${H}" autoplay playsinline muted
+      style="display:none; transform:scaleX(-1);"></video>
+    <canvas id="cam-canvas" width="${W}" height="${H}"
+      style="display:none; position:absolute; top:0; left:0;"></canvas>
+    <div id="cam-status" style="display:none; position:absolute; top:8px; left:8px;
+      background:rgba(0,0,0,0.6); color:#fff; font-size:13px; padding:4px 10px; border-radius:4px;"></div>
+    <button id="stop-btn" style="display:none; position:absolute; bottom:14px; left:50%;
+      transform:translateX(-50%); padding:8px 24px; font-size:14px; font-weight:600;
+      border:none; border-radius:6px; background:rgba(180,40,40,0.85); color:#fff; cursor:pointer;">
+      ⏹ Stop Camera
+    </button>
+    <button id="fs-btn" style="display:none; position:absolute; top:8px; right:8px;
       background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:4px;
-      padding:4px 10px; cursor:pointer; font-size:18px; line-height:1;">⛶</button>
+      padding:4px 10px; cursor:pointer; font-size:18px;">⛶</button>
   </div>`
 
-  const video  = container.querySelector("video")
-  const canvas = container.querySelector("canvas")
-  const status = container.querySelector("#cam-status")
-  const fsBtn  = container.querySelector("#fs-btn")
-  const ctx    = canvas.getContext("2d")
+  const placeholder = container.querySelector("#cam-placeholder")
+  const startBtn    = container.querySelector("#start-btn")
+  const video       = container.querySelector("#cam-video")
+  const canvas      = container.querySelector("#cam-canvas")
+  const status      = container.querySelector("#cam-status")
+  const stopBtn     = container.querySelector("#stop-btn")
+  const fsBtn       = container.querySelector("#fs-btn")
+  const ctx         = canvas.getContext("2d")
 
-  fsBtn.onclick = () => {
-    if (!document.fullscreenElement) container.requestFullscreen().catch(() => {})
-    else document.exitFullscreen()
-  }
-  document.addEventListener("fullscreenchange", () => {
-    fsBtn.textContent = document.fullscreenElement ? "✕" : "⛶"
-  })
+  // Load model eagerly in background so Start is instant when clicked
+  const model = await cocoSsd.load()
+  startBtn.textContent = "Start Camera"
+  startBtn.disabled = false
 
   const iou = (a, b) => {
     const [ax, ay, aw, ah] = a.bbox, [bx, by, bw, bh] = b.bbox
@@ -286,76 +301,96 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
 
   const nms = (dets, tau) => {
     const sorted = [...dets].sort((a, b) => b.score - a.score)
-    const kept = []
-    const seen = new Set()
+    const kept = [], seen = new Set()
     for (let i = 0; i < sorted.length; i++) {
       if (seen.has(i)) continue
       kept.push(sorted[i])
-      for (let j = i + 1; j < sorted.length; j++) {
+      for (let j = i + 1; j < sorted.length; j++)
         if (iou(sorted[i], sorted[j]) >= tau) seen.add(j)
-      }
     }
     return kept
   }
 
   const colors = ["steelblue","#ff9f3f","#50fa7b","#ff79c6","#bd93f9","#8be9fd","#ffb86c"]
+  const classColor = {}
+  let colorIdx = 0, animId = null, currentStream = null
 
-  try {
-    // "user" = front camera; mirroring makes it feel natural (selfie view)
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "user" } }
-    })
-    video.srcObject = stream
-    await new Promise(r => video.onloadedmetadata = r)
-
-    status.textContent = "Loading COCO-SSD..."
-    const model = await cocoSsd.load()
-    status.textContent = "Running"
-
-    const classColor = {}
-    let colorIdx = 0
-
-    const detect = async () => {
-      const raw  = await model.detect(video)
-      const filt = raw.filter(d => d.score >= cam_score)
-      const kept = nms(filt, cam_tau)
-
-      ctx.clearRect(0, 0, W, H)
-
-      kept.forEach(d => {
-        if (!classColor[d.class]) classColor[d.class] = colors[colorIdx++ % colors.length]
-        const col = classColor[d.class]
-        const [x, y, w, h] = d.bbox
-        const mx = W - x - w  // mirror x: video is CSS-flipped, canvas is not
-
-        ctx.strokeStyle = col
-        ctx.lineWidth   = 2.5
-        ctx.strokeRect(mx, y, w, h)
-
-        ctx.fillStyle = col
-        ctx.globalAlpha = 0.15
-        ctx.fillRect(mx, y, w, h)
-        ctx.globalAlpha = 1
-
-        const label = `${d.class} ${(d.score * 100).toFixed(0)}%`
-        ctx.font      = "bold 13px sans-serif"
-        const tw      = ctx.measureText(label).width
-        ctx.fillStyle = col
-        ctx.fillRect(mx, y - 20, tw + 8, 20)
-        ctx.fillStyle = "#fff"
-        ctx.fillText(label, mx + 4, y - 5)
-      })
-
-      status.textContent = `${kept.length} object${kept.length !== 1 ? "s" : ""} · τ=${cam_tau.toFixed(2)} · min score=${cam_score.toFixed(2)}`
-      requestAnimationFrame(detect)
-    }
-
-    detect()
-  } catch (e) {
-    status.textContent = e.name === "NotAllowedError"
-      ? "Camera permission denied -- allow camera access and reload."
-      : `Camera error: ${e.message}`
+  const showCamera = () => {
+    placeholder.style.display = "none"
+    video.style.display       = "block"
+    canvas.style.display      = "block"
+    status.style.display      = "block"
+    stopBtn.style.display     = "block"
+    fsBtn.style.display       = "block"
   }
+
+  const showPlaceholder = () => {
+    placeholder.style.display = "flex"
+    video.style.display       = "none"
+    canvas.style.display      = "none"
+    status.style.display      = "none"
+    stopBtn.style.display     = "none"
+    fsBtn.style.display       = "none"
+    ctx.clearRect(0, 0, W, H)
+  }
+
+  const detect = async () => {
+    const raw  = await model.detect(video)
+    const filt = raw.filter(d => d.score >= cam_score)
+    const kept = nms(filt, cam_tau)
+
+    ctx.clearRect(0, 0, W, H)
+    kept.forEach(d => {
+      if (!classColor[d.class]) classColor[d.class] = colors[colorIdx++ % colors.length]
+      const col = classColor[d.class]
+      const [x, y, w, h] = d.bbox
+      const mx = W - x - w  // mirror x to match CSS-flipped video
+
+      ctx.strokeStyle = col; ctx.lineWidth = 2.5
+      ctx.strokeRect(mx, y, w, h)
+      ctx.fillStyle = col; ctx.globalAlpha = 0.15
+      ctx.fillRect(mx, y, w, h); ctx.globalAlpha = 1
+
+      const label = `${d.class} ${(d.score * 100).toFixed(0)}%`
+      ctx.font = "bold 13px sans-serif"
+      const tw = ctx.measureText(label).width
+      ctx.fillStyle = col; ctx.fillRect(mx, y - 20, tw + 8, 20)
+      ctx.fillStyle = "#fff"; ctx.fillText(label, mx + 4, y - 5)
+    })
+
+    status.textContent = `${kept.length} object${kept.length !== 1 ? "s" : ""} · τ = ${cam_tau.toFixed(2)} · min score = ${cam_score.toFixed(2)}`
+    animId = requestAnimationFrame(detect)
+  }
+
+  startBtn.onclick = async () => {
+    try {
+      currentStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "user" } }
+      })
+      video.srcObject = currentStream
+      await new Promise(r => video.onloadedmetadata = r)
+      showCamera()
+      detect()
+    } catch (e) {
+      startBtn.textContent = e.name === "NotAllowedError"
+        ? "Permission denied -- reload to try again"
+        : `Error: ${e.message}`
+    }
+  }
+
+  stopBtn.onclick = () => {
+    if (animId) { cancelAnimationFrame(animId); animId = null }
+    if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null }
+    showPlaceholder()
+  }
+
+  fsBtn.onclick = () => {
+    if (!document.fullscreenElement) container.requestFullscreen().catch(() => {})
+    else document.exitFullscreen()
+  }
+  document.addEventListener("fullscreenchange", () => {
+    fsBtn.textContent = document.fullscreenElement ? "✕" : "⛶"
+  })
 
   return container
 }
