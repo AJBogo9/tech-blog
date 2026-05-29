@@ -262,6 +262,9 @@ torch.manual_seed(99)
 np.random.seed(99)
 
 # Average over 3 independent random orderings to smooth out single-seed noise
+# Recompute initial seeds -- labeled was fully consumed by the BALD loop above
+seed_labeled = [int(np.argmin(np.abs(x_pool_np - sx))) for sx in seed_x]
+
 N_RAND_SEEDS = 3
 rand_mse_all = []
 
@@ -269,7 +272,7 @@ for rseed in range(N_RAND_SEEDS):
     torch.manual_seed(rseed * 17 + 5)
     np.random.seed(rseed * 17 + 5)
 
-    r_labeled   = labeled.copy()
+    r_labeled   = seed_labeled.copy()
     r_remaining = [i for i in range(N_POOL) if i not in r_labeled]
     np.random.shuffle(r_remaining)
 
