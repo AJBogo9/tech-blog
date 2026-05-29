@@ -9,7 +9,6 @@ categories:
   - computer vision
   - object detection
   - deep learning
-draft: true
 ---
 
 ## The Problem: Too Many Boxes
@@ -249,20 +248,32 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
   const cocoSsd = await require("https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js")
 
   const W = 640, H = 480
-  const container = html`<div style="position:relative; width:${W}px;">
+  const container = html`<div style="position:relative; width:${W}px; background:#000; border-radius:6px;">
     <video width="${W}" height="${H}" autoplay playsinline muted
-      style="border-radius:6px; display:block;"></video>
+      style="border-radius:6px; display:block; transform:scaleX(-1);"></video>
     <canvas width="${W}" height="${H}"
       style="position:absolute; top:0; left:0; border-radius:6px;"></canvas>
     <div id="cam-status" style="position:absolute; top:8px; left:8px;
       background:rgba(0,0,0,0.6); color:#fff; font-size:13px;
       padding:4px 10px; border-radius:4px;">Loading model...</div>
+    <button id="fs-btn" title="Fullscreen" style="position:absolute; top:8px; right:8px;
+      background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:4px;
+      padding:4px 10px; cursor:pointer; font-size:18px; line-height:1;">⛶</button>
   </div>`
 
   const video  = container.querySelector("video")
   const canvas = container.querySelector("canvas")
   const status = container.querySelector("#cam-status")
+  const fsBtn  = container.querySelector("#fs-btn")
   const ctx    = canvas.getContext("2d")
+
+  fsBtn.onclick = () => {
+    if (!document.fullscreenElement) container.requestFullscreen().catch(() => {})
+    else document.exitFullscreen()
+  }
+  document.addEventListener("fullscreenchange", () => {
+    fsBtn.textContent = document.fullscreenElement ? "✕" : "⛶"
+  })
 
   const iou = (a, b) => {
     const [ax, ay, aw, ah] = a.bbox, [bx, by, bw, bh] = b.bbox
@@ -290,7 +301,10 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
   const colors = ["steelblue","#ff9f3f","#50fa7b","#ff79c6","#bd93f9","#8be9fd","#ffb86c"]
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:"environment" } })
+    // "user" = front camera; mirroring makes it feel natural (selfie view)
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "user" } }
+    })
     video.srcObject = stream
     await new Promise(r => video.onloadedmetadata = r)
 
@@ -312,23 +326,24 @@ viewof cam_score = Inputs.range([0.1, 0.9], {
         if (!classColor[d.class]) classColor[d.class] = colors[colorIdx++ % colors.length]
         const col = classColor[d.class]
         const [x, y, w, h] = d.bbox
+        const mx = W - x - w  // mirror x: video is CSS-flipped, canvas is not
 
         ctx.strokeStyle = col
         ctx.lineWidth   = 2.5
-        ctx.strokeRect(x, y, w, h)
+        ctx.strokeRect(mx, y, w, h)
 
         ctx.fillStyle = col
         ctx.globalAlpha = 0.15
-        ctx.fillRect(x, y, w, h)
+        ctx.fillRect(mx, y, w, h)
         ctx.globalAlpha = 1
 
         const label = `${d.class} ${(d.score * 100).toFixed(0)}%`
         ctx.font      = "bold 13px sans-serif"
         const tw      = ctx.measureText(label).width
         ctx.fillStyle = col
-        ctx.fillRect(x, y - 20, tw + 8, 20)
+        ctx.fillRect(mx, y - 20, tw + 8, 20)
         ctx.fillStyle = "#fff"
-        ctx.fillText(label, x + 4, y - 5)
+        ctx.fillText(label, mx + 4, y - 5)
       })
 
       status.textContent = `${kept.length} object${kept.length !== 1 ? "s" : ""} · τ=${cam_tau.toFixed(2)} · min score=${cam_score.toFixed(2)}`
