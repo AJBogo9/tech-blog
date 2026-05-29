@@ -69,6 +69,7 @@ $$I(Y;\, \theta \mid x^*) = H[Y \mid x^*] - \mathbb{E}_{q(\theta)}\bigl[H[Y \mid
 $$I(Y;\, \theta \mid x^*) \;\propto\; H[Y \mid x^*] \;\approx\; \sigma_{ep}^2(x^*)$$
 
 - Maximising the BALD score reduces to maximising **epistemic variance**: the variance of predictions across weight samples. This is both cheap to compute and directly interpretable.
+- **For classification,** the regression simplification does not apply: $H[Y \mid x^*, \theta]$ is the entropy of a categorical distribution and varies with both $x^*$ and $\theta$. The BALD score must be estimated in full -- approximate the marginal predictive $\hat{p}(y \mid x^*) = \frac{1}{T}\sum_t p(y \mid x^*, \theta_t)$ and compute both entropy terms via Monte Carlo. The intuition is identical: target points where different weight configurations predict different class labels, not points that are inherently ambiguous regardless of weights.
 
 ## Computing BALD with a BNN
 
@@ -198,8 +199,9 @@ def mc_predict(model, x_t, T=300):
         samps = torch.stack([model(x_t).squeeze() for _ in range(T)])
     return samps.mean(0).numpy(), samps.std(0).numpy()
 
-x_eval_t = torch.tensor(x_eval_np, dtype=torch.float32).unsqueeze(1)
-x_pool_t = torch.tensor(x_pool_np, dtype=torch.float32).unsqueeze(1)
+x_eval_t    = torch.tensor(x_eval_np, dtype=torch.float32).unsqueeze(1)
+x_pool_t    = torch.tensor(x_pool_np, dtype=torch.float32).unsqueeze(1)
+y_eval_true = true_fn(x_eval_np)
 
 labeled  = [5, 34]
 N_ITER   = 38  # label all remaining pool points to show full convergence
@@ -220,6 +222,7 @@ for it in range(N_ITER):
 
     next_idx     = int(np.argmax(p_std_masked))
     unlabeled_ex = [i for i in range(N_POOL) if i not in labeled and i != next_idx]
+    test_mse     = float(np.mean((mean_c - y_eval_true) ** 2))
 
     al_iters.append({
         "labeled":   labeled.copy(),
@@ -231,9 +234,34 @@ for it in range(N_ITER):
         "u68":       (mean_c + std_c).tolist(),
         "l68":       (mean_c - std_c).tolist(),
         "pool_std":  p_std_masked.tolist(),
+        "test_mse":  test_mse,
     })
 
     labeled.append(next_idx)
+```
+
+```{python}
+#| label: bald-random-baseline
+#| output: false
+
+# Random sampling baseline -- same seed points, shuffled random order
+torch.manual_seed(99)
+np.random.seed(99)
+
+rand_labeled   = [5, 34]
+rand_remaining = [i for i in range(N_POOL) if i not in rand_labeled]
+np.random.shuffle(rand_remaining)
+rand_mse       = []
+
+for it in range(N_ITER):
+    x_tr_r = torch.tensor(x_pool_np[rand_labeled], dtype=torch.float32).unsqueeze(1)
+    y_tr_r = torch.tensor(y_pool_np[rand_labeled], dtype=torch.float32).unsqueeze(1)
+
+    model_r   = train_bnn(x_tr_r, y_tr_r, epochs=1000)
+    mean_r, _ = mc_predict(model_r, x_eval_t, T=100)
+    rand_mse.append(float(np.mean((mean_r - y_eval_true) ** 2)))
+
+    rand_labeled.append(rand_remaining[it])
 ```
 
 ```{python}
@@ -282,6 +310,8 @@ ojs_define(
     bald_pool_x = x_pool_np.tolist(),
     bald_pool_y = y_pool_np.tolist(),
     bald_iters  = al_iters,
+    bald_mse    = [it["test_mse"] for it in al_iters],
+    rand_mse    = rand_mse,
 )
 ```
 
@@ -411,6 +441,45 @@ viewof bald_iter = {
 }
 ```
 
+## BALD vs Random: The Learning Curve
+
+- The interactive demo shows *where* BALD queries. The plot below shows *why that matters*: test MSE against the true function as a function of labeled set size, for BALD and random sampling from the same pool and seed points.
+- BALD reaches low error with far fewer labels. In the early iterations it queries the most informative regions (edges, gaps) and the error drops sharply. Random sampling stumbles through uninformative points and converges more slowly.
+- By the final iteration all 40 pool points are labeled -- both strategies have seen the same data and the MSE converges to the same value. This is the "traditional dataloader" endpoint: with unlimited labels, strategy does not matter. BALD matters precisely when labels are scarce.
+- The crossover point -- where BALD's curve first reaches the MSE that random eventually achieves -- is the label budget saved. Everything to the left of it is annotation effort that BALD avoids.
+
+```{ojs}
+//| echo: false
+//| label: fig-learning-curve
+//| fig-cap: "Test MSE vs number of labeled points. BALD (steelblue) reaches low error with fewer labels than random sampling (red). Both converge to the same MSE when the full pool is labeled. The gap between the curves is the annotation budget BALD saves."
+
+{
+  const nLabeled = bald_mse.map((_, i) => i + 2)
+
+  const baldCurve = nLabeled.map((n, i) => ({ n, mse: bald_mse[i], strategy: "BALD" }))
+  const randCurve = nLabeled.map((n, i) => ({ n, mse: rand_mse[i], strategy: "Random" }))
+  const allData   = [...baldCurve, ...randCurve]
+
+  return Plot.plot({
+    width:      700,
+    height:     260,
+    marginLeft: 55,
+    x: { label: "Labeled points", nice: true },
+    y: { label: "Test MSE", grid: true, nice: true },
+    color: {
+      legend:  true,
+      domain:  ["BALD", "Random"],
+      range:   ["steelblue", "#ff6b6b"],
+      label:   "Strategy",
+    },
+    marks: [
+      Plot.line(allData, { x:"n", y:"mse", stroke:"strategy", strokeWidth:2.5 }),
+      Plot.dot(allData,  { x:"n", y:"mse", fill:"strategy",   r:3 }),
+    ],
+  })
+}
+```
+
 ## Real-World Applications
 
 - **Medical imaging.** Labeling a radiology scan requires an expert clinician -- scarce and expensive. BALD selects the scans the model is most uncertain about: unusual presentations, rare pathologies, edge-of-distribution cases that matter most for model reliability. Studies report 50--80% label reduction to match passive-learning performance on standard benchmarks.
@@ -422,7 +491,8 @@ viewof bald_iter = {
 ## BatchBALD: Selecting a Whole Batch
 
 - Real annotation pipelines send data to labelers in batches, not one point at a time.
-- Greedy BALD (select the single top-scoring point, re-score, repeat) fails for batches: if the two highest-scoring candidates are neighbors in input space they carry nearly identical information, and selecting both wastes one query.
+- Greedy BALD (select the single top-scoring point, re-score, repeat) fails for batches: imagine the top two scoring candidates are adjacent pool points at $x = 1.0$ and $x = 1.2$. Each individually has high epistemic uncertainty. But conditioning on the label at $x = 1.0$ resolves almost all the uncertainty at $x = 1.2$ too -- the two points are informationally redundant. Selecting both wastes one query that could have gone to an entirely different region.
+- The mutual information objective is submodular, so a batch selected greedily by individual BALD scores can be far from the jointly optimal batch. The more clustered the top candidates, the worse greedy performs.
 - **BatchBALD** [@kirsch2019batchbald] generalises the objective to select a batch $\mathcal{B}$ *jointly*:
 
 $$I(Y_\mathcal{B};\, \theta \mid \mathcal{B}) = H[Y_\mathcal{B} \mid \mathcal{B}] - \mathbb{E}_{q(\theta)}\bigl[H[Y_\mathcal{B} \mid \mathcal{B}, \theta]\bigr]$$
