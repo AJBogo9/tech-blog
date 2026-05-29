@@ -151,7 +151,7 @@ x_eval_np = np.linspace(-5.5, 5.5, 300)
 
 # DEV_MODE: coarse settings for fast iteration during writing.
 # Flip to False for the final render -- freeze:auto caches the result so it only runs once.
-DEV_MODE   = True
+DEV_MODE   = False
 N_EPOCHS_B = 150 if DEV_MODE else 800   # BALD training epochs per iteration
 N_EPOCHS_R = 100 if DEV_MODE else 500   # random baseline epochs
 T_EVAL     =  20 if DEV_MODE else 100   # MC samples for eval/learning-curve
