@@ -498,12 +498,17 @@ viewof bald_iter = {
   </div>`
 
   const chart = Plot.plot({
-    width:      700,
-    height:     260,
-    marginLeft: 55,
-    x: { label: "Labeled points", nice: true },
-    y: { label: "Test MSE", grid: true, nice: true },
+    width:        700,
+    height:       260,
+    marginLeft:   55,
+    marginBottom: 40,
+    marginRight:  20,
+    marginTop:    10,
+    x: { label: "Labeled points", labelOffset: 32, nice: true, tickSize: 6 },
+    y: { label: "Test MSE", labelOffset: 42, grid: true, nice: true, tickSize: 6 },
     marks: [
+      Plot.ruleX([0], { stroke: "#555" }),
+      Plot.ruleY([0], { stroke: "#555" }),
       Plot.line(randSeeds, { x:"n", y:"mse", z:"si", stroke:"#ff6b6b", strokeWidth:1, strokeOpacity:0.3 }),
       Plot.line(randMean,  { x:"n", y:"mse", stroke:"#ff6b6b", strokeWidth:2.5 }),
       Plot.line(baldCurve, { x:"n", y:"mse", stroke:"steelblue", strokeWidth:2.5 }),
