@@ -13,7 +13,7 @@ $font-family-sans-serif:  Inter, system-ui, -apple-system, BlinkMacSystemFont,
                           "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 $font-family-monospace:   "JetBrains Mono", "Fira Code", "Cascadia Code",
                           ui-monospace, "SFMono-Regular", Menlo, monospace;
-$font-size-base:          1rem;
+$font-size-base:          1.0625rem;
 $line-height-base:        1.75;
 $headings-font-weight:    600;
 $headings-line-height:    1.25;
@@ -99,6 +99,8 @@ h3 { font-size: 1.15rem; }
 
 p, li { color: $body-color; }
 
+p { margin-bottom: 1.4rem; }
+
 // Links: lighter text, underline on hover only
 a {
   color: $link-color;
@@ -164,6 +166,18 @@ nav[role="doc-toc"] {
     &:hover  { color: $link-color !important; }
     &.active { color: $link-color !important; border-left-color: $link-color !important; }
   }
+}
+
+// Constrain prose column for comfortable line length (~68 chars)
+.quarto-title-block,
+.quarto-title,
+#quarto-document-content p,
+#quarto-document-content li,
+#quarto-document-content blockquote,
+#quarto-document-content h1,
+#quarto-document-content h2,
+#quarto-document-content h3 {
+  max-width: 68ch;
 }
 
 // Post title block
