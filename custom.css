@@ -112,18 +112,11 @@ table {
 /* ── Blog listing card hover ─────────────────────────────────────────── */
 
 .quarto-grid-item {
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: opacity 0.12s ease-out;
 }
 
 .quarto-grid-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .quarto-grid-item {
-    transition: none;
-  }
+  opacity: 0.75;
 }
 
 /* ── Category filter chips (blog listing page, all screen sizes) ─────── */
