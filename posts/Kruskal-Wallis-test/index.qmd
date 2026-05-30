@@ -104,8 +104,7 @@ ojs_define(
 ```{python}
 #| label: tbl-pain-summary
 #| tbl-cap: "Summary statistics for the three pain management protocols."
-#| code-fold: true
-#| code-summary: "Summary statistics"
+#| echo: false
 
 from IPython.display import HTML
 
@@ -307,8 +306,7 @@ F, p_anova = stats.f_oneway(*groups)
 ```
 
 ```{python}
-#| code-fold: true
-#| code-summary: "Table rendering"
+#| echo: false
 
 from IPython.display import HTML
 
