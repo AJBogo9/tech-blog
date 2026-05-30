@@ -10,7 +10,7 @@ toc: false
 include-in-header:
   text: |
     <meta name="description" content="MSc student in Machine Learning, Data Science and AI at Aalto University. I write about ML, statistics, and algorithms.">
-    <link rel="preload" as="image" href="profile.webp">
+    <link rel="preload" as="image" href="profile.webp" fetchpriority="high">
 listing:
   id: recent-posts
   contents: posts
