@@ -166,18 +166,6 @@ nav[role="doc-toc"] {
   }
 }
 
-// Constrain prose column for comfortable line length (~68 chars)
-.quarto-title-block,
-.quarto-title,
-#quarto-document-content p,
-#quarto-document-content li,
-#quarto-document-content blockquote,
-#quarto-document-content h1,
-#quarto-document-content h2,
-#quarto-document-content h3 {
-  max-width: 68ch;
-}
-
 // Post title block
 .quarto-title h1.title {
   font-size: 2rem;
