@@ -264,14 +264,14 @@ table {
 /* mirrors: .sidebar nav[role=doc-toc] ul>li>a.active, ...ul>li>ul>li>a.active */
 #TOC.toc-inline ul > li > a.active,
 #TOC.toc-inline ul > li > ul > li > a.active {
-  border-left: 1px solid #00bc8c;
-  color: #00bc8c !important;
+  border-left: 1px solid #6b9ec8;
+  color: #6b9ec8 !important;
 }
 
 /* mirrors: .sidebar nav[role=doc-toc] ul>li>a:hover, ...ul>li>ul>li>a:hover */
 #TOC.toc-inline ul > li > a:hover,
 #TOC.toc-inline ul > li > ul > li > a:hover {
-  color: #00bc8c !important;
+  color: #6b9ec8 !important;
 }
 
 /* ── Post navigation (prev / next) ──────────────────────────────────── */
