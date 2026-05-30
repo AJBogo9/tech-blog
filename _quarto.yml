@@ -50,7 +50,7 @@ jupyter: python3
 
 format:
   html:
-    theme: darkly
+    theme: [darkly, theme.scss]
     css: custom.css
     highlight-style: github-dark
     code-fold: false
