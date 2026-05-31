@@ -1,3 +1,9 @@
+/* ── View Transitions API ────────────────────────────────────────────── */
+
+@view-transition {
+  navigation: auto;
+}
+
 /* ── Screen-reader only text ─────────────────────────────────────────── */
 
 .sr-only {

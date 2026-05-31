@@ -67,6 +67,9 @@ format:
         <link rel="preconnect" href="https://cdn.jsdelivr.net">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <script type="speculationrules">
+        {"prerender":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}
+        </script>
     include-after-body:
       text: |
         <script src="/instantpage.js" type="module"></script>
