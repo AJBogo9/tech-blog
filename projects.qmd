@@ -1,7 +1,14 @@
 ---
 title: "Projects"
-page-layout: article
-toc: false
+listing:
+  contents: projects
+  sort: "date desc"
+  type: grid
+  sort-ui: false
+  filter-ui: false
+  fields: [image, title, description, categories]
+page-layout: full
+title-block-banner: false
 ---
 
-Coming soon.
+Things I built to learn something. Each project page documents what it does, how it works, and what I took away from it.
