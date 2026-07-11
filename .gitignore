@@ -14,10 +14,10 @@ __pycache__/
 .venv/
 
 # Terraform
-infra/.terraform/
-infra/terraform.tfvars
-infra/terraform.tfstate
-infra/terraform.tfstate.backup
+_infra/.terraform/
+_infra/terraform.tfvars
+_infra/terraform.tfstate
+_infra/terraform.tfstate.backup
 
 # Playwright MCP
 .playwright-mcp/

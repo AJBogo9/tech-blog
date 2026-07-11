@@ -33,7 +33,8 @@ with `TALIESIN_PYTHON=/path/to/.venv/bin/python` (the venv must have `ipykernel`
 This is a [Taliesin](https://github.com/AJBogo9/taliesin) static website (`.tmd`
 sources rendered to HTML) hosted on Cloudflare Pages (CNAME → `andreasbogossian.com`).
 The built output goes to `_site/`, which is what gets deployed. Infra is managed with
-Terraform in `infra/`. The blog was migrated from Quarto to Taliesin (see
+Terraform in `_infra/` (underscore-prefixed so `taliesin build` never mirrors it
+into the deployed `_site/`). The blog was migrated from Quarto to Taliesin (see
 `docs/superpowers/specs/` for the migration design).
 
 **Key config files:**
