@@ -38,4 +38,4 @@ Create a new entry in the Projects listing. Projects differ from blog posts: the
 
 - **No em dashes or en dashes anywhere.**
 - Do not commit. Leave the new files as uncommitted changes for review.
-- After scaffolding, remind the user to add `thumbnail.png` and run `quarto preview`.
+- After scaffolding, remind the user to add `thumbnail.png` and run `taliesin preview .`.
