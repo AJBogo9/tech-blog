@@ -5,13 +5,13 @@ description: Run the blog's deploy ritual — regenerate llms-full.txt, render t
 
 # Deploy the blog
 
-The site is a Quarto static build hosted on Cloudflare Pages (CNAME → andreasbogossian.com). Deployment is scripted in `publish.sh`, which renders the site and force-pushes `_site/` to the `cf-pages` branch.
+The site is a Taliesin static build hosted on Cloudflare Pages (CNAME → andreasbogossian.com). Deployment is scripted in `publish.sh`, which renders the site and force-pushes `_site/` to the `cf-pages` branch.
 
 ## Preflight (do this first)
 
 1. **Confirm intent.** Deploying is outward-facing and force-pushes a branch. Confirm the user wants to publish now unless they already said so explicitly.
 2. **Check the working tree** with `git status`. If there are uncommitted source changes, surface them — the user likely wants those committed (with their approval) before the rendered output reflects them.
-3. **Recommend a local check** if anything substantive changed: `quarto preview` to eyeball rendering before shipping.
+3. **Recommend a local check** if anything substantive changed: `taliesin preview .` to eyeball rendering before shipping.
 
 ## Deploy
 
@@ -21,7 +21,7 @@ Run the existing script from the repo root:
 ./publish.sh
 ```
 
-It runs `generate_llms_full.py`, `quarto render`, then inits a throwaway git repo inside `_site/`, commits, and force-pushes to the `cf-pages` branch of the same origin remote. Cloudflare Pages builds from that branch.
+It runs `generate_llms_full.py`, `taliesin build .`, then inits a throwaway git repo inside `_site/`, commits, and force-pushes to the `cf-pages` branch of the same origin remote. Cloudflare Pages builds from that branch.
 
 ## After
 

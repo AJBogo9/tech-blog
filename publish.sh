@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 python generate_llms_full.py
-quarto render
+taliesin build .
 cd _site
 rm -rf .venv
 git init

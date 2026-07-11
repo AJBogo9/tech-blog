@@ -22,7 +22,7 @@ def extract_frontmatter_field(raw, field):
 
 def load_posts():
     posts = []
-    for post in sorted(POSTS_DIR.glob("*/index.qmd"), key=lambda p: p.parent.name):
+    for post in sorted(POSTS_DIR.glob("*/index.tmd"), key=lambda p: p.parent.name):
         raw = post.read_text()
         title = extract_frontmatter_field(raw, "title")
         date = extract_frontmatter_field(raw, "date")

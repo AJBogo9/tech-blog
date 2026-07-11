@@ -4,7 +4,7 @@
 
 Personal tech blog at [andreasbogossian.com](https://andreasbogossian.com). Posts cover machine learning, algorithms, and software engineering, with interactive visualisations built in Observable JS.
 
-**Stack:** [Quarto](https://quarto.org), Python (numpy, matplotlib, scikit-learn), D3 via OJS
+**Stack:** [Taliesin](https://github.com/AJBogo9/taliesin), Python (numpy, matplotlib, scikit-learn), D3
 
 ## Local development
 
@@ -13,8 +13,8 @@ Personal tech blog at [andreasbogossian.com](https://andreasbogossian.com). Post
 python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 
 # Preview with live reload
-quarto preview
+taliesin preview .
 
 # Full build
-quarto render
+taliesin build .
 ```

@@ -2,16 +2,11 @@
 llms.txt
 llms-full.txt
 
-# Quarto output
+# Taliesin build (this is now a Taliesin, not a Quarto, build)
 _site/
-.quarto/
-/.quarto/
 *_cache/
 *_files/
 _freeze/
-
-# Quarto notebooks
-**/*.quarto_ipynb*
 
 # Python
 __pycache__/
@@ -31,5 +26,4 @@ infra/terraform.tfstate.backup
 .DS_Store
 .vscode/
 *.swp
-**/*.quarto_ipynb
 _notes/

@@ -9,9 +9,9 @@ Create a new entry in the Projects listing. Projects differ from blog posts: the
 
 ## Steps
 
-1. **Determine the slug.** Short kebab-case, matching the project/repo name (e.g. `supercollider-mcp`). The page lives at `projects/<slug>/index.qmd`.
+1. **Determine the slug.** Short kebab-case, matching the project/repo name (e.g. `supercollider-mcp`). The page lives at `projects/<slug>/index.tmd`.
 
-2. **Create `projects/<slug>/index.qmd`** with this frontmatter:
+2. **Create `projects/<slug>/index.tmd`** with this frontmatter:
 
    ```
    ---
