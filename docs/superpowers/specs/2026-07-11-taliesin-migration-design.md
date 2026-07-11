@@ -11,6 +11,31 @@ author's own `.tmd` → HTML dev server), in-place in the tech-blog repo, withou
 publishing anything until the migration is complete and approved. This is
 real-world dogfooding of Taliesin against a production personal site.
 
+## Revision (2026-07-11): approach is transplant, not re-author
+
+Investigation found that a **complete, content-current Taliesin port of the blog
+already exists** at `taliesin/corpus/tech-blog/`, built as a dogfooding fixture
+through the DROP-QUARTO initiative (last updated 2026-07-10). It contains a fully
+mapped `_site.yml`, all six OJS posts **already converted to native reactive
+`{js}`** (no leftover `{ojs}`, no placeholders), all pages, all projects
+(including the three that are only uncommitted WIP on the real blog), citations,
+and a Taliesin-built `_site/`. Its CV body and publications include are
+byte-identical to the real blog's current WIP, and it is wired into Taliesin's
+test suite (`tech_blog.rs`, `cite_bib_fixes.rs`).
+
+Consequently the plan is a **transplant**, not a rewrite:
+
+- Copy the finished `.tmd` site from `corpus/tech-blog/` into the real `tech-blog`
+  repo, drop the Quarto files, rewire the deploy, verify, and stage for cutover.
+- The two-phase (scaffold → interactivity) execution and the Phase-1 OJS
+  placeholder are **obsolete** — interactivity is already done.
+- `corpus/tech-blog/` **stays** in the Taliesin repo as a frozen test fixture. The
+  real repo receives a one-way copy; the copy source (corpus) is never modified.
+  The two are expected to drift; a sync mechanism is an out-of-scope follow-up.
+
+The constraints, goal, and design decisions below still hold; only the execution
+plan (see "## Execution plan") is replaced by the transplant flow.
+
 ## Non-negotiable constraints
 
 1. **Privacy.** Nothing new goes public until the author explicitly deploys.
@@ -78,8 +103,8 @@ content as-is (including WIP), since it reflects the author's latest intent.
 
 **Known gaps / risks (accepted):**
 - **OJS reactive runtime:** Taliesin has no OJS runtime. Each interactive figure
-  must be rewritten to the native `{js}` reactive model. This is the bulk of the
-  per-post work and is deferred to Phase 2 (visible placeholder in Phase 1).
+  must be rewritten to the native `{js}` reactive model. **Already done** in the
+  corpus port — every OJS post is converted; no per-post rewriting remains.
 - **CSL fidelity:** Taliesin does IEEE-style formatting, not a full CSL processor.
   Current site already uses IEEE, so expected match — **verify rendering early**.
 - **URL parity:** confirm Taliesin's site output produces `/posts/<slug>/` URLs
@@ -89,20 +114,18 @@ content as-is (including WIP), since it reflects the author's latest intent.
 
 ## Decisions (from brainstorming)
 
-1. **Sequencing:** scaffold the whole site first (structure + all content +
-   Python + math + listings + theme identity), then circle back to polish the
-   interactive visualizations.
-2. **Repo layout:** in-place, on the `taliesin-migration` branch. `.tmd` source
-   is added alongside then replaces `.qmd`; git history, CNAME, and Cloudflare
-   deploy config are preserved.
-3. **Design:** adopt Taliesin's native look (dark default, its typography +
-   iron-gall accent) as the baseline; port only identity essentials (profile
-   image, favicon, social-icon footer, an accent tweak if wanted). Retire
-   `theme.scss` and most of `custom.css`; keep a minimal identity CSS only where a
-   real gap appears.
-4. **Phase 1 OJS placeholder:** interactive figures render as a small, obviously
-   temporary "interactive figure — coming soon" card, replaced by real `{js}` in
-   Phase 2.
+1. **Approach:** transplant the finished `corpus/tech-blog/` port into the real
+   repo (see the Revision note above). The original "scaffold first, then polish
+   interactivity" sequencing and the Phase-1 OJS placeholder are superseded —
+   interactivity is already converted in the corpus port.
+2. **Repo layout:** in-place, on the `taliesin-migration` branch. `.tmd` replaces
+   `.qmd`; git history, CNAME, and Cloudflare deploy config are preserved.
+3. **Design:** the corpus port already adopts Taliesin's native look plus the
+   blog's identity (profile image, favicon, social-icon footer) via a trimmed
+   `custom.css`; `theme.scss` is dropped. No further design work planned.
+4. **Fixture:** `corpus/tech-blog/` stays in the Taliesin repo as a frozen test
+   fixture; the real repo gets a one-way copy. Drift is accepted; sync is an
+   out-of-scope follow-up.
 5. **Gap handling:** work around in the blog, flag upstream (see constraint 3).
 
 ## Target structure
@@ -142,30 +165,48 @@ Unchanged deploy topology; only the renderer changes:
 `taliesin preview .` serves the same block model locally with hot reload for the
 dev loop. The `.tmd` file is the only editing surface; the browser is read-only.
 
-## Execution plan
+## Execution plan (transplant)
 
-### Phase 0 — De-risk (before mass migration)
-- Point `TALIESIN_PYTHON` at a suitable venv; confirm a `{python}` cell executes.
-- Migrate ONE simple post (KL-divergence: Python + math + refs, no OJS) end to end.
-- Verify: `taliesin check` clean, `taliesin build` clean, IEEE refs render
-  correctly, `/posts/kl-divergence/` URL parity, browser screenshot at 3 viewports.
-- This proves the recipe (frontmatter mapping, refs, math, Python, URLs) cheaply.
+### What transfers corpus/tech-blog → real tech-blog repo
+`.tmd` sources (`index`, `blog`, `projects`, `cv`, `publications`, `404`),
+`posts/**` (`.tmd` + `references.bib` + images + helper `.js` + audio),
+`projects/**` (`.tmd` + thumbnails + the plan `.md`), `_includes/`, `_site.yml`,
+`custom.css` (the corpus version — 351 lines, differs from the real 432-line one),
+`ieee.csl`, `bell-curve.svg`, `og-image.webp`, `profile.webp`, `instantpage.js`
+(still referenced in `_site.yml body-end`), and the Taliesin-aware `.claude/skills/`.
 
-### Phase 1 — Whole site standing
-- Write `_site.yml` (nav, footer, OG, favicon, site-url).
-- Migrate every page and post to `.tmd`: prose, `{python}`, math, listings, refs.
-- OJS cells → visible placeholder card.
-- Port identity CSS (footer social icons, profile, accent) — minimal.
-- Wire static resources into the build; ensure `docs/` is excluded from the site.
-- Update `generate_llms_full.py` and `publish.sh` (do NOT deploy).
-- Verify every page: `check` clean, `build` clean, browser screenshots at mobile
-  (~390×844), laptop landscape (~1440×900), laptop portrait (~900×1440).
+### What stays in the real repo (not in corpus)
+`CNAME`, `robots.txt`, `LICENSE`, `infra/` (Cloudflare terraform — unchanged),
+`.git`, `README.md` (stack section updated).
 
-### Phase 2 — Interactivity
-- Convert each post's OJS visualizations to native `{js}` (`//| name:` /
-  `//| viewof:` / `//| input:`), one post at a time, browser-verified.
-- Order: start with the lightest OJS post, end with the heaviest (a-star: 9 cells,
-  fourier-transform: 8 cells).
+### What is removed from the real repo (Quarto residue)
+`_quarto.yml`, `theme.scss`, all `*.qmd`, `posts/**/*.qmd`, `projects/**/*.qmd`,
+`.quarto/`, `.quartoignore`, `post-nav.js` (dropped — Taliesin has built-in
+prev/next; not referenced in `_site.yml`). The real 432-line `custom.css` is
+overwritten by the corpus version.
+
+### What is NOT transplanted from corpus
+`theme.scss` (vestigial — referenced by nothing), the built `_site/`
+(regenerated), `.claude/settings.local.json` (machine-specific paths),
+corpus `_freeze/` is copied only as a local build convenience (gitignored).
+
+### Steps
+1. **Reference build.** Confirm the corpus source is clean at HEAD:
+   `taliesin check corpus/tech-blog` and `taliesin build corpus/tech-blog`
+   (outputs are gitignored; non-destructive). Capture its `_site/` URL set as the
+   parity reference.
+2. **Transplant** the files above into the real repo on `taliesin-migration`;
+   remove the Quarto residue. `taliesin check .` clean.
+3. **Build + URL parity.** `taliesin build .` clean; diff the migrated `_site/`
+   URL set against the reference. Confirm `/posts/<slug>/`, `/blog.html`, etc.
+4. **Browser verify** at mobile (~390×844), laptop landscape (~1440×900), laptop
+   portrait (~900×1440): index/blog/a-post/projects/cv/publications/404, plus
+   drive the interactive `{js}` controls on one converted post.
+5. **Rewire deploy (do NOT run):** `publish.sh` → `taliesin build .` instead of
+   `quarto render`; `generate_llms_full.py` glob `index.qmd` → `index.tmd`;
+   `.gitignore` de-Quarto'd; `.claude/skills/deploy` rewritten for Taliesin;
+   `README.md` stack updated.
+6. **Commit** the migration on the branch; stage for author-initiated cutover.
 
 ### Cutover (author-initiated, out of scope for the branch work)
 - Author reviews the finished branch, merges to `main`, runs `publish.sh`.
@@ -180,7 +221,8 @@ No in-repo corpus, so verification is:
 - chrome-devtools MCP screenshots per page at the three viewports.
 - URL-parity diff: enumerate current `_site/` URLs vs migrated `_site/` URLs.
 - Reference-rendering spot check against the current IEEE output.
-- Per-post: interactive figures behave (Phase 2) — drive controls in the browser.
+- Per-post: the already-converted interactive `{js}` figures behave — drive their
+  controls in the browser on at least one heavy post (a-star or fourier-transform).
 
 ## Out of scope
 
