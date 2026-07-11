@@ -1,6 +1,6 @@
 ---
 title: "supercollider-mcp"
-date: "2026-06-14"
+date: "2026-06-10"
 description: "An MCP server that gives an LLM a synthesis engine, a feedback loop, and ears."
 image: "thumbnail.png"
 categories:

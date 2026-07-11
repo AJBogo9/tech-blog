@@ -2,12 +2,12 @@
 title: "Andreas Bogossian"
 subtitle: "Machine Learning · Software"
 page-layout: article
-title-block-banner: false
-format:
-  html:
-    toc: false
-  typst:
-    output-file: "cv.pdf"
+toc: false
+listing:
+  - id: cv-projects
+    contents: projects
+    type: default
+    sort: "date desc"
 ---
 
 M.Sc. student at Aalto University specialising in machine learning and mathematics. I build systems at the intersection of math and production-quality software.
@@ -41,34 +41,14 @@ Software Engineering
 
 ## Publications
 
-**Knowledge Graph Enhanced Recommender Systems** \
-*Aalto University* · Sep 2025 · *Graded 5/5 (Excellent)* \
-Bachelor's thesis comparing traditional recommendation algorithms with knowledge
-graph-based approaches (graph neural networks and knowledge graph embeddings),
-analysing the strengths and weaknesses and optimal use cases for each method. \
-[Read thesis](https://aaltodoc.aalto.fi/server/api/core/bitstreams/d141fd14-5b38-475d-a149-429aa3f8812b/content)
+{{< include _includes/publications.md >}}
 
 ## Projects
 
-**Activity Challenge Telegram Bot** · Dec 2025–Jan 2026 \
-Production Telegram bot running guild-based fitness competitions across Aalto
-university societies. Features a point system based on the 2024 Physical Activity
-Compendium, multi-step conversation flows for activity logging, a React/Vite
-analytics dashboard, and full IaC deployment on Kubernetes (Talos OS) with
-Terraform and Flux CD. \
-[GitHub](https://github.com/AJBogo9/activity-challenge-bot)
+Each links to a write-up. The full set lives on the [Projects](projects.tmd) page.
 
-**Hierarchical Bayesian Analysis of Aviation Safety** \
-Investigated fatality rate patterns across aircraft manufacturers using hierarchical
-Bayesian models in R with brms. Partial pooling models revealed persistent
-manufacturer-level safety differences despite industry standardisation. \
-[GitHub](https://github.com/AJBogo9/bayesian-fatality-analysis)
-
-**iPhone Premium Analysis: Hardware vs. Price** \
-Regression study assessing whether Apple devices are priced above hardware-justified
-levels. Tested linear regression, decision trees, random forests and neural networks
-in Python. The report concludes that all Apple models are priced above predicted hardware value. \
-[GitHub](https://github.com/AJBogo9/phone-price-prediction)
+::: {#cv-projects}
+:::
 
 ## Experience
 
