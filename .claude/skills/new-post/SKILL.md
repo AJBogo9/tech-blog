@@ -24,10 +24,10 @@ this blog's house style.
    bibliography: references.bib
    ```
 
-   - **Reuse existing categories** for filter consistency. The current pool: `algorithms`, `graph theory`, `probabilistic ML`, `variational inference`, `signal processing`, `information theory`, `statistics`, `hypothesis testing`, `linear algebra`, `machine learning`. Only invent a new category if nothing fits. (A near-miss category is caught by `taliesin check`, but a plausible-looking new one is not.)
+   - **Reuse existing categories.** The current post pool is `Algorithms`, `Machine Learning`, `Mathematics`, `Statistics` (Title Case, deliberately broad). Only invent a new category if nothing fits. Categories feed the RSS feed and card badges; there is no category filter UI, and nothing lints a plausible-looking new one, so keep the pool tight by hand.
    - `image` is almost always `thumbnail.webp` (one post uses a named file). The thumbnail itself is created manually later, so do not generate it. Leave a note reminding the user to add it.
 
-4. **Create an empty `posts/<slug>/references.bib`** (BibTeX, IEEE style via `../ieee.csl`). Add entries as the post cites sources.
+4. **Create an empty `posts/<slug>/references.bib`** (BibTeX). IEEE is Taliesin's built-in style; there is no `csl:` key. Add entries as the post cites sources, and cite with `[@key]` (a bare `@key` renders as literal text).
 
 5. **Write the body** if the user gave enough to start; otherwise leave the stub the command wrote. Match the house style of existing posts:
    - Open with a concrete, motivating example or question, not a definition.
@@ -38,6 +38,6 @@ this blog's house style.
 ## House rules (do not violate)
 
 - **No em dashes or en dashes anywhere.** Use commas, colons, parentheses, or restructure.
-- `_metadata.yml` already applies the CC BY license, author, citation, and Google Scholar. Do not repeat those in the post.
+- There is no `_metadata.yml` cascade in Taliesin. `_site.yml` sets the site-wide `author:`; the CC BY licence, citation and Google Scholar keys the old Quarto `_metadata.yml` declared are not Taliesin features, so do not add them to the post.
 - Do not commit. Leave the new files as uncommitted changes for the user to review.
-- After scaffolding, remind the user to add `thumbnail.webp`, then run `taliesin preview .` to check rendering and `taliesin check .` to catch a broken reference before it ships.
+- After scaffolding, remind the user to add `thumbnail.webp`, then run `taliesin preview .` to check rendering and `taliesin build . --check-only --strict` (there is no `taliesin check`) to catch a broken reference before it ships.

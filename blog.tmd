@@ -3,10 +3,7 @@ title: "Blog"
 title-block-style: none
 listing:
   contents: posts
-  sort: "date desc"
-  type: grid
-  categories: true
-page-layout: full
+  type: list
 ---
 
 I write about concepts I'm working to understand, mostly machine learning, statistics, and algorithms.

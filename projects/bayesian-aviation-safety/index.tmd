@@ -3,13 +3,14 @@ title: "Hierarchical Bayesian Analysis of Aviation Safety"
 date: "2025-11-04"
 description: "A hierarchical Bayesian study of fatality rates across aircraft manufacturers, showing partial pooling beats complete pooling by ~1,944 ELPD."
 image: "thumbnail.png"
+image-alt: "A forest plot of fatality rates for about forty aircraft manufacturers, each a point with a credible interval, against a dashed red line marking the overall mean."
 categories:
   - R
-  - bayesian
-  - statistics
+  - Bayesian
+  - Statistics
 ---
 
-[GitHub](https://github.com/AJBogo9/bayesian-fatality-analysis){.btn .btn-outline-secondary .btn-sm}
+<a href="https://github.com/AJBogo9/bayesian-fatality-analysis" class="btn btn-outline-secondary btn-sm">GitHub</a>
 
 A study of fatality-rate patterns across aircraft manufacturers, fitting hierarchical and non-hierarchical Bayesian models in R with `brms` (Stan backend) to 1,766 aviation crashes spanning 40 manufacturers from 1976 to 2024.
 

@@ -1,3 +1,10 @@
+> **SUPERSEDED — historical record (completed 2026-08-21).** Kept for the design
+> rationale only; do not follow its steps. Several assumptions here turned out to be
+> wrong: there is no `taliesin check` subcommand (the gate is
+> `taliesin build . --check-only --strict`), `custom.css` and `_metadata.yml` were
+> deleted rather than carried over, and `_site.yml` keys `css:`/`head:`/`body-end:`/
+> `output:`/`toc:`/`image:` no longer exist. See CLAUDE.md for current behaviour.
+
 # Taliesin Migration (Transplant) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

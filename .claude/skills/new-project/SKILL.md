@@ -29,7 +29,7 @@ Create a new entry in the Projects listing. Projects differ from blog posts: the
 
    - Use today's date unless told otherwise. The listing sorts by `date desc`.
    - Categories here are tech/tooling tags (e.g. `python`, `MCP`, `music`), not the academic-topic tags used by blog posts.
-   - `projects/_metadata.yml` only sets the author; no bibliography by default. Add `bibliography: references.bib` only if the project page cites sources.
+   - There is no `projects/_metadata.yml` (Taliesin has no `_metadata.yml` cascade); `_site.yml` sets the site-wide `author:`. No bibliography by default: add `bibliography: references.bib` only if the project page cites sources.
    - The thumbnail (`thumbnail.png`) is created manually later — do not generate it; remind the user to add it.
 
 3. **Suggested structure** for the body (adapt to the project): the problem it solves, how it works, what was built, what the user took away. Concrete and first-person, matching the existing project page.

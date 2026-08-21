@@ -1,18 +1,12 @@
 ---
 title: "Andreas Bogossian"
 subtitle: "Machine Learning · Software"
-page-layout: article
 toc: false
-listing:
-  - id: cv-projects
-    contents: projects
-    type: default
-    sort: "date desc"
 ---
 
 M.Sc. student at Aalto University specialising in machine learning and mathematics. I build systems at the intersection of math and production-quality software.
 
-[GitHub](https://github.com/AJBogo9) · [LinkedIn](https://www.linkedin.com/in/bogo9/) · [andreasbogossian.com](https://andreasbogossian.com)
+[GitHub](https://github.com/AJBogo9) · [LinkedIn](https://www.linkedin.com/in/andreas-bogossian/) · [andreasbogossian.com](https://andreasbogossian.com)
 
 ## Education
 
@@ -37,18 +31,11 @@ Software Engineering
 | ML / Data | scikit-learn, PyTorch, pandas, NumPy, brms, ggplot2 |
 | Web & Backend | React, Next.js, Bun, PostgreSQL |
 | Infrastructure | Docker, Kubernetes, Terraform, Google Cloud, Flux CD |
-| Tools | Git, Ubuntu, Quarto |
+| Tools | Git, Ubuntu |
 
 ## Publications
 
 {{< include _includes/publications.md >}}
-
-## Projects
-
-Each links to a write-up. The full set lives on the [Projects](projects.tmd) page.
-
-::: {#cv-projects}
-:::
 
 ## Experience
 
@@ -66,14 +53,14 @@ Jun 2024–Aug 2024 · Finland
 
 ## Honors & Awards
 
-**Accenture Software Quality Award — Finalist** \
+**Accenture Software Quality Award, Finalist** \
 *Accenture* · May 2025 \
 Top 3 of 19 teams at Aalto University, recognized for software implementation quality.
 
 ## Volunteering
 
 **Board Member** · Aalto Triathlon Club · Sep 2024–Present \
-**Sports Committee Board Member** · Tietokilta · Jan 2025–Present
+**Board Member** · Tietokilta Sports Committee  · Jan 2025–Present
 
 ## Languages
 

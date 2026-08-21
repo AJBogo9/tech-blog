@@ -6,8 +6,8 @@ image: "astar.webp"
 image-alt: "Animated visualisation of the A* pathfinding algorithm navigating a grid"
 bibliography: references.bib
 categories:
-  - algorithms
-  - graph theory
+  - Algorithms
+  - Mathematics
 ---
 
 How does Google Maps find the *best* route in under a second, across millions of roads? Stripping this question into its basic elements, the question becomes, how to find the shortest path in a graph from the start position to the end position. If one was to approach this problem by trying every single path, the number of paths grow as $\mathcal{O}(b^d)$, where $b$ is the branching factor (average number of branches from each node) and $d$ is the depth. The brute force method scales extremely poorly so another solution must be used.
@@ -29,7 +29,7 @@ where
 
 After A\* computes the score of each frontier node, the algorithm will always expand the node with the lowest $f(n)$. Minimizing both the cost of getting to the current node $g(n)$ and the estimate of arriving at the goal $h(n)$ makes the algorithm seek the shortest path from start point to the end point.
 
-For a more thorough study of A\*, please refer to @russell2022artificial.
+For a more thorough study of A\*, please refer to [@russell2022artificial].
 
 ## Implementation
 
@@ -157,7 +157,7 @@ Start with Dijkstra and then swap to A\* with the Manhattan heuristic. Also, tes
 
 // ── controls ─────────────────────────────────────────────────────────────────
 const wrap = document.createElement("label");
-wrap.className = "qmd-input";
+wrap.className = "tali-input";
 wrap.append("Heuristic ");
 const sel = document.createElement("select");
 for (const opt of ["zero (Dijkstra)", "manhattan"]) {
@@ -175,7 +175,7 @@ return wrap;
 //| echo: false
 
 const wrap = document.createElement("label");
-wrap.className = "qmd-input";
+wrap.className = "tali-input";
 wrap.append("Weight (w) ");
 const input = document.createElement("input");
 input.type = "range"; input.min = "1"; input.max = "5"; input.step = "0.1"; input.value = "1";
@@ -188,7 +188,7 @@ return wrap;
 //| echo: false
 
 const wrap = document.createElement("label");
-wrap.className = "qmd-input";
+wrap.className = "tali-input";
 wrap.append("Speed (ms/step) ");
 const input = document.createElement("input");
 input.type = "range"; input.min = "10"; input.max = "500"; input.step = "10"; input.value = "80";
@@ -200,7 +200,7 @@ return wrap;
 //| echo: false
 
 // ── A* demo (built once; mounted here; exposes s/draw/resetSearch for the
-//    slider watcher cell below via qmd.set) ────────────────────────────────────
+//    slider watcher cell below via tali.set) ────────────────────────────────────
 
 // ── constants ────────────────────────────────────────────────────────────────
 const COLS = 19;
@@ -357,7 +357,7 @@ const C = {
     path:      "#fbbf24",  // amber-400
     current:   "#f97316",  // orange-500
     text:      "#ffffff",  // white — for S/E labels on coloured cells
-    scoreText: "#1e293b",  // slate-800 — dark, readable on all light cell colours
+    scoreText: "#22201A",  // the ink — AA (4.5:1+) on every scored cell colour
   };
 
   // ── SVG setup ───────────────────────────────────────────────────────────────
@@ -392,7 +392,7 @@ const C = {
   const tooltip = Object.assign(document.createElement("div"), {});
   tooltip.style.cssText = `
   position: fixed;
-  background: #1e293b;
+  background: #3A5578;
   color: #f8fafc;
   border: 1px solid #475569;
   border-radius: 4px;
@@ -645,7 +645,7 @@ root.append(svg.node(), btnRow, iterDisplay);
 draw();
 
 // expose to the slider-watcher cell below (set synchronously, before that cell runs)
-qmd.set("astar", { s, draw, resetSearch });
+tali.set("astar", { s, draw, resetSearch });
 
 return root;
 ```
@@ -655,14 +655,14 @@ return root;
 //| echo: false
 
 // ── watcher: slider changes re-run only this cell; the app is never rebuilt ────
-const astar = qmd.get("astar");
+const astar = tali.get("astar");
 if (!astar) return;
 const { s, draw, resetSearch } = astar;
 
 // fall back to current state when an input isn't registered yet (initial load)
-const h = qmd.value("heuristic"); if (h !== undefined) s.heuristic = h;
-const w = qmd.value("weight");    if (w !== undefined) s.weight    = w;
-const sp = qmd.value("speed");    if (sp !== undefined) s.speed    = sp;
+const h = tali.value("heuristic"); if (h !== undefined) s.heuristic = h;
+const w = tali.value("weight");    if (w !== undefined) s.weight    = w;
+const sp = tali.value("speed");    if (sp !== undefined) s.speed    = sp;
 
 if (!s.animating) {
   resetSearch(s);

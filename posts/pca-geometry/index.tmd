@@ -5,8 +5,8 @@ date: 2026-05-08
 image: "thumbnail.webp"
 image-alt: "3D scatter plot of NBA player measurements with three principal component vectors, PC1 capturing 80% of variance"
 categories:
-  - linear algebra
-  - machine learning
+  - Machine Learning
+  - Mathematics
 bibliography: references.bib
 ---
 
@@ -24,18 +24,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
+# Only what the page theme does NOT own. The inline render recolours every
+# figure's text, spines, ticks and grid to the reader's foreground and emits the
+# figure twice (light + dark), so a colour set here is overridden anyway -- it
+# only makes the source claim a control it does not have. Data colours ARE ours:
+# those survive the recolour, so they must read on both backgrounds by choice.
 plt.rcParams.update({
-    'figure.facecolor': '#111827',
-    'axes.facecolor':   '#111827',
-    'savefig.facecolor':'#111827',
-    'text.color':       'white',
-    'axes.labelcolor':  'white',
-    'xtick.color':      'white',
-    'ytick.color':      'white',
-    'axes.edgecolor':   '#374151',
-    'grid.color':       '#374151',
-    'axes.grid':        True,
-    'grid.linewidth':   0.5,
+    'axes.grid':      True,
+    'grid.linewidth': 0.5,
 })
 ```
 
@@ -73,11 +69,15 @@ X_raw = Z * stds + means
 
 fig = plt.figure(figsize=(8, 6), tight_layout=True)
 ax = fig.add_subplot(111, projection="3d")
-ax.scatter(X_raw[:, 0], X_raw[:, 1], X_raw[:, 2], alpha=0.55, s=14, color="#aaaacc")
+ax.scatter(X_raw[:, 0], X_raw[:, 1], X_raw[:, 2], alpha=0.8, s=14, color="#7a7a9e")
+# The scene sits ON the page instead of painting a slab behind itself. A filled
+# pane is a baked background and a 3-D pane is not a Text, a spine or ax.patch,
+# so the dual-theme recolour never reached it: on a light page this rendered as a
+# dark rectangle with the cloud all but invisible inside it. Item 72's ruling,
+# one subsystem over.
 for pane in [ax.xaxis.pane, ax.yaxis.pane, ax.zaxis.pane]:
-    pane.fill = True
-    pane.set_facecolor("#1c2333")
-    pane.set_edgecolor("#374151")
+    pane.fill = False
+    pane.set_edgecolor("#8a8a9a")
 ax.set_xlabel("Height (cm)", labelpad=8)
 ax.set_ylabel("Wingspan (cm)", labelpad=8)
 fig.text(
@@ -87,7 +87,6 @@ fig.text(
     rotation=90,
     va="center",
     ha="right",
-    color="white",
     fontsize=9,
 )
 ax.set_title("Raw player measurements")
@@ -120,19 +119,22 @@ define(std_pts = X.tolist())
 //| label: fig-std-3d
 //| fig-cap: "The same 220 players after standardisation. Each axis now has mean 0 and variance 1. The elongated shape is preserved. Drag to rotate, scroll to zoom."
 
-const std_pts = qmd.defines.std_pts; if (!std_pts) return;
-const makeScene3D = qmd.get("makeScene3D");
+const std_pts = tali.defines.std_pts; if (!std_pts) return;
+const makeScene3D = tali.get("makeScene3D");
 
+// The canvas is transparent, so every colour here has to read on BOTH page backgrounds
+// (white and #16181d). These sit near the midpoint of that range: ~4:1 either way, where
+// the old dark-tuned pastels dropped to ~1.5:1 the moment the slab behind them went away.
 return makeScene3D((scene, THREE, { O, spriteLabel }) => {
   const flat = new Float32Array(std_pts.flatMap(p => p));
   const ptGeo = new THREE.BufferGeometry();
   ptGeo.setAttribute("position", new THREE.Float32BufferAttribute(flat, 3));
   scene.add(new THREE.Points(ptGeo,
-    new THREE.PointsMaterial({ color: 0xaaaacc, size: 0.07, transparent: true, opacity: 0.65 })
+    new THREE.PointsMaterial({ color: 0x7a7a9e, size: 0.07, transparent: true, opacity: 0.8 })
   ));
 
   const axLen    = 3.8;
-  const axColors = [0xf0956a, 0x6ddc8b, 0x7eb8f7];
+  const axColors = [0xc2622c, 0x2d8b4e, 0x3f7fbf];
   const axNames  = ["Height", "Wingspan", "S. Reach"];
   [[1,0,0],[0,1,0],[0,0,1]].forEach(([x,y,z], i) => {
     const hex = "#" + axColors[i].toString(16).padStart(6, "0");
@@ -253,9 +255,9 @@ define(
 //| label: fig-3d-pca
 //| fig-cap: "Three-dimensional point cloud of standardised player measurements. Arrows show the three principal components scaled by their standard deviation √λ. Colour: PC1 (orange) explains the most variance, PC2 (green) the next, PC3 (blue) the least. The translucent plane is the PC1–PC2 subspace. Drag to rotate, scroll to zoom."
 
-const pts = qmd.defines.pts; if (!pts) return;
-const { pcs, evr, eigs } = qmd.defines;
-const makeScene3D = qmd.get("makeScene3D");
+const pts = tali.defines.pts; if (!pts) return;
+const { pcs, evr, eigs } = tali.defines;
+const makeScene3D = tali.get("makeScene3D");
 
 return makeScene3D((scene, THREE, { O, spriteLabel }) => {
   // ── Point cloud ─────────────────────────────────────────────────────────
@@ -263,13 +265,13 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
   const ptGeo = new THREE.BufferGeometry();
   ptGeo.setAttribute("position", new THREE.Float32BufferAttribute(flat, 3));
   scene.add(new THREE.Points(ptGeo,
-    new THREE.PointsMaterial({ color: 0xaaaacc, size: 0.07, transparent: true, opacity: 0.65 })
+    new THREE.PointsMaterial({ color: 0x7a7a9e, size: 0.07, transparent: true, opacity: 0.8 })
   ));
 
   // ── PC1–PC2 plane ────────────────────────────────────────────────────────
   const planeGeo = new THREE.PlaneGeometry(7, 7, 14, 14);
   const planeMesh = new THREE.Mesh(planeGeo, new THREE.MeshBasicMaterial({
-    color: 0x7eb8f7, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false
+    color: 0x3f7fbf, transparent: true, opacity: 0.10, side: THREE.DoubleSide, depthWrite: false
   }));
   planeMesh.quaternion.setFromUnitVectors(
     new THREE.Vector3(0, 0, 1),
@@ -278,12 +280,12 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
   scene.add(planeMesh);
   planeMesh.add(new THREE.LineSegments(
     new THREE.WireframeGeometry(planeGeo),
-    new THREE.LineBasicMaterial({ color: 0x7eb8f7, transparent: true, opacity: 0.12, depthWrite: false })
+    new THREE.LineBasicMaterial({ color: 0x3f7fbf, transparent: true, opacity: 0.22, depthWrite: false })
   ));
 
   // ── PC arrows ────────────────────────────────────────────────────────────
-  const pcColors = [0xf0956a, 0x6ddc8b, 0x7eb8f7];
-  const pcCssCol = ["#f0956a", "#6ddc8b", "#7eb8f7"];
+  const pcColors = [0xc2622c, 0x2d8b4e, 0x3f7fbf];
+  const pcCssCol = ["#c2622c", "#2d8b4e", "#3f7fbf"];
   pcs.forEach((pc, i) => {
     const len  = Math.sqrt(eigs[i]) * 2.2;
     const hLen = Math.min(0.22, len * 0.14);
@@ -296,12 +298,15 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
   });
 
   // ── Feature axes (faint) ─────────────────────────────────────────────────
+  // A mid grey stays quiet on both backgrounds; the old near-black navy was faint on the
+  // dark slab but turned into the loudest thing in the scene once the page showed through.
   const axLen = 3.8;
   [[1,0,0],[0,1,0],[0,0,1]].forEach(dir => {
-    scene.add(new THREE.ArrowHelper(new THREE.Vector3(...dir), O, axLen, 0x3a3a55, 0.12, 0.07));
+    scene.add(new THREE.ArrowHelper(new THREE.Vector3(...dir), O, axLen, 0x8a8a9a, 0.12, 0.07));
   });
+  // No colour: the label follows the page's text colour, and repaints on a theme toggle.
   [["Height", [axLen+0.3,0,0]], ["Wingspan", [0,axLen+0.3,0]], ["S. Reach", [0,0,axLen+0.3]]].forEach(([t,p]) => {
-    const lbl = spriteLabel(t, "#555577", 1.5);
+    const lbl = spriteLabel(t, null, 1.5);
     lbl.position.set(...p);
     scene.add(lbl);
   });
@@ -323,7 +328,12 @@ ax2 = ax1.twinx()
 bars = ax1.bar(
     range(1, 4),
     explained_var * 100,
-    color=["#f0956a", "#6ddc8b", "#7eb8f7"],
+    # The SAME three hues the 3-D scenes give the PC arrows (`pcCssCol` above), so
+    # the two neighbouring figures name one colour per component instead of two
+    # shades of it. Data colours are the one thing the dual-theme inline render
+    # never recolours, so these are picked to read on both page backgrounds --
+    # which is exactly what that palette was retuned for.
+    color=["#c2622c", "#2d8b4e", "#3f7fbf"],
     alpha=0.85,
     width=0.5,
 )
@@ -345,8 +355,6 @@ ax2.plot(
 )
 ax2.set_ylabel("Cumulative variance (%)")
 ax2.set_ylim(0, 105)
-ax2.tick_params(colors="white")
-ax2.spines["right"].set_color("#374151")
 
 for i, v in enumerate(explained_var):
     ax1.text(
@@ -355,7 +363,6 @@ for i, v in enumerate(explained_var):
         f"{v * 100:.1f}%",
         ha="center",
         va="bottom",
-        color="white",
         fontsize=11,
     )
 
@@ -382,7 +389,7 @@ $$
 //| echo: false
 const options = [1, 2];
 const wrap = document.createElement("label");
-wrap.className = "qmd-input";
+wrap.className = "tali-input";
 wrap.append("Principal components to keep (k) ");
 const radios = options.map((v, i) => {
   const opt = document.createElement("label");
@@ -397,7 +404,7 @@ const radios = options.map((v, i) => {
   return input;
 });
 // Expose a numeric `.value` so the runtime registers `wrap` as the control and
-// `qmd.value("k_dim")` returns the checked radio's number; bubble an `input`
+// `tali.value("k_dim")` returns the checked radio's number; bubble an `input`
 // event from the wrapper when any radio changes so sinks re-run.
 Object.defineProperty(wrap, "value", {
   get() {
@@ -416,10 +423,10 @@ return wrap;
 //| input: k_dim
 //| label: fig-recon-3d
 //| fig-cap: "Dimensionality reduction round-trip. Faint blue: original standardised players. Orange: reconstructed from k PCs. Grey lines: projection error."
-const pts = qmd.defines.pts; if (!pts) return;
-const { pcs, eigs } = qmd.defines;
-const makeScene3D = qmd.get("makeScene3D");
-const k_dim = qmd.value("k_dim");
+const pts = tali.defines.pts; if (!pts) return;
+const { pcs, eigs } = tali.defines;
+const makeScene3D = tali.get("makeScene3D");
+const k_dim = tali.value("k_dim");
 
 const dot = (a, b) => a.reduce((s, ai, i) => s + ai * b[i], 0);
 
@@ -438,7 +445,7 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
     const ptGeo = new THREE.BufferGeometry();
     ptGeo.setAttribute("position", new THREE.Float32BufferAttribute(flat, 3));
     scene.add(new THREE.Points(ptGeo,
-      new THREE.PointsMaterial({ color: 0xaaaacc, size: 0.07, transparent: true, opacity: 0.25 })
+      new THREE.PointsMaterial({ color: 0x7a7a9e, size: 0.07, transparent: true, opacity: 0.35 })
     ));
 
     // Reconstructed points
@@ -446,7 +453,7 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
     const rGeo = new THREE.BufferGeometry();
     rGeo.setAttribute("position", new THREE.Float32BufferAttribute(rFlat, 3));
     scene.add(new THREE.Points(rGeo,
-      new THREE.PointsMaterial({ color: 0xf0956a, size: 0.1, transparent: true, opacity: 0.85 })
+      new THREE.PointsMaterial({ color: 0xc2622c, size: 0.1, transparent: true, opacity: 0.85 })
     ));
 
     // Projection lines (original → reconstructed)
@@ -455,12 +462,12 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(linePos), 3));
     scene.add(new THREE.LineSegments(lineGeo,
-      new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.2 })
+      new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.4 })
     ));
 
     // PC arrows (kept PCs bright, discarded faint)
-    const pcColors = [0xf0956a, 0x6ddc8b, 0x7eb8f7];
-    const pcCssCol = ["#f0956a", "#6ddc8b", "#7eb8f7"];
+    const pcColors = [0xc2622c, 0x2d8b4e, 0x3f7fbf];
+    const pcCssCol = ["#c2622c", "#2d8b4e", "#3f7fbf"];
     pcs.forEach((pc, i) => {
       const len  = Math.sqrt(eigs[i]) * 2.2;
       const hLen = Math.min(0.22, len * 0.14);
@@ -480,10 +487,10 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
     // Feature axes (very faint)
     const axLen = 3.8;
     [[1,0,0],[0,1,0],[0,0,1]].forEach(dir => {
-      scene.add(new THREE.ArrowHelper(new THREE.Vector3(...dir), O, axLen, 0x3a3a55, 0.12, 0.07));
+      scene.add(new THREE.ArrowHelper(new THREE.Vector3(...dir), O, axLen, 0x8a8a9a, 0.12, 0.07));
     });
     [["Height",[axLen+0.3,0,0]],["Wingspan",[0,axLen+0.3,0]],["S. Reach",[0,0,axLen+0.3]]].forEach(([t,p]) => {
-      const lbl = spriteLabel(t, "#555577", 1.5);
+      const lbl = spriteLabel(t, null, 1.5);
       lbl.position.set(...p);
       scene.add(lbl);
     });

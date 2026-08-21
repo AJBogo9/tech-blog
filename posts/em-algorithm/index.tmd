@@ -5,9 +5,7 @@ date: 2026-04-14
 image: "thumbnail.webp"
 image-alt: "Visualisation of the EM-algorithm fitting two Gaussian distributions to unlabelled data"
 categories:
-  - probabilistic ML
-  - algorithms
-  - variational inference
+  - Machine Learning
 bibliography: references.bib
 ---
 
@@ -277,9 +275,9 @@ The slider steps through the iterations of the EM algorithm. The top plot shows 
 //| echo: false
 // Slider over EM iterations; its range comes from the Python `history` length
 // (the cell re-runs when that define lands). Returns a labeled range input.
-const n = (qmd.defines.history || []).length || 1;
+const n = (tali.defines.history || []).length || 1;
 const wrap = document.createElement("label");
-wrap.className = "qmd-input";
+wrap.className = "tali-input";
 wrap.append("EM iteration ");
 const input = document.createElement("input");
 input.type = "range"; input.min = "1"; input.max = String(n); input.step = "1"; input.value = "1";
@@ -291,7 +289,7 @@ return wrap;
 //| viewof: showTrue
 //| echo: false
 const wrap = document.createElement("label");
-wrap.className = "qmd-input";
+wrap.className = "tali-input";
 const input = document.createElement("input");
 input.type = "checkbox";
 wrap.append(input, " Reveal true labels");
@@ -306,10 +304,10 @@ return wrap;
 
 const { gaussPDF, makeCurve, makeResp, linspace } = await import("./em-helpers.js");
 
-const history = qmd.defines.history;
+const history = tali.defines.history;
 if (!history) return; // the Python define hasn't landed yet (cold preview)
-const { X_data, true_labels, true_mu } = qmd.defines;
-const iter = qmd.value("iter"), showTrue = qmd.value("showTrue");
+const { X_data, true_labels, true_mu } = tali.defines;
+const iter = tali.value("iter"), showTrue = tali.value("showTrue");
 
 // Snapshot for the current slider value
 const snap = history[iter - 1];
@@ -374,7 +372,7 @@ const fig = Plot.plot({
 // Knock a page-coloured halo out from behind the glyphs: paint-order puts the stroke
 // down first, so `fill` (the colour encoding) is untouched. Plot writes `stroke` as a
 // presentation attribute, where var() cannot resolve, hence the inline style, which
-// also keeps the halo correct across a live light/dark/sepia theme flip.
+// also keeps the halo correct across a live light/dark theme flip.
 for (const t of fig.querySelectorAll('g[aria-label="text"] text')) {
   t.style.paintOrder = "stroke";
   t.style.stroke = "var(--tali-bg)";
@@ -391,9 +389,9 @@ return fig;
 //| fig-cap: "Log-likelihood across iterations. It can only ever increase."
 
 const { makeLLData } = await import("./em-helpers.js");
-const history = qmd.defines.history;
+const history = tali.defines.history;
 if (!history) return;
-const iter = qmd.value("iter");
+const iter = tali.value("iter");
 
 const ll_data = makeLLData(history);
 

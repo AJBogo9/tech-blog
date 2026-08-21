@@ -3,10 +3,7 @@ title: "Projects"
 title-block-style: none
 listing:
   contents: projects
-  sort: "date desc"
   type: grid
-  categories: true
-page-layout: full
 ---
 
 Things I built to learn something. Each project page documents what it does, how it works, and what I took away from it.
