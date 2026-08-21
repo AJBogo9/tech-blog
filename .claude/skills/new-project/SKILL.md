@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Scaffold a new project page under projects/<slug>/ with correct Taliesin frontmatter and this blog's project-page conventions. Use when the user wants to add a project, document something they built, or create a new entry under projects/.
+description: Scaffold a new project page under site/projects/<slug>/ with correct Taliesin frontmatter and this blog's project-page conventions. Use when the user wants to add a project, document something they built, or create a new entry under projects/.
 ---
 
 # Scaffold a new project page
@@ -9,9 +9,9 @@ Create a new entry in the Projects listing. Projects differ from blog posts: the
 
 ## Steps
 
-1. **Determine the slug.** Short kebab-case, matching the project/repo name (e.g. `supercollider-mcp`). The page lives at `projects/<slug>/index.tmd`.
+1. **Determine the slug.** Short kebab-case, matching the project/repo name (e.g. `supercollider-mcp`). The page lives at `site/projects/<slug>/index.tmd` (rendered sources all live under `site/`).
 
-2. **Create `projects/<slug>/index.tmd`** with this frontmatter:
+2. **Create `site/projects/<slug>/index.tmd`** with this frontmatter:
 
    ```
    ---
@@ -29,7 +29,7 @@ Create a new entry in the Projects listing. Projects differ from blog posts: the
 
    - Use today's date unless told otherwise. The listing sorts by `date desc`.
    - Categories here are tech/tooling tags (e.g. `python`, `MCP`, `music`), not the academic-topic tags used by blog posts.
-   - There is no `projects/_metadata.yml` (Taliesin has no `_metadata.yml` cascade); `_site.yml` sets the site-wide `author:`. No bibliography by default: add `bibliography: references.bib` only if the project page cites sources.
+   - There is no `site/projects/_metadata.yml` (Taliesin has no `_metadata.yml` cascade); `site/_site.yml` sets the site-wide `author:`. No bibliography by default: add `bibliography: references.bib` only if the project page cites sources.
    - The thumbnail (`thumbnail.png`) is created manually later — do not generate it; remind the user to add it.
 
 3. **Suggested structure** for the body (adapt to the project): the problem it solves, how it works, what was built, what the user took away. Concrete and first-person, matching the existing project page.
@@ -38,4 +38,4 @@ Create a new entry in the Projects listing. Projects differ from blog posts: the
 
 - **No em dashes or en dashes anywhere.**
 - Do not commit. Leave the new files as uncommitted changes for review.
-- After scaffolding, remind the user to add `thumbnail.png` and run `taliesin preview .`.
+- After scaffolding, remind the user to add `thumbnail.png` and run `taliesin preview site`.

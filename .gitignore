@@ -1,7 +1,3 @@
-# Generated at publish time
-llms.txt
-llms-full.txt
-
 # Taliesin build (this is now a Taliesin, not a Quarto, build)
 _site/
 *_cache/

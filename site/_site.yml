@@ -4,6 +4,7 @@ title: Andreas Bogossian
 author: Andreas Bogossian
 description: Machine learning and statistics, worked out from first principles
 url: https://andreasbogossian.com
+python: ../.venv/bin/python   # repo-root venv; site/ is the project dir, so pin it
 favicon: bell-curve.svg
 logo: logo.svg          # brand image in the navbar (the `title:` above is its alt text)
 nav:

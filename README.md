@@ -12,9 +12,15 @@ Personal tech blog at [andreasbogossian.com](https://andreasbogossian.com). Post
 # Install Python deps
 python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 
-# Preview with live reload
-taliesin preview .
+# Preview with live reload (the site sources live in site/)
+taliesin preview site
 
-# Full build
-taliesin build .
+# Full build, output lands in site/_site/
+taliesin build site
 ```
+
+## Layout
+
+`site/` holds everything that gets rendered and published. The repo root holds only
+project scaffolding: the deploy script, Terraform under `_infra/`, docs and agent
+skills. Nothing outside `site/` can reach the published output.

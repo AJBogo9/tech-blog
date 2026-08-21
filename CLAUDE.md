@@ -4,40 +4,52 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+Every Taliesin command takes `site` as its project argument. The rendered sources
+live in `site/`, not at the repo root.
+
 **Preview the site locally (live reload):**
 ```bash
-taliesin preview .
+taliesin preview site
 ```
 
-**Build the site to `_site/`:**
+**Build the site to `site/_site/`:**
 ```bash
-taliesin build .
+taliesin build site
 ```
 
 **Pre-publish gate (lints, writes nothing, exits non-zero on any located warning):**
 ```bash
-taliesin build . --check-only --strict
+taliesin build site --check-only --strict
 ```
-There is no `taliesin check` subcommand. `taliesin doctor .` audits the environment
+There is no `taliesin check` subcommand. `taliesin doctor site` audits the environment
 (interpreter, `ipykernel`, `_site.yml`) but is not a substitute for the gate above.
 
 **Preview a single post:**
 ```bash
-taliesin preview posts/<post-slug>/index.tmd
+taliesin preview site/posts/<post-slug>/index.tmd
 ```
 
-Python dependencies are managed via a `.venv` and listed in `requirements.txt`.
-`{python}` cells execute against a warm Jupyter kernel; point Taliesin at the venv
-with `TALIESIN_PYTHON=/path/to/.venv/bin/python` (the venv must have `ipykernel`).
+Python dependencies are managed via a `.venv` at the repo root and listed in
+`requirements.txt`. `{python}` cells execute against a warm Jupyter kernel. Because the
+project dir (`site/`) now sits *below* the venv, `site/_site.yml` pins the interpreter
+with `python: ../.venv/bin/python`. That pin outranks `TALIESIN_PYTHON` in Taliesin's
+resolution order, so do not remove it; confirm with `taliesin doctor site` (the venv
+must have `ipykernel`).
 
 ## Architecture
 
 This is a [Taliesin](https://github.com/AJBogo9/taliesin) static website (`.tmd`
 sources rendered to HTML) hosted on Cloudflare Pages (CNAME → `andreasbogossian.com`).
-The built output goes to `_site/`, which is what gets deployed. Infra is managed with
-Terraform in `_infra/` (underscore-prefixed so `taliesin build` never mirrors it
-into the deployed `_site/`). The blog was migrated from Quarto to Taliesin (see
-`docs/superpowers/specs/` for the migration design).
+**Everything Taliesin renders lives under `site/`.** The repo root holds only project
+scaffolding: `publish.sh`, `requirements.txt`, `_infra/`, `docs/`, `.claude/`, the
+README, the LICENSE and this file. That split is a security boundary, not just tidiness:
+`taliesin build site` can only ever see what is inside `site/`, so deploy internals and
+Terraform secrets are structurally unable to reach the published output. Do not move
+rendered sources back to the root, and do not put deploy or infra files inside `site/`.
+
+The built output goes to `site/_site/`, which is what gets deployed. Infra is managed
+with Terraform in `_infra/` at the repo root. The blog was migrated from Quarto to
+Taliesin (see `docs/superpowers/specs/` for the migration design).
 
 **Key config files:**
 - `_site.yml` — site-wide config. Flat native schema (HTML-only; no
@@ -57,7 +69,7 @@ defaults and a page's own front matter overrides it.
 `blog.xml`/`projects.xml` and `search-index.js`. Do not commit hand-written copies.
 
 **Post format:**
-Each post lives in `posts/<slug>/index.tmd`. Frontmatter fields that matter:
+Each post lives in `site/posts/<slug>/index.tmd`. Frontmatter fields that matter:
 - `image:` + `image-alt:` — the listing thumbnail (`image-alt:` is required, or the
   gate warns; use `image-alt: ""` only if the image is purely decorative)
 - `bibliography:` — a `.bib` file in the same directory, rendered IEEE-style. There
@@ -91,19 +103,23 @@ screenshots saved into the post directory.
 
 ## Deploy
 
-Deployment is scripted in `publish.sh` (regenerate `llms-full.txt`, `taliesin build .`,
-then force-push `_site/` to the `cf-pages` branch that Cloudflare Pages serves). See
-the `deploy` skill in `.claude/skills/deploy/`. Deploying is outward-facing — confirm
-intent first.
+Deployment is scripted in `publish.sh` (`taliesin build site`, then force-push
+`site/_site/` to the `cf-pages` branch that Cloudflare Pages serves). See the `deploy`
+skill in `.claude/skills/deploy/`. Deploying is outward-facing: confirm intent first.
 
-`taliesin build` mirrors every non-dot/underscore file into `_site/`, so `publish.sh`
-strips `publish.sh`, `generate_llms_full.py` and `requirements.txt` from the output
-before pushing. Secrets live under `_infra/` (underscore = never mirrored).
+`taliesin build` mirrors every non-dot/underscore file it can see into the output, but
+it only ever sees `site/`. The `rm -rf` of `publish.sh`, `requirements.txt` and `_infra`
+inside `publish.sh` is therefore belt-and-suspenders now, not the actual guarantee.
+
+There is no `llms.txt` / `llms-full.txt`. The generator was deleted on 2026-08-21:
+llms.txt is an unadopted convention, Taliesin has no native support for it, and the
+script duplicated parsing the build already does. Do not re-add it.
 
 ## Gotchas
 
-- `taliesin build` refuses to write into an `_site/` holding files it did not produce
-  ("not a Taliesin build directory"). After a tooling change, `rm -rf _site` first.
+- `taliesin build` refuses to write into a `site/_site/` holding files it did not
+  produce ("not a Taliesin build directory"). After a tooling change, `rm -rf
+  site/_site` first.
 - Editing a post and not seeing the change: `taliesin preview` hot-reloads, but a plain
   `taliesin build` reuses frozen cell output — a code cell only re-runs when its (or an
   upstream cell's) content changes.
