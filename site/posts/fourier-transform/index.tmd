@@ -426,5 +426,3 @@ drawSpectrumPanel(svg, { specK, wind_f, mag: mag_display, comp_freqs, compColors
 
 return svg.node();
 ```
-
-An instrument plays three notes at once, but you hear a single chord. Your brain solves that problem instantly, without effort. Now you know how a computer does it too.
