@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  mmmmmmm        ""#      "                    "
+     #     mmm     #    mmm     mmm    mmm   mmm    m mm
+     #    "   #    #      #    #"  #  #   "    #    #"  #
+     #    m"""#    #      #    #""""   """m    #    #   #
+     #    "mm"#    "mm  mm#mm  "#mm"  "mmm"  mm#mm  #   #
+
+  Taliesin v1.1.0  -  https://taliesin.sh
+  Rendered from .tmd source, not a batch compiler: a warm, source-mapped,
+  block-modeled live HTML process.  https://github.com/AJBogo9/taliesin
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="referrer" content="no-referrer" />
+<meta name="generator" content="Taliesin" />
+<title>Publications · Andreas Bogossian</title>
+<link rel="icon" type="image/svg+xml" href="bell-curve.svg" />
+<script>
+(function(){
+  // The reader's DEVICE decides the mode. DEVICE is a function (not a constant) so it
+  // re-reads the OS on every call — the dev toggle and the OS-change listener both see
+  // the live value. Falls back to light when the OS expresses no dark preference.
+  function DEVICE(){
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return "dark";
+    } catch(e) {}
+    return "light";
+  }
+  // The one stored override, written ONLY by the preview dev menu's quick toggle
+  // (web-client/client.js), which never ships in a build — so on a built page this is
+  // always absent and the device always wins. Absent or unrecognized reads as "auto",
+  // which is also why withdrawing a mode needs no migration step.
+  function choice(){
+    var v = null;
+    try { v = localStorage.getItem("tali-theme"); } catch(e) {}
+    return (v === "light" || v === "dark") ? v : "auto";
+  }
+  // The MODE that actually paints: never "auto".
+  function pref(){
+    var c = choice();
+    return c === "auto" ? DEVICE() : c;
+  }
+  var BG = { dark: '#14130f', light: '#ffffff' };
+  function apply(){
+    var mode = pref();
+    var el = document.documentElement;
+    el.setAttribute("data-theme", mode);
+    // Set color-scheme + background inline, right here in the pre-paint head
+    // script, so the browser's canvas is the theme colour from the very first
+    // frame. Without this the canvas stays white until the inline <style> parses,
+    // which shows as a white flash on every (cross-page) navigation in dark mode.
+    el.style.colorScheme = mode === "dark" ? "dark" : "light";
+    el.style.background = BG[mode] || '#ffffff';
+    // Keep the mobile browser-chrome tint (`<meta name="theme-color">`) in lockstep with the
+    // canvas, so a dark page no longer sits under a white status bar. Reuse the same BG map
+    // (single source, no duplicated hex) and follow the in-page toggle, not just the OS. The
+    // meta is created here rather than emitted statically so its value is never a stale literal.
+    try {
+      var head = document.head || document.getElementsByTagName("head")[0];
+      var mc = document.querySelector('meta[name="theme-color"]');
+      if (!mc && head) { mc = document.createElement("meta"); mc.setAttribute("name", "theme-color"); head.appendChild(mc); }
+      if (mc) mc.setAttribute("content", BG[mode] || '#ffffff');
+    } catch(e) {}
+    // Let theme-dependent renderers (e.g. mermaid, whose SVG colours are baked at
+    // render time) re-render when the mode changes. The detail carried a `choice` field
+    // until 2026-08-13, for the Settings picker's pressed state alone; no listener reads
+    // anything but `mode`.
+    try { window.dispatchEvent(new CustomEvent("tali:themechange", { detail: { mode: mode } })); } catch(e) {}
+  }
+  apply();
+  // Follow OS theme flips live. The listener is registered UNCONDITIONALLY: it used to
+  // be skipped whenever front matter forced a mode, and that state no longer exists, so
+  // a surviving guard would be a branch nothing can take. It still re-applies only while
+  // the choice is auto, so the dev toggle is not fought by the OS mid-preview. (Older
+  // Safari exposes addListener instead of addEventListener; guard for it the way the
+  // rest of the code guards matchMedia.)
+  try {
+    if (window.matchMedia) {
+      var osDark = window.matchMedia('(prefers-color-scheme: dark)');
+      var onOsChange = function(){ if (choice() === "auto") apply(); };
+      if (osDark.addEventListener) osDark.addEventListener('change', onOsChange);
+      else if (osDark.addListener) osDark.addListener(onOsChange);
+    }
+  } catch(e) {}
+  // Passing anything that is not "light"/"dark" REMOVES the key rather than storing it:
+  // "following the device" and "never touched the toggle" are the same state, and the
+  // OS listener above keys off exactly that.
+  window.taliSetTheme = function(p){
+    try {
+      if (p === "light" || p === "dark") localStorage.setItem("tali-theme", p);
+      else localStorage.removeItem("tali-theme");
+    } catch(e) {}
+    apply();
+  };
+  // Paper is white. dark.css recolours the syntax scopes with untokenised literals (a
+  // dark-mode string is #a5d6ff: 1.6:1 on paper), so the print stylesheet's token reset
+  // cannot reach them. (The diagnostic boxes are now token-derived, so the reset DOES reach
+  // them; the syntax scopes are what still force the swap.) Drop the whole document to the
+  // light theme for the duration of the print job and restore afterwards. `apply()`
+  // restores colour-scheme, canvas, and mermaid.
+  try {
+    window.addEventListener("beforeprint", function(){
+      var el = document.documentElement;
+      el.setAttribute("data-theme", "light");
+      el.style.colorScheme = "light";
+      el.style.background = BG.light;
+    });
+    window.addEventListener("afterprint", apply);
+  } catch(e) {}
+})();
+</script>
+<link rel="preload" as="font" type="font/woff2" href="_assets/literata-latin-wght-normal.7176a8389de9bbdb.woff2" crossorigin><link rel="stylesheet" href="_assets/app.3531ab873771b9c8.css">
+
+<script>
+// --- Enhancer registry (the public extension hook) ---------------------------
+// An *enhancer* is `fn(root)` that decorates freshly-mounted DOM. An extension's
+// JS opts in with `window.taliEnhancers.register(fn)`; the registered fn then runs
+// after every (re)mount in the live preview, on DOMContentLoaded in the static
+// build, and once immediately if it registers after the page is already mounted
+// (an extension script loaded in `include-after-body`). Enhancers MUST be
+// idempotent — guard with a data-attribute — since they re-run on every change.
+// The built-in copy-button / etc. below (and mermaid, in its own
+// mermaid.js) register through the exact same API, so a third-party enhancer is
+// indistinguishable from core's.
+(function () {
+  if (window.taliEnhancers) return;
+  /** @type {Array<(root: ParentNode) => void>} */
+  var list = [];
+  var mounted = false;
+  /** @param {(root: ParentNode) => void} fn @param {ParentNode | null} [root] */
+  function run1(fn, root) {
+    try { fn(root || document); } catch (e) { console.error('[taliesin] enhancer failed', e); }
+  }
+  window.taliEnhancers = {
+    register: function (fn) {
+      if (typeof fn === 'function') {
+        list.push(fn);
+        if (mounted) run1(fn, document); // late registration: catch up on existing DOM
+      }
+      return this;
+    },
+    run: function (root) {
+      mounted = true;
+      for (var i = 0; i < list.length; i++) run1(list[i], root);
+    },
+  };
+  var enh = window.taliEnhancers; // captured non-undefined for the entry-point closure
+  // The single entry point every caller uses (live client, static build, reveal).
+  window.taliEnhanceCode = function (root) { enh.run(root); };
+})();
+
+// Shared clipboard helper: navigator.clipboard in a secure context, with a hidden-textarea
+// execCommand fallback for insecure contexts (file://, plain http). Never throws;
+// calls onOk on success, onFail (optional) on total failure.
+/** @param {string} text @param {() => void} onOk @param {() => void} [onFail] */
+function taliCopyText(text, onOk, onFail) {
+  function legacy() {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var done = document.execCommand('copy'); document.body.removeChild(ta);
+      return done;
+    } catch (e) { return false; }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onOk, function () { if (legacy()) onOk(); else if (onFail) onFail(); });
+  } else if (legacy()) { onOk(); }
+  else if (onFail) { onFail(); }
+}
+
+</script>
+
+<meta name="description" content="Machine learning and statistics, worked out from first principles">
+<meta property="og:description" content="Machine learning and statistics, worked out from first principles">
+<meta property="og:title" content="Publications">
+<meta property="og:url" content="https://andreasbogossian.com/publications.html">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/atom+xml" title="Blog" href="https://andreasbogossian.com/blog.xml">
+<link rel="alternate" type="application/atom+xml" title="Publications" href="https://andreasbogossian.com/publications.xml">
+<link rel="alternate" type="application/atom+xml" title="Projects" href="https://andreasbogossian.com/projects.xml">
+</head>
+<body class="tali-site">
+<a class="tali-skip" href="#tali-main">Skip to content</a>
+
+<header class="tali-site-nav" data-tali-src="_site.yml"><nav class="tali-nav-inner" aria-label="Primary"><a class="tali-nav-brand" href="index.html"><img class="tali-brand-logo" src="logo.svg" alt="Andreas Bogossian" /></a><button type="button" class="tali-nav-burger" id="tali-nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="tali-nav-links"><span></span><span></span><span></span></button><div class="tali-nav-links" id="tali-nav-links"><a class="tali-nav-link" href="blog.html" data-label="Blog">Blog</a><a class="tali-nav-link tali-nav-active" aria-current="page" href="publications.html" data-label="Publications">Publications</a><a class="tali-nav-link" href="projects.html" data-label="Projects">Projects</a><span class="tali-nav-spacer"></span><button class='tali-search-btn' type='button' data-tali-search aria-label='Search: ⌘K' aria-keyshortcuts='Control+K Meta+K'><svg width='15' height='15' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.6' aria-hidden='true'><circle cx='7' cy='7' r='4.5'/><path d='M10.5 10.5 14 14' stroke-linecap='round'/></svg><kbd class='tali-search-kbd' aria-hidden='true'>⌘K</kbd></button></div></nav></header><script>(function(){var b=document.getElementById('tali-nav-toggle'),m=document.getElementById('tali-nav-links');if(!b||!m||b.dataset.navWired)return;b.dataset.navWired='1';function set(o){b.setAttribute('aria-expanded',o?'true':'false');m.classList.toggle('tali-nav-open',o);}b.addEventListener('click',function(){set(b.getAttribute('aria-expanded')!=='true');});m.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&b.getAttribute('aria-expanded')==='true'){set(false);b.focus();}});})();</script>
+<div class="tali-site-main">
+<main id="tali-main" tabindex="-1">
+<h1 class="tali-sr-only" data-block-id="tali-sr-title" data-section-end="b-2c14efbfa54c">Publications</h1>
+<p data-block-id="b-2c14efbfa54c" data-sourcepos="9:1-9:93">Theses and papers I have written. Each entry has a short summary and a link to the full text.</p>
+<ul role="list" class="tali-listing tali-listing-default" data-block-id="listing-0-publications"><li class="tali-listing-item"><a class="tali-card" href="publications/knowledge-graph-recommender-systems/index.html" data-tali-src="publications/knowledge-graph-recommender-systems/index.tmd"><div class="tali-card-body"><time class="tali-card-date" datetime="2025-09-01">1 September 2025</time><h2 class="tali-card-title">Knowledge Graph Enhanced Recommender Systems</h2><p class="tali-card-desc">B.Sc. thesis (Aalto University, graded 5/5): a literature review of knowledge graph-enhanced recommender systems against collaborative, content-based and hybrid filtering.</p></div></a></li></ul>
+</main>
+</div>
+<footer class="tali-site-footer" data-tali-src="_site.yml"><div class="tali-foot-inner"><div class="tali-foot-left"><span class="tali-foot-item">© 2026 Andreas Bogossian</span><a class="tali-foot-item" href="https://github.com/AJBogo9/tech-blog">Source</a></div><div class="tali-foot-center"></div><div class="tali-foot-right"><a class="tali-foot-item" aria-label="linkedin" href="https://www.linkedin.com/in/andreas-bogossian/"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"/></svg></a><a class="tali-foot-item" aria-label="github" href="https://github.com/AJBogo9"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg></a><a class="tali-foot-item" aria-label="rss" href="blog.xml"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1m0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1"/></svg></a></div></div></footer>
+
+
+<script src="_assets/app.142f5dbbc83e31c8.js" defer></script>
+<script>document.addEventListener('DOMContentLoaded',function(){window.taliEnhanceCode&&window.taliEnhanceCode(document.body);});</script>
+<script>window.TALIESIN_SITE_ROOT="";window.TALIESIN_PAGE_URL="publications.html";window.TALIESIN_SEARCH_URL="search-index.js"</script>
+
+
+</body>
+</html>

@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  mmmmmmm        ""#      "                    "
+     #     mmm     #    mmm     mmm    mmm   mmm    m mm
+     #    "   #    #      #    #"  #  #   "    #    #"  #
+     #    m"""#    #      #    #""""   """m    #    #   #
+     #    "mm"#    "mm  mm#mm  "#mm"  "mmm"  mm#mm  #   #
+
+  Taliesin v1.1.0  -  https://taliesin.sh
+  Rendered from .tmd source, not a batch compiler: a warm, source-mapped,
+  block-modeled live HTML process.  https://github.com/AJBogo9/taliesin
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="referrer" content="no-referrer" />
+<meta name="generator" content="Taliesin" />
+<title>A* Pathfinding Algorithm · Andreas Bogossian</title>
+<link rel="icon" type="image/svg+xml" href="../../bell-curve.svg" />
+<script>
+(function(){
+  // The reader's DEVICE decides the mode. DEVICE is a function (not a constant) so it
+  // re-reads the OS on every call — the dev toggle and the OS-change listener both see
+  // the live value. Falls back to light when the OS expresses no dark preference.
+  function DEVICE(){
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return "dark";
+    } catch(e) {}
+    return "light";
+  }
+  // The one stored override, written ONLY by the preview dev menu's quick toggle
+  // (web-client/client.js), which never ships in a build — so on a built page this is
+  // always absent and the device always wins. Absent or unrecognized reads as "auto",
+  // which is also why withdrawing a mode needs no migration step.
+  function choice(){
+    var v = null;
+    try { v = localStorage.getItem("tali-theme"); } catch(e) {}
+    return (v === "light" || v === "dark") ? v : "auto";
+  }
+  // The MODE that actually paints: never "auto".
+  function pref(){
+    var c = choice();
+    return c === "auto" ? DEVICE() : c;
+  }
+  var BG = { dark: '#14130f', light: '#ffffff' };
+  function apply(){
+    var mode = pref();
+    var el = document.documentElement;
+    el.setAttribute("data-theme", mode);
+    // Set color-scheme + background inline, right here in the pre-paint head
+    // script, so the browser's canvas is the theme colour from the very first
+    // frame. Without this the canvas stays white until the inline <style> parses,
+    // which shows as a white flash on every (cross-page) navigation in dark mode.
+    el.style.colorScheme = mode === "dark" ? "dark" : "light";
+    el.style.background = BG[mode] || '#ffffff';
+    // Keep the mobile browser-chrome tint (`<meta name="theme-color">`) in lockstep with the
+    // canvas, so a dark page no longer sits under a white status bar. Reuse the same BG map
+    // (single source, no duplicated hex) and follow the in-page toggle, not just the OS. The
+    // meta is created here rather than emitted statically so its value is never a stale literal.
+    try {
+      var head = document.head || document.getElementsByTagName("head")[0];
+      var mc = document.querySelector('meta[name="theme-color"]');
+      if (!mc && head) { mc = document.createElement("meta"); mc.setAttribute("name", "theme-color"); head.appendChild(mc); }
+      if (mc) mc.setAttribute("content", BG[mode] || '#ffffff');
+    } catch(e) {}
+    // Let theme-dependent renderers (e.g. mermaid, whose SVG colours are baked at
+    // render time) re-render when the mode changes. The detail carried a `choice` field
+    // until 2026-08-13, for the Settings picker's pressed state alone; no listener reads
+    // anything but `mode`.
+    try { window.dispatchEvent(new CustomEvent("tali:themechange", { detail: { mode: mode } })); } catch(e) {}
+  }
+  apply();
+  // Follow OS theme flips live. The listener is registered UNCONDITIONALLY: it used to
+  // be skipped whenever front matter forced a mode, and that state no longer exists, so
+  // a surviving guard would be a branch nothing can take. It still re-applies only while
+  // the choice is auto, so the dev toggle is not fought by the OS mid-preview. (Older
+  // Safari exposes addListener instead of addEventListener; guard for it the way the
+  // rest of the code guards matchMedia.)
+  try {
+    if (window.matchMedia) {
+      var osDark = window.matchMedia('(prefers-color-scheme: dark)');
+      var onOsChange = function(){ if (choice() === "auto") apply(); };
+      if (osDark.addEventListener) osDark.addEventListener('change', onOsChange);
+      else if (osDark.addListener) osDark.addListener(onOsChange);
+    }
+  } catch(e) {}
+  // Passing anything that is not "light"/"dark" REMOVES the key rather than storing it:
+  // "following the device" and "never touched the toggle" are the same state, and the
+  // OS listener above keys off exactly that.
+  window.taliSetTheme = function(p){
+    try {
+      if (p === "light" || p === "dark") localStorage.setItem("tali-theme", p);
+      else localStorage.removeItem("tali-theme");
+    } catch(e) {}
+    apply();
+  };
+  // Paper is white. dark.css recolours the syntax scopes with untokenised literals (a
+  // dark-mode string is #a5d6ff: 1.6:1 on paper), so the print stylesheet's token reset
+  // cannot reach them. (The diagnostic boxes are now token-derived, so the reset DOES reach
+  // them; the syntax scopes are what still force the swap.) Drop the whole document to the
+  // light theme for the duration of the print job and restore afterwards. `apply()`
+  // restores colour-scheme, canvas, and mermaid.
+  try {
+    window.addEventListener("beforeprint", function(){
+      var el = document.documentElement;
+      el.setAttribute("data-theme", "light");
+      el.style.colorScheme = "light";
+      el.style.background = BG.light;
+    });
+    window.addEventListener("afterprint", apply);
+  } catch(e) {}
+})();
+</script>
+<link rel="preload" as="font" type="font/woff2" href="../../_assets/literata-latin-wght-normal.7176a8389de9bbdb.woff2" crossorigin><link rel="stylesheet" href="../../_assets/app.3531ab873771b9c8.css">
+<link rel="stylesheet" href="../../_assets/katex.d9d3f6b6ed6a55e8.css">
+<script src="../../_assets/jslibs.55501db62ead1d31.js" defer></script>
+<script>
+// --- Enhancer registry (the public extension hook) ---------------------------
+// An *enhancer* is `fn(root)` that decorates freshly-mounted DOM. An extension's
+// JS opts in with `window.taliEnhancers.register(fn)`; the registered fn then runs
+// after every (re)mount in the live preview, on DOMContentLoaded in the static
+// build, and once immediately if it registers after the page is already mounted
+// (an extension script loaded in `include-after-body`). Enhancers MUST be
+// idempotent — guard with a data-attribute — since they re-run on every change.
+// The built-in copy-button / etc. below (and mermaid, in its own
+// mermaid.js) register through the exact same API, so a third-party enhancer is
+// indistinguishable from core's.
+(function () {
+  if (window.taliEnhancers) return;
+  /** @type {Array<(root: ParentNode) => void>} */
+  var list = [];
+  var mounted = false;
+  /** @param {(root: ParentNode) => void} fn @param {ParentNode | null} [root] */
+  function run1(fn, root) {
+    try { fn(root || document); } catch (e) { console.error('[taliesin] enhancer failed', e); }
+  }
+  window.taliEnhancers = {
+    register: function (fn) {
+      if (typeof fn === 'function') {
+        list.push(fn);
+        if (mounted) run1(fn, document); // late registration: catch up on existing DOM
+      }
+      return this;
+    },
+    run: function (root) {
+      mounted = true;
+      for (var i = 0; i < list.length; i++) run1(list[i], root);
+    },
+  };
+  var enh = window.taliEnhancers; // captured non-undefined for the entry-point closure
+  // The single entry point every caller uses (live client, static build, reveal).
+  window.taliEnhanceCode = function (root) { enh.run(root); };
+})();
+
+// Shared clipboard helper: navigator.clipboard in a secure context, with a hidden-textarea
+// execCommand fallback for insecure contexts (file://, plain http). Never throws;
+// calls onOk on success, onFail (optional) on total failure.
+/** @param {string} text @param {() => void} onOk @param {() => void} [onFail] */
+function taliCopyText(text, onOk, onFail) {
+  function legacy() {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var done = document.execCommand('copy'); document.body.removeChild(ta);
+      return done;
+    } catch (e) { return false; }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onOk, function () { if (legacy()) onOk(); else if (onFail) onFail(); });
+  } else if (legacy()) { onOk(); }
+  else if (onFail) { onFail(); }
+}
+
+</script>
+
+<meta name="description" content="A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.">
+<meta property="og:description" content="A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.">
+<meta property="og:title" content="A* Pathfinding Algorithm">
+<meta property="og:url" content="https://andreasbogossian.com/posts/a-star/">
+<meta property="og:image" content="https://andreasbogossian.com/posts/a-star/astar.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/atom+xml" title="Blog" href="https://andreasbogossian.com/blog.xml">
+<link rel="alternate" type="application/atom+xml" title="Publications" href="https://andreasbogossian.com/publications.xml">
+<link rel="alternate" type="application/atom+xml" title="Projects" href="https://andreasbogossian.com/projects.xml">
+</head>
+<body class="tali-site">
+<a class="tali-skip" href="#tali-main">Skip to content</a>
+<a class="tali-skip tali-skip-toc" href="#TOC">Skip to table of contents</a>
+
+<header class="tali-site-nav" data-tali-src="_site.yml"><nav class="tali-nav-inner" aria-label="Primary"><a class="tali-nav-brand" href="../../index.html"><img class="tali-brand-logo" src="../../logo.svg" alt="Andreas Bogossian" /></a><button type="button" class="tali-nav-burger" id="tali-nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="tali-nav-links"><span></span><span></span><span></span></button><div class="tali-nav-links" id="tali-nav-links"><a class="tali-nav-link" href="../../blog.html" data-label="Blog">Blog</a><a class="tali-nav-link" href="../../publications.html" data-label="Publications">Publications</a><a class="tali-nav-link" href="../../projects.html" data-label="Projects">Projects</a><span class="tali-nav-spacer"></span><button class='tali-search-btn' type='button' data-tali-search aria-label='Search: ⌘K' aria-keyshortcuts='Control+K Meta+K'><svg width='15' height='15' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.6' aria-hidden='true'><circle cx='7' cy='7' r='4.5'/><path d='M10.5 10.5 14 14' stroke-linecap='round'/></svg><kbd class='tali-search-kbd' aria-hidden='true'>⌘K</kbd></button></div></nav></header><script>(function(){var b=document.getElementById('tali-nav-toggle'),m=document.getElementById('tali-nav-links');if(!b||!m||b.dataset.navWired)return;b.dataset.navWired='1';function set(o){b.setAttribute('aria-expanded',o?'true':'false');m.classList.toggle('tali-nav-open',o);}b.addEventListener('click',function(){set(b.getAttribute('aria-expanded')!=='true');});m.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&b.getAttribute('aria-expanded')==='true'){set(false);b.focus();}});})();</script>
+<div class="tali-site-main has-toc">
+<main id="tali-main" tabindex="-1">
+<article>
+<header class="tali-title-block" data-block-id="tali-title-block"><h1 class="title">A* Pathfinding Algorithm</h1><p class="description">A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.</p><div class="tali-title-meta"><time datetime="2026-03-19">19 March 2026</time></div></header>
+<p data-block-id="b-d0f3cdfe9c3f" data-sourcepos="13:1-13:538">How does Google Maps find the <em>best</em> route in under a second, across millions of roads? Stripping this question into its basic elements, the question becomes, how to find the shortest path in a graph from the start position to the end position. If one was to approach this problem by trying every single path, the number of paths grow as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><msup><mi>b</mi><mi>d</mi></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(b^d)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0991em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>, where <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> is the branching factor (average number of branches from each node) and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span></span></span></span> is the depth. The brute force method scales extremely poorly so another solution must be used.</p>
+<p data-block-id="b-33391ff59b22" data-sourcepos="15:1-15:307">Dijkstra’s algorithm improves on the brute force method slightly. Dijkstra always expands the cheapest node so far. The problem with Dijkstra is that it expands the search in every direction including roads that lead away from the destination. Dijkstra can be beaten with algorithms with sense of direction.</p>
+<h2 id="the-idea-behind-the-a-algorithm" data-block-id="b-e9d7faf90149" data-sourcepos="17:1-17:36" data-section-end="b-4ee57f30c177">The idea behind the A* algorithm</h2>
+<p data-block-id="b-1072547db380" data-sourcepos="19:1-19:38">A* assigns every node a single score:</p>
+<p data-block-id="b-673a508fb60f" data-sourcepos="21:1-23:2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mi>g</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo><mo>+</mo><mi>h</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">
+f(n) = g(n) + h(n)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">h</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span></span></p>
+<p data-block-id="b-379d6b8893e8" data-sourcepos="25:1-25:5">where</p>
+<ul data-block-id="b-e6af41665602" data-sourcepos="27:1-28:105"><li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>: the exact cost from start to the current node <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span>. This is known.</li><li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">h(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">h</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>: the estimated cost from the current node <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> to the goal. This is a heuristic (educated guess).</li></ul>
+<p data-block-id="b-fa94f29f06ab" data-sourcepos="30:1-30:306">After A* computes the score of each frontier node, the algorithm will always expand the node with the lowest <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>. Minimizing both the cost of getting to the current node <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> and the estimate of arriving at the goal <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">h(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">h</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> makes the algorithm seek the shortest path from start point to the end point.</p>
+<p data-block-id="b-4ee57f30c177" data-sourcepos="32:1-32:75">For a more thorough study of A*, please refer to [<a href="#ref-russell2022artificial">1</a>].</p>
+<h2 id="implementation" data-block-id="b-b6d11c8f5ed0" data-sourcepos="34:1-34:17" data-section-end="b-feb53136afe3">Implementation</h2>
+<h3 id="heuristic" data-block-id="b-84321a2b75f1" data-sourcepos="36:1-36:13" data-section-end="b-cc52a445235b">Heuristic</h3>
+<p data-block-id="b-eba94dd5a6ce" data-sourcepos="38:1-38:45">A common heuristic is the Manhattan distance:</p>
+<p data-block-id="b-f52ad153c306" data-sourcepos="40:1-42:2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>h</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">∣</mi><msub><mi>x</mi><mn>1</mn></msub><mo>−</mo><msub><mi>x</mi><mn>2</mn></msub><mi mathvariant="normal">∣</mi><mo>+</mo><mi mathvariant="normal">∣</mi><msub><mi>y</mi><mn>1</mn></msub><mo>−</mo><msub><mi>y</mi><mn>2</mn></msub><mi mathvariant="normal">∣</mi></mrow><annotation encoding="application/x-tex">
+h(n) = |x_1 - x_2| + |y_1 - y_2|
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">h</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∣</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∣</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∣</span></span></span></span></span></p>
+<p data-block-id="b-14811d2651c4" data-sourcepos="44:1-44:145">The geometric interpretation of this is amount of grid cells that need to be navigated to go from one point to another without moving diagonally.</p>
+<pre data-block-id="b-cc52a445235b" data-sourcepos="46:1-49:3" data-tali-cell="python"><code class="language-python"><span class="tali-hl-source tali-hl-python"><span class="tali-hl-meta tali-hl-function tali-hl-python"><span class="tali-hl-storage tali-hl-type tali-hl-function tali-hl-python">def</span> <span class="tali-hl-entity tali-hl-name tali-hl-function tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">heuristic</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-parameters tali-hl-begin tali-hl-python">(</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-variable tali-hl-parameter tali-hl-python">a</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-parameters tali-hl-python">,</span> <span class="tali-hl-variable tali-hl-parameter tali-hl-python">b</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-parameters tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-meta tali-hl-function tali-hl-python"> </span><span class="tali-hl-meta tali-hl-function tali-hl-annotation tali-hl-return tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-return tali-hl-python">-&gt;</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-function tali-hl-begin tali-hl-python">:</span></span>
+    <span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-return tali-hl-python">return</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">abs</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">a</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">-</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">b</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">+</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">abs</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">a</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">-</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">b</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+</span></code></pre>
+<h3 id="main-loop" data-block-id="b-7c37ddb15067" data-sourcepos="51:1-51:13" data-section-end="b-b3ca02a0f8cc">Main loop</h3>
+<p data-block-id="b-797d94c7b9c0" data-sourcepos="53:1-53:191">The open set is a min-heap keyed on <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>. At each iteration the node with the lowest <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span> is popped. Then check if the goal has been reached. Then the third step is to expand the neighbours:</p>
+<pre data-block-id="b-b3ca02a0f8cc" data-sourcepos="55:1-96:3" data-tali-cell="python"><code class="language-python"><span class="tali-hl-source tali-hl-python"><span class="tali-hl-meta tali-hl-statement tali-hl-import tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-import tali-hl-python">import</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">heapq</span></span></span>
+
+<span class="tali-hl-meta tali-hl-function tali-hl-python"><span class="tali-hl-storage tali-hl-type tali-hl-function tali-hl-python">def</span> <span class="tali-hl-entity tali-hl-name tali-hl-function tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">astar</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-parameters tali-hl-begin tali-hl-python">(</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python">
+    <span class="tali-hl-variable tali-hl-parameter tali-hl-python">grid</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">list</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">list</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-parameters tali-hl-python">,</span>
+    <span class="tali-hl-variable tali-hl-parameter tali-hl-python">start</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-parameters tali-hl-python">,</span>
+    <span class="tali-hl-variable tali-hl-parameter tali-hl-python">goal</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span>
+</span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-parameters tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-meta tali-hl-function tali-hl-python"> </span><span class="tali-hl-meta tali-hl-function tali-hl-annotation tali-hl-return tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-return tali-hl-python">-&gt;</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">dict</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span>, <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-function tali-hl-begin tali-hl-python">:</span></span>
+    <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">rows</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">cols</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">len</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">grid</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>, <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">len</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">grid</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+
+    <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">open_set</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-variable tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">list</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span>
+    <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">heapq</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">heappush</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">open_set</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">start</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+
+    <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">came_from</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-variable tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">dict</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span>, <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-structure tali-hl-dictionary tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-dictionary tali-hl-begin tali-hl-python">{</span><span class="tali-hl-meta tali-hl-empty-dictionary tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-dictionary tali-hl-end tali-hl-python">}</span></span></span>
+    <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">g_score</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-variable tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">dict</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-structure tali-hl-dictionary-or-set tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-dictionary-or-set tali-hl-begin tali-hl-python">{</span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">start</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-key-value tali-hl-python">:</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-dictionary-or-set tali-hl-end tali-hl-python">}</span></span>
+
+    <span class="tali-hl-meta tali-hl-statement tali-hl-while tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-while tali-hl-python">while</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">open_set</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-block tali-hl-while tali-hl-python">:</span></span>
+        <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-language tali-hl-python">_</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">current</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">heapq</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">heappop</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">open_set</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+
+        <span class="tali-hl-meta tali-hl-statement tali-hl-if tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-conditional tali-hl-python">if</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">current</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">==</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">goal</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-block tali-hl-conditional tali-hl-python">:</span></span>
+            <span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-python">break</span>
+
+        <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">r</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">c</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">current</span></span>
+        <span class="tali-hl-meta tali-hl-statement tali-hl-for tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-for tali-hl-python">for</span> <span class="tali-hl-meta tali-hl-generic-name tali-hl-python">dr</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-target-list tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-generic-name tali-hl-python">dc</span> <span class="tali-hl-meta tali-hl-statement tali-hl-for tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-for tali-hl-in tali-hl-python">in</span></span></span><span class="tali-hl-meta tali-hl-statement tali-hl-for tali-hl-python"> <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">-</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span><span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span><span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span><span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">-</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span><span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-block tali-hl-for tali-hl-python">:</span></span>
+            <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">neighbour</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-variable tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">r</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">+</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">dr</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">c</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">+</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">dc</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span>
+            <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">nr</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">nc</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">neighbour</span></span>
+
+            <span class="tali-hl-meta tali-hl-statement tali-hl-if tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-conditional tali-hl-python">if</span> <span class="tali-hl-keyword tali-hl-operator tali-hl-logical tali-hl-python">not</span> <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">&lt;=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">nr</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">&lt;</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">rows</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-logical tali-hl-python">and</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">&lt;=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">nc</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">&lt;</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">cols</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-block tali-hl-conditional tali-hl-python">:</span></span>
+                <span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-python">continue</span>
+            <span class="tali-hl-meta tali-hl-statement tali-hl-if tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-conditional tali-hl-python">if</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">grid</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">nr</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">nc</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">==</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-section tali-hl-block tali-hl-conditional tali-hl-python">:</span></span>
+                <span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-python">continue</span>
+
+            <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">tentative_g</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">g_score</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">current</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">+</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span>
+
+            <span class="tali-hl-meta tali-hl-statement tali-hl-if tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-conditional tali-hl-python">if</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">tentative_g</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">&lt;</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">g_score</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">get</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">neighbour</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">float</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-string tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-single tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-begin tali-hl-python">&#39;</span></span></span><span class="tali-hl-meta tali-hl-string tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-single tali-hl-python">inf<span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-end tali-hl-python">&#39;</span></span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-block tali-hl-conditional tali-hl-python">:</span></span>
+                <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">came_from</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">neighbour</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">current</span></span>
+                <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">g_score</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">neighbour</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">tentative_g</span></span>
+                <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">f</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">tentative_g</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">+</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">heuristic</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">neighbour</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">goal</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+                <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">heapq</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">heappush</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">open_set</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">f</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">neighbour</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+
+    <span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-return tali-hl-python">return</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">came_from</span></span>
+</span></code></pre>
+<h3 id="path-reconstruction" data-block-id="b-6dc77bae49ca" data-sourcepos="98:1-98:23" data-section-end="b-19c9b648b7a4">Path reconstruction</h3>
+<pre data-block-id="b-19c9b648b7a4" data-sourcepos="100:1-114:3" data-tali-cell="python"><code class="language-python"><span class="tali-hl-source tali-hl-python"><span class="tali-hl-meta tali-hl-function tali-hl-python"><span class="tali-hl-storage tali-hl-type tali-hl-function tali-hl-python">def</span> <span class="tali-hl-entity tali-hl-name tali-hl-function tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">reconstruct_path</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-parameters tali-hl-begin tali-hl-python">(</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python">
+    <span class="tali-hl-variable tali-hl-parameter tali-hl-python">came_from</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">dict</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span>, <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-parameters tali-hl-python">,</span>
+    <span class="tali-hl-variable tali-hl-parameter tali-hl-python">start</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-parameters tali-hl-python">,</span>
+    <span class="tali-hl-variable tali-hl-parameter tali-hl-python">goal</span></span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-annotation tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-parameter tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span>
+</span><span class="tali-hl-meta tali-hl-function tali-hl-parameters tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-parameters tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-meta tali-hl-function tali-hl-python"> </span><span class="tali-hl-meta tali-hl-function tali-hl-annotation tali-hl-return tali-hl-python"><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-return tali-hl-python">-&gt;</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">list</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-function tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-function tali-hl-begin tali-hl-python">:</span></span>
+    <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">path</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-annotation tali-hl-variable tali-hl-python">:</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">list</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">tuple</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-type tali-hl-python">int</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span>
+    <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">node</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">goal</span></span>
+    <span class="tali-hl-meta tali-hl-statement tali-hl-while tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-while tali-hl-python">while</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">node</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">!=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">start</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-block tali-hl-while tali-hl-python">:</span></span>
+        <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">path</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">append</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">node</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+        <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">node</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">came_from</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">node</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span>
+    <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">path</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">append</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">start</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+    <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">path</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">reverse</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+    <span class="tali-hl-keyword tali-hl-control tali-hl-flow tali-hl-return tali-hl-python">return</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">path</span></span>
+</span></code></pre>
+<h3 id="running-the-algorithm-on-a-2d-grid" data-block-id="b-5e4dcad65da0" data-sourcepos="116:1-116:38" data-section-end="b-feb53136afe3">Running the algorithm on a 2D grid</h3>
+<pre data-block-id="b-feb53136afe3" data-sourcepos="118:1-131:3" data-tali-cell="python"><code class="language-python"><span class="tali-hl-source tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">grid</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span>
+    <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span>
+    <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span>
+    <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span>
+    <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span>
+    <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span>
+<span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span>
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">start</span></span>, <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">goal</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span>, <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">4</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-tuple tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">4</span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span>
+
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">came_from</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">astar</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">grid</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">start</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">goal</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">path</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">reconstruct_path</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">came_from</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">start</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">goal</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+<span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">print</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">path</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+</span></code></pre>
+<div class="tali-output" data-block-id="b-feb53136afe3-out" data-sourcepos="118:1-131:3"><pre class="tali-stream">[(0, 0), (0, 1), (0, 2), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4)]
+</pre></div>
+<h2 id="weighted-a" data-block-id="b-eef1f745e80e" data-sourcepos="134:1-134:15" data-section-end="b-5142bb158846">Weighted A*</h2>
+<p data-block-id="b-25992d7287b6" data-sourcepos="136:1-136:103">A useful, greedier A* variant is weighted A*. The variant inflates the heuristic by a weight <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>&gt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">w &gt; 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>:</p>
+<p data-block-id="b-f6b6b73ae28d" data-sourcepos="138:1-140:2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mi>g</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo><mo>+</mo><mi>w</mi><mo>⋅</mo><mi>h</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">
+f(n) = g(n) + w \cdot h(n)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">h</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span></span></p>
+<p data-block-id="b-5142bb158846" data-sourcepos="142:1-142:207">The benefit of using the weight is that fewer nodes are expanded because the search prioritizes nodes that are close to the end. The trade-off is that the path found is at most <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi></mrow><annotation encoding="application/x-tex">w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span></span></span></span> times longer than optimal.</p>
+<h2 id="demo" data-block-id="b-cdb4667f8d5b" data-sourcepos="144:1-144:7" data-section-end="b-a3b4c608b27d">Demo</h2>
+<p data-block-id="b-7d3ae3adee20" data-sourcepos="146:1-146:158">Start with Dijkstra and then swap to A* with the Manhattan heuristic. Also, test the weight slider to make the algorithm faster with the expense of accuracy.</p>
+<ul data-block-id="b-3168273c41fa" data-sourcepos="148:1-152:104"><li><strong>Blue-green cells</strong>: open set, discovered but not yet expanded.</li><li><strong>Orange cell</strong>: node currently being expanded.</li><li><strong>Dark green cells</strong>: closed set, fully expanded.</li><li><strong>Yellow path</strong>: the solution once the algorithm reaches the end node.</li><li>Drag <strong>S</strong> or <strong>E</strong> to reposition start and goal. Paint walls by clicking and dragging on empty cells.</li></ul>
+<div data-block-id="b-909dce941d8a" data-sourcepos="154:1-171:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-909dce941d8a"></div><script type="application/tali-js" data-target="tali-js-b-909dce941d8a" data-viewof="heuristic">
+// ── controls ─────────────────────────────────────────────────────────────────
+const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Heuristic ");
+const sel = document.createElement("select");
+for (const opt of ["zero (Dijkstra)", "manhattan"]) {
+  const o = document.createElement("option");
+  o.value = opt; o.textContent = opt;
+  sel.append(o);
+}
+sel.value = "zero (Dijkstra)";
+wrap.append(sel);
+return wrap;
+</script></div>
+<div data-block-id="b-9e5646d129df" data-sourcepos="173:1-184:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-9e5646d129df"></div><script type="application/tali-js" data-target="tali-js-b-9e5646d129df" data-viewof="weight">
+const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Weight (w) ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "1"; input.max = "5"; input.step = "0.1"; input.value = "1";
+wrap.append(input);
+return wrap;
+</script></div>
+<div data-block-id="b-c9c9661e3c91" data-sourcepos="186:1-197:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-c9c9661e3c91"></div><script type="application/tali-js" data-target="tali-js-b-c9c9661e3c91" data-viewof="speed">
+const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Speed (ms/step) ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "10"; input.max = "500"; input.step = "10"; input.value = "80";
+wrap.append(input);
+return wrap;
+</script></div>
+<div data-block-id="b-cb820940b85f" data-sourcepos="199:1-651:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-cb820940b85f"></div><script type="application/tali-js" data-target="tali-js-b-cb820940b85f">
+// ── A* demo (built once; mounted here; exposes s/draw/resetSearch for the
+//    slider watcher cell below via tali.set) ────────────────────────────────────
+
+// ── constants ────────────────────────────────────────────────────────────────
+const COLS = 19;
+const ROWS = 11;
+const CELL = 40;
+const W    = COLS * CELL;
+const H    = ROWS * CELL;
+const key  = (r, c) => `${r},${c}`;
+
+// ── heuristic function ───────────────────────────────────────────────────────
+function heuristicFn(r1, c1, r2, c2, type) {
+  const dr = Math.abs(r1 - r2), dc = Math.abs(c1 - c2);
+  if (type === "manhattan")       return dr + dc;
+  if (type === "zero (Dijkstra)") return 0;
+  return dr + dc;
+}
+
+// ── search functions ─────────────────────────────────────────────────────────
+function initSearch(s) {
+  const sk = key(s.start.r, s.start.c);
+  s.openSet   = [{ r: s.start.r, c: s.start.c }];
+  s.closedSet = new Set();
+  s.cameFrom  = {};
+  s.gScore    = { [sk]: 0 };
+  s.fScore    = { [sk]: s.weight * heuristicFn(s.start.r, s.start.c, s.end.r, s.end.c, s.heuristic) };
+  s.path      = [];
+  s.current   = null;
+  s.running   = true;
+  s.done      = false;
+  s.iter      = 0;
+  s.status    = "searching…";
+}
+
+function stepOnce(s) {
+  if (!s.running || s.done) return;
+  if (s.openSet.length === 0) {
+    s.running = false; s.done = true; s.current = null; s.status = "no path found"; return;
+  }
+  let bestIdx = 0;
+  for (let i = 1; i < s.openSet.length; i++) {
+    const fi = s.fScore[key(s.openSet[i].r, s.openSet[i].c)] ?? Infinity;
+    const fb = s.fScore[key(s.openSet[bestIdx].r, s.openSet[bestIdx].c)] ?? Infinity;
+    if (fi < fb) bestIdx = i;
+  }
+  const cur = s.openSet.splice(bestIdx, 1)[0];
+  const ck  = key(cur.r, cur.c);
+  s.current = ck;
+
+  if (cur.r === s.end.r && cur.c === s.end.c) {
+    let k = ck;
+    while (s.cameFrom[k]) { s.path.push(k); k = s.cameFrom[k]; }
+    s.path.push(key(s.start.r, s.start.c));
+    s.running = false; s.done = true; s.current = null;
+    s.status  = `done — ${s.path.length - 1} steps`;
+    return;
+  }
+  s.closedSet.add(ck);
+  s.iter++;
+
+  for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+    const nr = cur.r + dr, nc = cur.c + dc;
+    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+    if (s.walls[nr][nc]) continue;
+    const nk = key(nr, nc);
+    if (s.closedSet.has(nk)) continue;
+    const tentG = (s.gScore[ck] ?? Infinity) + 1;
+    if (tentG < (s.gScore[nk] ?? Infinity)) {
+      s.cameFrom[nk] = ck;
+      s.gScore[nk]   = tentG;
+      s.fScore[nk]   = tentG + s.weight * heuristicFn(nr, nc, s.end.r, s.end.c, s.heuristic);
+      if (!s.openSet.find(n => n.r === nr && n.c === nc))
+        s.openSet.push({ r: nr, c: nc });
+    }
+  }
+}
+
+function resetSearch(s) {
+  s.openSet = []; s.closedSet = new Set(); s.cameFrom = {};
+  s.gScore  = {}; s.fScore   = {};
+  s.path    = []; s.current = null; s.running  = false; s.done = false; s.iter = 0; s.status = "idle";
+}
+
+// ── maze generation ──────────────────────────────────────────────────────────
+function generateMaze(s) {
+  s.walls = Array.from({ length: ROWS }, () => new Array(COLS).fill(true));
+  const inMaze    = Array.from({ length: ROWS }, () => new Array(COLS).fill(false));
+  const cardinals = [[0,2],[0,-2],[2,0],[-2,0]];
+
+  function neighbours(r, c) {
+    return cardinals
+      .map(([dr, dc]) => [r + dr, c + dc])
+      .filter(([nr, nc]) => nr >= 1 && nr < ROWS - 1 && nc >= 1 && nc < COLS - 1);
+  }
+
+  s.walls[1][1] = false;
+  inMaze[1][1]  = true;
+  let frontier  = neighbours(1, 1).map(([nr, nc]) => [nr, nc, 1, 1]);
+
+  while (frontier.length) {
+    const idx = Math.floor(Math.random() * frontier.length);
+    const [r, c, pr, pc] = frontier.splice(idx, 1)[0];
+    if (inMaze[r][c]) continue;
+    s.walls[r][c] = false;
+    s.walls[(r + pr) / 2][(c + pc) / 2] = false;
+    inMaze[r][c] = true;
+    for (const [nr, nc] of neighbours(r, c))
+      if (!inMaze[nr][nc]) frontier.push([nr, nc, r, c]);
+  }
+
+  const dist   = Array.from({ length: ROWS }, () => new Array(COLS).fill(-1));
+  const queue  = [[1, 1]];
+  dist[1][1]   = 0;
+  let furthest = [1, 1];
+  while (queue.length) {
+    const [r, c] = queue.shift();
+    for (const [dr, dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+      if (s.walls[nr][nc] || dist[nr][nc] !== -1) continue;
+      dist[nr][nc] = dist[r][c] + 1;
+      if (dist[nr][nc] > dist[furthest[0]][furthest[1]]) furthest = [nr, nc];
+      queue.push([nr, nc]);
+    }
+  }
+  s.start = { r: 1, c: 1 };
+  s.end   = { r: furthest[0], c: furthest[1] };
+  resetSearch(s);
+}
+
+// ── state (built once) ───────────────────────────────────────────────────────
+const s = {
+  walls:     Array.from({ length: ROWS }, () => new Array(COLS).fill(false)),
+  start:     { r: 1, c: 1 },
+  end:       { r: ROWS - 2, c: COLS - 2 },
+  openSet:   [], closedSet: new Set(), cameFrom: {},
+  gScore:    {}, fScore:    {}, path: [],
+  running:   false, done: false, iter: 0, status: "idle",
+  heuristic: "zero (Dijkstra)", weight: 1, speed: 80,
+  showScores: false, current: null,
+  animating: false, animTimer: null,
+};
+generateMaze(s);
+
+// ── app (D3 implementation — never mentions heuristic or weight) ──────────────
+const C = {
+    bg:        "#f8fafc",  // very light gray
+    grid:      "#cbd5e1",  // slate-300
+    empty:     "#f1f5f9",  // slate-100
+    wall:      "#334155",  // slate-700
+    start:     "#3b82f6",  // blue-500
+    end:       "#ef4444",  // red-500
+    open:      "#93c5fd",  // blue-300
+    closed:    "#86efac",  // green-300
+    path:      "#fbbf24",  // amber-400
+    current:   "#f97316",  // orange-500
+    text:      "#ffffff",  // white — for S/E labels on coloured cells
+    scoreText: "#22201A",  // the ink — AA (4.5:1+) on every scored cell colour
+  };
+
+  // ── SVG setup ───────────────────────────────────────────────────────────────
+  const svg = d3.create("svg")
+    .attr("width",  "100%")
+    .attr("viewBox", `0 0 ${W} ${H}`)
+    .style("cursor", "crosshair")
+    .style("max-width", `${W}px`)
+    .style("display", "block");
+
+  // background
+  svg.append("rect").attr("width", W).attr("height", H).attr("fill", C.bg);
+
+  // ── build flat cell array ────────────────────────────────────────────────
+  // Each object is a stable reference — D3 joins on identity, not index.
+  const cells = Array.from({ length: ROWS }, (_, r) =>
+    Array.from({ length: COLS }, (_, c) => ({ r, c }))
+  ).flat();
+
+  // ── cell rects ───────────────────────────────────────────────────────────
+  const rects = svg.append("g").attr("class", "cells")
+    .selectAll("rect")
+    .data(cells, d => key(d.r, d.c))   // key by position — stable across updates
+    .join("rect")
+      .attr("x",      d => d.c * CELL + 1)
+      .attr("y",      d => d.r * CELL + 1)
+      .attr("width",  CELL - 2)
+      .attr("height", CELL - 2)
+      .attr("rx", 1);
+
+  // ── tooltip ───────────────────────────────────────────────────────────────
+  const tooltip = Object.assign(document.createElement("div"), {});
+  tooltip.style.cssText = `
+  position: fixed;
+  background: #3A5578;
+  color: #f8fafc;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.8em;
+  font-family: monospace;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+  `;
+  document.body.appendChild(tooltip);
+
+  invalidation.then(() => {
+    tooltip.remove();
+    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
+    s.animating = false;
+  });
+
+  rects.on("mousemove", function(e, d) {
+  const k = key(d.r, d.c);
+  const g = s.gScore[k] ?? "—";
+  const h = heuristicFn(d.r, d.c, s.end.r, s.end.c, s.heuristic);
+  const f = s.fScore[k] ?? "—";
+  tooltip.innerHTML = `g=${g} &nbsp; h=${h} &nbsp; f=${f}`;
+  tooltip.style.opacity = 1;
+  tooltip.style.left = (e.clientX + 12) + "px";
+  tooltip.style.top  = (e.clientY - 28) + "px";
+  });
+
+  rects.on("mouseleave", () => { tooltip.style.opacity = 0; });
+
+  // ── labels (S / E) ────────────────────────────────────────────────────────
+  const labels = svg.append("g").attr("class", "labels");
+
+  function updateLabels() {
+    const data = [
+      { r: s.start.r, c: s.start.c, text: "S" },
+      { r: s.end.r,   c: s.end.c,   text: "E" },
+    ];
+    labels.selectAll("text")
+      .data(data)
+      .join("text")
+        .attr("x", d => d.c * CELL + CELL / 2)
+        .attr("y", d => d.r * CELL + CELL / 2)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("font-size", CELL * 0.38)
+        .attr("font-family", "monospace")
+        .attr("font-weight", "bold")
+        .attr("fill", C.text)
+        .attr("pointer-events", "none")
+        .text(d => d.text);
+  }
+
+  // ── score text overlay ───────────────────────────────────────────────────
+  const scoreG = svg.append("g").attr("class", "scores");
+
+  function updateScores() {
+    scoreG.selectAll("*").remove();
+    if (!s.showScores) return;
+    const scored = cells.filter(d => {
+      const k = key(d.r, d.c);
+      return s.gScore[k] !== undefined && !s.walls[d.r][d.c]
+        && !(d.r === s.start.r && d.c === s.start.c)
+        && !(d.r === s.end.r   && d.c === s.end.c);
+    });
+    // g — top-left
+    scoreG.selectAll("text.gs")
+      .data(scored, d => key(d.r, d.c) + "g")
+      .join("text").attr("class", "gs")
+        .attr("x", d => d.c * CELL + 3).attr("y", d => d.r * CELL + 10)
+        .attr("text-anchor", "start").attr("font-size", 9)
+        .attr("font-family", "monospace").attr("fill", C.scoreText)
+        .attr("pointer-events", "none")
+        .text(d => `g:${s.gScore[key(d.r, d.c)]}`);
+    // h — top-right
+    scoreG.selectAll("text.hs")
+      .data(scored, d => key(d.r, d.c) + "h")
+      .join("text").attr("class", "hs")
+        .attr("x", d => d.c * CELL + CELL - 3).attr("y", d => d.r * CELL + 10)
+        .attr("text-anchor", "end").attr("font-size", 9)
+        .attr("font-family", "monospace").attr("fill", C.scoreText)
+        .attr("pointer-events", "none")
+        .text(d => `h:${heuristicFn(d.r, d.c, s.end.r, s.end.c, s.heuristic)}`);
+    // f — bottom-centre, bold
+    scoreG.selectAll("text.fs")
+      .data(scored, d => key(d.r, d.c) + "f")
+      .join("text").attr("class", "fs")
+        .attr("x", d => d.c * CELL + CELL / 2).attr("y", d => d.r * CELL + CELL - 5)
+        .attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", "bold")
+        .attr("font-family", "monospace").attr("fill", C.scoreText)
+        .attr("pointer-events", "none")
+        .text(d => { const f = s.fScore[key(d.r, d.c)]; return f !== undefined ? `f:${Number.isInteger(f) ? f : f.toFixed(1)}` : ""; });
+  }
+
+  // ── grid lines ────────────────────────────────────────────────────────────
+  const gridG = svg.append("g").attr("class", "grid")
+    .attr("stroke", C.grid)
+    .attr("stroke-width", 0.4);
+
+  for (let r = 0; r <= ROWS; r++)
+    gridG.append("line").attr("x1", 0).attr("y1", r*CELL).attr("x2", W).attr("y2", r*CELL);
+  for (let c = 0; c <= COLS; c++)
+    gridG.append("line").attr("x1", c*CELL).attr("y1", 0).attr("x2", c*CELL).attr("y2", H);
+
+  // ── draw — only updates fill, no DOM rebuild ──────────────────────────────
+  const iterDisplay = document.createElement("div");
+  iterDisplay.style.cssText = "margin-top:6px;font-size:0.85em";
+  iterDisplay.textContent   = "iterations: —";
+
+  function cellColor(d) {
+    const k         = key(d.r, d.c);
+    const isStart   = d.r === s.start.r && d.c === s.start.c;
+    const isEnd     = d.r === s.end.r   && d.c === s.end.c;
+    const isWall    = s.walls[d.r][d.c];
+    const isPath    = pathSet.has(k)     && !isStart && !isEnd;
+    const isCurrent = k === s.current   && !isStart && !isEnd;
+    const isOpen    = openKeys.has(k)    && !isStart && !isEnd;
+    const isClosed  = s.closedSet.has(k) && !isStart && !isEnd;
+    return isWall ? C.wall : isStart ? C.start : isEnd ? C.end :
+           isPath ? C.path : isCurrent ? C.current : isOpen ? C.open : isClosed ? C.closed : C.empty;
+  }
+
+  // these are updated before every draw call
+  let openKeys = new Set(), pathSet = new Set();
+
+  function draw() {
+    openKeys = new Set(s.openSet.map(n => key(n.r, n.c)));
+    pathSet  = new Set(s.path);
+
+    // D3 only touches the fill attribute — no DOM nodes created or destroyed
+    rects.attr("fill", d => cellColor(d));
+
+    updateLabels();
+    updateScores();
+
+    iterDisplay.textContent = s.done
+      ? `iterations: ${s.iter} · ${s.status}`
+      : s.iter > 0 ? `iterations: ${s.iter}…` : "iterations: —";
+  }
+
+  // ── pointer / paint / drag ────────────────────────────────────────────────
+  let painting = false, paintValue = true, dragging = null;
+
+  function cellAt(e) {
+    const svgEl = svg.node();
+    const rect  = svgEl.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    return {
+      r: Math.floor((e.clientY - rect.top)  * scaleY / CELL),
+      c: Math.floor((e.clientX - rect.left) * scaleX / CELL),
+    };
+  }
+
+  function applyEdit(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if ((r === s.start.r && c === s.start.c) || (r === s.end.r && c === s.end.c)) return;
+    if (s.walls[r][c] === paintValue) return;
+    s.walls[r][c] = paintValue;
+    resetSearch(s); draw();
+  }
+
+  svg.on("pointerdown", e => {
+    stopAnim(); svg.node().setPointerCapture(e.pointerId);
+    const { r, c } = cellAt(e);
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+    if (r === s.start.r && c === s.start.c) { dragging = "start"; return; }
+    if (r === s.end.r   && c === s.end.c)   { dragging = "end";   return; }
+    painting = true;
+    paintValue = !s.walls[r][c]; applyEdit(r, c);
+  });
+  svg.on("pointermove", e => {
+    const { r, c } = cellAt(e);
+    if (dragging) {
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || s.walls[r][c]) return;
+      if (dragging === "start") s.start = { r, c };
+      else                      s.end   = { r, c };
+      resetSearch(s); draw();
+    } else if (painting) {
+      applyEdit(r, c);
+    }
+  });
+  svg.on("pointerup", () => { painting = false; dragging = null; });
+
+  // ── animation ─────────────────────────────────────────────────────────────
+  function stopAnim() {
+    s.animating = false;
+    if (s.animTimer) { clearTimeout(s.animTimer); s.animTimer = null; }
+    btnAnimate.textContent = "▶ Animate";
+  }
+
+  function animTick() {
+    if (!s.animating) return;
+    if (!s.running && !s.done) initSearch(s);
+    stepOnce(s); draw();
+    if (!s.done) s.animTimer = setTimeout(animTick, s.speed);
+    else stopAnim();
+  }
+
+  function startAnim() {
+    if (s.done) resetSearch(s);
+    s.animating = true;
+    btnAnimate.textContent = "⏸ Pause";
+    animTick();
+  }
+
+  // ── buttons ───────────────────────────────────────────────────────────────
+  const btnAnimate = Object.assign(document.createElement("button"), { textContent: "▶ Animate" });
+  const btnStep    = Object.assign(document.createElement("button"), { textContent: "Step" });
+  const btnRun     = Object.assign(document.createElement("button"), { textContent: "Run" });
+  const btnReset   = Object.assign(document.createElement("button"), { textContent: "Reset" });
+  const btnClear   = Object.assign(document.createElement("button"), { textContent: "Clear walls" });
+  const btnMaze    = Object.assign(document.createElement("button"), { textContent: "New maze" });
+  const chkScores  = Object.assign(document.createElement("input"),  { type: "checkbox", id: "chk-scores" });
+  const lblScores  = Object.assign(document.createElement("label"),  { textContent: "Show g/h/f", htmlFor: "chk-scores" });
+  lblScores.style.cssText = "font-size:0.85em;cursor:pointer;user-select:none";
+
+  btnAnimate.onclick = () => s.animating ? stopAnim() : startAnim();
+  btnStep.onclick    = () => {
+    stopAnim();
+    if (!s.running && !s.done) initSearch(s);
+    stepOnce(s); draw();
+  };
+  btnRun.onclick     = () => {
+    stopAnim();
+    if (!s.running && !s.done) initSearch(s);
+    while (!s.done) stepOnce(s);
+    draw();
+  };
+  btnReset.onclick   = () => { stopAnim(); resetSearch(s); draw(); };
+  btnClear.onclick   = () => {
+    stopAnim();
+    s.walls = Array.from({ length: ROWS }, () => new Array(COLS).fill(false));
+    resetSearch(s); draw();
+  };
+  btnMaze.onclick    = () => { stopAnim(); generateMaze(s); draw(); };
+  chkScores.onchange = () => { s.showScores = chkScores.checked; draw(); };
+
+  const btnRow = document.createElement("div");
+  btnRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center";
+  const scoreWrap = document.createElement("span");
+  scoreWrap.style.cssText = "display:flex;align-items:center;gap:4px;margin-left:8px";
+  scoreWrap.append(chkScores, lblScores);
+  btnRow.append(btnAnimate, btnStep, btnRun, btnReset, btnClear, btnMaze, scoreWrap);
+
+const root = document.createElement("div");
+root.append(svg.node(), btnRow, iterDisplay);
+
+draw();
+
+// expose to the slider-watcher cell below (set synchronously, before that cell runs)
+tali.set("astar", { s, draw, resetSearch });
+
+return root;
+</script></div>
+<div data-block-id="b-a3b4c608b27d" data-sourcepos="653:1-671:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-a3b4c608b27d"></div><script type="application/tali-js" data-target="tali-js-b-a3b4c608b27d" data-inputs="heuristic,weight,speed">
+// ── watcher: slider changes re-run only this cell; the app is never rebuilt ────
+const astar = tali.get("astar");
+if (!astar) return;
+const { s, draw, resetSearch } = astar;
+
+// fall back to current state when an input isn't registered yet (initial load)
+const h = tali.value("heuristic"); if (h !== undefined) s.heuristic = h;
+const w = tali.value("weight");    if (w !== undefined) s.weight    = w;
+const sp = tali.value("speed");    if (sp !== undefined) s.speed    = sp;
+
+if (!s.animating) {
+  resetSearch(s);
+  draw();
+}
+</script></div>
+<h2 id="discussion" data-block-id="b-3f2cdc6faaa8" data-sourcepos="673:1-673:13" data-section-end="b-b7386af650f8">Discussion</h2>
+<p data-block-id="b-f6aaf1a461a8" data-sourcepos="675:1-675:258">A* shines in applications where a cost function and an admissible heuristic (a heuristic that never overestimates the distance to the end) can be defined. Examples of these types of application are GPS routing, NPC path finding in games and network routing.</p>
+<p data-block-id="b-b7386af650f8" data-sourcepos="677:1-677:231">There is one problem with A*: it doesn’t factor walls into the heuristic when using Manhattan distance. For solving this problem, algorithms like <a href="https://en.wikipedia.org/wiki/Jump_point_search">Jump Point Search</a> (JPS) are used.</p>
+<h2 id="references" data-block-id="b-31dda0420bcb" data-sourcepos="679:1-679:13" data-section-end="b-31dda0420bcb">References</h2>
+<section class="tali-references" data-block-id="tali-references"><div id="ref-russell2022artificial" class="csl-entry">[1] S. Russell and P. Norvig, <em>Artificial Intelligence: A Modern Approach</em>, 4th ed. Pearson Education Limited, 2022.</div></section>
+</article>
+</main>
+<nav id="TOC" tabindex="-1" aria-label="Table of contents" class="tali-toc" role="doc-toc"><ul><li><a href="#the-idea-behind-the-a-algorithm">The idea behind the A* algorithm</a></li><li><a href="#implementation">Implementation</a><ul><li><a href="#heuristic">Heuristic</a></li><li><a href="#main-loop">Main loop</a></li><li><a href="#path-reconstruction">Path reconstruction</a></li><li><a href="#running-the-algorithm-on-a-2d-grid">Running the algorithm on a 2D grid</a></li></ul></li><li><a href="#weighted-a">Weighted A*</a></li><li><a href="#demo">Demo</a></li><li><a href="#discussion">Discussion</a></li><li><a href="#references">References</a></li></ul></nav>
+<nav class="tali-postnav tali-listing-backnav" aria-label="Back to listing"><a class="tali-back-link" href="../../blog.html"><span class="tali-back-glyph" aria-hidden="true">←</span> Blog</a></nav></div>
+<footer class="tali-site-footer" data-tali-src="_site.yml"><div class="tali-foot-inner"><div class="tali-foot-left"><span class="tali-foot-item">© 2026 Andreas Bogossian</span><a class="tali-foot-item" href="https://github.com/AJBogo9/tech-blog">Source</a></div><div class="tali-foot-center"></div><div class="tali-foot-right"><a class="tali-foot-item" aria-label="linkedin" href="https://www.linkedin.com/in/andreas-bogossian/"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"/></svg></a><a class="tali-foot-item" aria-label="github" href="https://github.com/AJBogo9"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg></a><a class="tali-foot-item" aria-label="rss" href="../../blog.xml"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1m0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1"/></svg></a></div></div></footer>
+
+
+<script src="../../_assets/app.142f5dbbc83e31c8.js" defer></script>
+<script>// Native interactive `{js}` cells — a tiny enhancer that replaces the vendored
+// 440 KB Observable runtime. Each `{js}` cell is emitted (render/mod.rs) as a
+// `<script type="application/tali-js">` carrying the author's JS plus a sibling
+// target `<div>`; this enhancer runs the source with a small scope and mounts a
+// returned DOM node into the target. Plot + d3 are vendored globals (window.Plot,
+// window.d3); Three.js is dynamically `import()`ed by the cell itself.
+//
+// The corpus's whole reactive surface is single-input fan-out (one input -> a few
+// sink cells; intermediate helpers are pure), so there is no dataflow engine here:
+// inputs are plain DOM elements and a sink re-runs when a named input fires. Cell
+// kinds (from `//|` options):
+//   //| viewof: NAME  -> returns a DOM input; registered as input NAME, mounted.
+//   //| name: NAME    -> return value stored in the shared scope as NAME.
+//   //| input: A, B   -> sink: re-runs when input/define A or B changes.
+//   (none)            -> one-shot: runs once; re-runs when a Python define lands.
+//
+// Cell scope: { get(n), set(n,v), value(n), defines, onInput(names,cb), container,
+// invalidation }. Registered through the same taliEnhancers registry as mermaid;
+// idempotent (a `data-tali-ran` guard) so it is safe to re-run after every mount.
+//
+// `publish` is deliberately absent from that list: it is a language-only hook, passed to a
+// language's `setup` as a fourth argument and never placed on the author-facing scope.
+//
+// This file is also the CLIENT HALF of the cell-language registry (`render/client_lang.rs`
+// is the server half). `{js}` is its one entry in `languages` below. Everything outside a
+// language's own `setup` — mounting the returned node, publishing `//| name`, registering
+// `//| viewof`, the dependency graph, the live region, the error box, teardown — is written
+// once against the shared wrapper contract, so a second language is a registration and not
+// surgery.
+(function () {
+  "use strict";
+  var AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+  /**
+   * A client-side cell language: given the cell's source, its scope api, its parsed
+   * `//|` options and the language-only hooks, return the thing that runs it. `run` is
+   * called once on mount and again on every scheduled re-run; `dispose` (optional) is
+   * called when the cell is torn down. A language never mounts the returned value itself —
+   * the shared wrapper does.
+   *
+   * `hooks` carries what a LANGUAGE may do and author source may not. It is a separate
+   * argument precisely because `api` is passed through to author cell source verbatim.
+   * @typedef {(src: string, api: any, opts: {name: string|null, viewof: string|null,
+   *   inputs: string[], kind: string}, hooks: {publish: (n: string, v: any) => Promise<void>})
+   *   => {run: () => any, dispose?: () => void}} TaliLangSetup
+   */
+  /** @type {Record<string, TaliLangSetup>} */
+  var languages = {};
+
+  /**
+   * @typedef {Object} TaliJsCell
+   * @property {string} kind
+   * @property {() => Promise<void>} run
+   * @property {string | null} defines
+   * @property {string[]} inputs
+   * @property {HTMLElement} container
+   * @property {() => void} dispose
+   * @property {{name: string, cb: () => void}[]} listeners
+   */
+  /**
+   * @typedef {Object} TaliJsGraph
+   * @property {Record<string, TaliJsCell[]>} consumers
+   * @property {TaliJsCell[]} order
+   * @property {TaliJsCell[]} cyclic
+   */
+  /**
+   * @typedef {Object} TaliJsRuntime
+   * @property {Record<string, any>} scope
+   * @property {Record<string, HTMLElement>} inputs
+   * @property {Record<string, any>} defines
+   * @property {Record<string, Set<() => void>>} listeners
+   * @property {TaliJsCell[]} cells
+   * @property {Record<string, Record<string, any>>} state
+   * @property {TaliJsGraph} [graph]
+   */
+
+  // Per-page singleton. Reset implicitly on navigation/reload; on a full re-mount
+  // the fresh DOM has no `data-tali-ran` guards, so every cell re-runs and rebuilds.
+  /** @returns {TaliJsRuntime} */
+  function rt() {
+    if (!window.__talijs) {
+      window.__talijs = {
+        scope: {}, inputs: {}, defines: {}, listeners: {}, cells: [],
+      };
+    }
+    return /** @type {TaliJsRuntime} */ (window.__talijs);
+  }
+
+  /** @param {any} el @returns {any} */
+  function readValue(el) {
+    if (!el) return undefined;
+    if (el.type === "checkbox") return el.checked;
+    if (el.type === "range" || el.type === "number") return el.valueAsNumber;
+    if (el.value !== undefined) return el.value;
+    return undefined;
+  }
+
+  // --- shareable control state in the URL fragment --------------------------
+  // `{{< input >}}` controls persist their values to the URL fragment as
+  // `name=value&...`, so a link captures the current view and reopening it (or a
+  // live-swap) restores every control + its downstream cells. A plain anchor
+  // fragment (`#heading`, no `=`) is left untouched, so heading / footnote / xref
+  // links still work; the first control change then replaces it with state.
+  function parseInputFragment() {
+    /** @type {Record<string, string>} */
+    var out = {};
+    var h = (location.hash || "").replace(/^#/, "");
+    var q = h;
+    if (q.indexOf("=") < 0) return out; // a plain anchor, not control state
+    q.split("&").forEach(function (kv) {
+      var i = kv.indexOf("=");
+      if (i < 0) return;
+      try {
+        out[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1));
+      } catch (e) {}
+    });
+    return out;
+  }
+  /** @param {any} el @param {string} val */
+  function applyInputValue(el, val) {
+    if (!el) return;
+    if (el.type === "checkbox") el.checked = val === "true" || val === "1" || val === "on";
+    else el.value = val;
+  }
+  function syncInputFragment() {
+    /** @type {string[]} */
+    var parts = [];
+    document.querySelectorAll("[data-tali-input]").forEach(function (el) {
+      var n = el.getAttribute("data-tali-input");
+      if (!n) return;
+      parts.push(encodeURIComponent(n) + "=" + encodeURIComponent(String(readValue(el))));
+    });
+    var url = "#" + parts.join("&");
+    // replaceState: change the URL without scrolling or spamming history on every tick.
+    try {
+      history.replaceState(null, "", url);
+    } catch (e) {
+      location.hash = url.replace(/^#/, "");
+    }
+  }
+
+  /** @param {TaliJsRuntime} r @param {string} name @param {HTMLElement | null} el */
+  function registerInput(r, name, el) {
+    if (!el) return;
+    r.inputs[name] = el;
+    el.addEventListener("input", function () {
+      // Re-run the transitive-downstream closure of this input, in dependency order
+      // (the cells that consume `name`, then whatever consumes their derived names).
+      scheduleFrom(r, name);
+      // Still fire any callbacks registered manually via the public `tali.onInput` API.
+      var set = r.listeners[name];
+      if (set) set.forEach(function (fn) { fn(); });
+    });
+  }
+
+  // Ingest `<script type="tali-define">` blobs (the Python ojs_define bridge): set
+  // the named values, then re-run every non-input cell — a define can land after
+  // the cells first ran (live preview executes Python after the page mounts).
+  function bindDefines() {
+    var r = rt();
+    var changed = false;
+    document.querySelectorAll('script[type="tali-define"]:not([data-tali-bound])').forEach(function (s) {
+      s.setAttribute("data-tali-bound", "1");
+      try {
+        var obj = JSON.parse(s.textContent || "{}");
+        // The Python bridge emits Observable's `{contents:[{name,value}]}` shape;
+        // also accept a flat `{name: value}` map.
+        var pairs = /** @type {Array<{ name: string, value: any }>} */ (
+          Array.isArray(obj.contents)
+            ? obj.contents
+            : Object.keys(obj).map(function (k) { return { name: k, value: obj[k] }; })
+        );
+        pairs.forEach(function (p) { r.defines[p.name] = p.value; });
+        changed = true;
+      } catch (e) {
+        console.error("tali-js: malformed define blob", e);
+      }
+    });
+    // Defines usually land once (cold load) or on kernel restart; re-run every
+    // cell (sequentially, document order) so inputs whose range depends on a define
+    // (e.g. a slider sized by history.length) and name-helpers reading defines
+    // rebuild in dependency order.
+    if (changed) runSequentially(r.cells);
+  }
+
+  /**
+   * `owned` is the calling cell's own registration list: every `onInput` callback is
+   * recorded on it as well as in the shared `r.listeners` map, so `teardownIn` can take
+   * the cell's callbacks back out again. Without that record the two are indistinguishable
+   * — a Set of anonymous closures says nothing about which cell put them there — and a
+   * torn-down cell's callback fired forever against detached DOM (one more copy per edit).
+   * @param {TaliJsRuntime} r @param {HTMLElement} container
+   * @param {() => (Promise<void> | null)} getInv
+   * @param {{name: string, cb: () => void}[]} owned
+   */
+  function makeApi(r, container, getInv, owned) {
+    return {
+      /** @param {string} n */
+      get: function (n) { return r.scope[n]; },
+      /** @param {string} n @param {any} v */
+      set: function (n, v) { r.scope[n] = v; },
+      /** @param {string} n */
+      value: function (n) {
+        return r.inputs[n] ? readValue(r.inputs[n]) : r.defines[n];
+      },
+      defines: r.defines,
+      /** @param {string | string[]} names @param {() => void} cb */
+      onInput: function (names, cb) {
+        (Array.isArray(names) ? names : [names]).forEach(function (n) {
+          (r.listeners[n] = r.listeners[n] || new Set()).add(cb);
+          owned.push({ name: n, cb: cb });
+        });
+      },
+      container: container,
+      get invalidation() { return getInv(); },
+    };
+  }
+
+  // AP7-2. A `//| input:` sink is a region of the document that rewrites itself as a
+  // consequence of the reader operating a control somewhere else on the page. Driving a
+  // slider from the keyboard changed six output regions on `corpus/reactive/inputs.tmd`
+  // with every live region on the page empty and no `.tali-js-out` carrying `aria-live`
+  // (7 of 7): a screen-reader user heard the slider value and was told nothing about the
+  // document that changed under it. This is the explorable-explanation feature, the most
+  // web-native thing the tool does, and it was silent.
+  //
+  // Marked from the FIRST run's output, so the region is already live before the reader
+  // can change anything, and only when that output is TEXT. A chart is the common sink and
+  // it has nothing useful to speak: re-reading an SVG's tick labels on every arrow-key tick
+  // is worse than silence, and a region that cries wolf gets turned off. (Measured on built
+  // `corpus/descent`: one of its three sink regions carries Plot's injected stylesheet as
+  // its text, so marking every sink live would announce raw CSS.) Text sinks are exactly
+  // the ones whose new content IS the answer the reader is looking for, so they are
+  // `atomic` — "k doubled (transitively) = 16" reads as one sentence, not as a diff.
+  //
+  // Idempotent, and never downgrades: a cell that painted text once keeps its live region
+  // even if a later run is empty (an empty region announces nothing anyway).
+  /** @param {Element | null} container */
+  function markLiveIfTextual(container) {
+    if (!container || container.getAttribute("aria-live")) return;
+    if (container.querySelector("svg, canvas, img, video, iframe")) return;
+    if (!(container.textContent || "").trim()) return;
+    container.setAttribute("aria-live", "polite");
+    container.setAttribute("aria-atomic", "true");
+  }
+
+  // Render a failure into the cell's output container. In the live preview (client.js
+  // defines taliOpenPageSource) show the full stack so the author can debug; in
+  // built/published output degrade to a terse themed message so a reader never sees a raw
+  // `TypeError ... at <anonymous>` leak. The full error always reaches console.error.
+  /** @param {HTMLElement} container @param {any} e */
+  function showCellError(container, e) {
+    var pre = document.createElement("pre");
+    pre.className = "tali-js-error";
+    pre.textContent = (typeof window.taliOpenPageSource === "function")
+      ? String((e && e.stack) || e)
+      : "This interactive element couldn't load.";
+    container.replaceChildren(pre);
+  }
+
+  /** @param {HTMLElement} script */
+  function setupCell(script) {
+    var r = rt();
+    // const so the null-guard below survives into the async run()/dispose closures.
+    const container = document.getElementById(script.getAttribute("data-target") || "");
+    if (!container) return;
+    var setup = languages[script.getAttribute("type") || ""];
+    if (!setup) return;
+    var src = script.textContent || "";
+    var name = script.getAttribute("data-name") || null;
+    var viewof = script.getAttribute("data-viewof") || null;
+    var inputs = (script.getAttribute("data-inputs") || "")
+      .split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    var kind = viewof ? "input" : (inputs.length ? "sink" : "once");
+
+    // Per-run invalidation: resolve the prior run's promise before re-running, so
+    // cells can tear down Three.js renderers / RAF loops / listeners on re-run.
+    // The same `resolveInv` is also fired by the cell's `dispose()` (below) when its
+    // block is edited away / unmounted, so DOM removal triggers author teardown too
+    // — not only a re-run does. Without that, editing a `{js}`/Three.js cell (which
+    // changes its content-hash block id, so the client replaces the node) would
+    // detach the old renderer with its `invalidation.then(...)` cleanup never run,
+    // leaking a WebGL context + RAF loop on every edit.
+    var resolveInv = /** @type {((value?: unknown) => void) | null} */ (null);
+    var currentInv = /** @type {Promise<any> | null} */ (null);
+    function freshInv() {
+      if (resolveInv) { resolveInv(); }
+      currentInv = new Promise(function (res) { resolveInv = res; });
+      return currentInv;
+    }
+    /** @type {{name: string, cb: () => void}[]} */
+    var listeners = [];
+    var api = makeApi(r, container, function () { return currentInv; }, listeners);
+    // Hand the source to the registered language. `setup` is where a language does its
+    // one-time work — compiling the author's JS into an AsyncFunction, linking a shader
+    // program — so it is the first thing that can fail, and a failure here used to escape
+    // `enhance`'s forEach and take the rest of the page's cells with it (a `{js}` cell with
+    // a SyntaxError never reached the run-time catch below, because the throw was at
+    // construction). Now a bad cell shows its own error box and its siblings still mount.
+    /** @type {{run: () => any, dispose?: () => void}} */
+    var impl;
+    try {
+      impl = setup(src, api, { name: name, viewof: viewof, inputs: inputs, kind: kind }, {
+        // Publish a value that arrived AFTER this cell's `run()` resolved, and re-run the
+        // cells that consume it. The shared wrapper publishes a cell's RETURN value and the
+        // scheduler orders everything, which is correct for a synchronous language; a
+        // language whose value is genuinely asynchronous (one that must boot a runtime
+        // before it can execute) has no such moment.
+        //
+        // A FOURTH ARGUMENT rather than a method on `api`, and that is the whole safety
+        // design: `api` is handed verbatim to author cell source as `tali` (see the
+        // `application/tali-js` registration below), so anything on it — or on its
+        // prototype — is author-reachable. A cell that could publish to a name it also
+        // declares as an `//| input:` would create a feedback edge `buildGraph` never saw
+        // and never cycle-checked, recursing without a guard: the reactive VM this project
+        // has refused three times. Passing the capability to the LANGUAGE instead means
+        // author source cannot reach it by any route, including a deliberate prototype
+        // walk. A masking shield on `api` was tried first and leaked through
+        // `Object.getPrototypeOf(tali).publish`.
+        publish: function (n, v) { r.scope[n] = v; return scheduleFrom(r, n); },
+      });
+    } catch (e) {
+      console.error("tali-js cell error:", e);
+      showCellError(container, e);
+      script.setAttribute("data-tali-done", "1");
+      return;
+    }
+
+    // `run` is async and AWAITED by the processing loops, so a `//| name:` helper's
+    // value is in the shared scope before a later cell reads it via tali.get() — the
+    // cross-cell contract OJS got from its module graph, without a reactive engine.
+    async function run() {
+      freshInv();
+      try {
+        var node = await impl.run();
+        // The returned value is arbitrary author output; `na` reads its duck-typed
+        // `.value` / `.querySelector` (an input control, a wrapper, or neither).
+        var na = /** @type {any} */ (node);
+        if (node instanceof Node) {
+          /** @type {HTMLElement} */ (container).replaceChildren(node);
+          if (viewof) {
+            // the cell may return the control itself or a labeled wrapper around it
+            var ctrl = na.value !== undefined ? node
+              : (na.querySelector ? na.querySelector("input, select, textarea") : null);
+            registerInput(r, viewof, ctrl);
+          }
+        }
+        if (name) {
+          r.scope[name] = (node instanceof Node && na.value !== undefined) ? na.value : node;
+        }
+        if (kind === "sink") { markLiveIfTextual(container); }
+      } catch (e) {
+        console.error("tali-js cell error:", e);
+        showCellError(/** @type {HTMLElement} */ (container), e);
+      } finally {
+        // A finished run, whether or not it painted. `data-tali-ran` is stamped at
+        // registration (before the cell body runs), and a cell may legitimately emit
+        // no DOM (a `//| name:` value publisher, an `//| input:` effect), so neither
+        // that attribute nor "the output div has children" says the cell is done.
+        // This one does, which is what a screenshot harness has to wait on.
+        script.setAttribute("data-tali-done", "1");
+      }
+    }
+
+    // `defines` is the name this cell publishes (a `//| name` value or a `//| viewof`
+    // input); `inputs` are the names it consumes. The dependency graph (buildGraph) is
+    // built from these, so a `//| input:` sink re-runs through the graph, not a per-input
+    // listener — which is what makes transitive chains (n -> squared -> here) work.
+    var cell = {
+      kind: kind,
+      run: run,
+      defines: name || viewof,
+      inputs: inputs,
+      container: container,
+      // Every `tali.onInput` callback this cell registered, so teardown can take them
+      // back out of the shared `r.listeners` map (see `makeApi`).
+      listeners: listeners,
+      // Resolve the outstanding `invalidation` (running the author's
+      // `invalidation.then(() => renderer.dispose())` teardown) so the cell can be
+      // dropped, then let the LANGUAGE tear down whatever the author cannot see (a WebGL
+      // context held by an `import()`ed three.js renderer). Idempotent: nulls the resolver
+      // so a later dispose is a no-op.
+      dispose: function () {
+        if (resolveInv) { resolveInv(); resolveInv = null; }
+        if (impl.dispose) impl.dispose();
+      },
+    };
+    r.cells.push(cell);
+    return cell;
+  }
+
+  // Tear down + drop every cell whose container is inside (or is) `node`: resolve its
+  // `invalidation` so author cleanup runs (renderer.dispose / cancelAnimationFrame /
+  // removeEventListener), then splice it out of `r.cells` so the push-only list can't
+  // accumulate stale cells across edits. Also unregister any input the cell published,
+  // so a re-mount re-registers a live element rather than firing a detached one, and drop
+  // the `tali.onInput` callbacks it registered. Called by the client BEFORE it detaches an
+  // outgoing block (Update/Remove).
+  //
+  // The callbacks are the half that has no other owner. `r.cells` and `r.inputs` are both
+  // keyed by something teardown can find again; `r.listeners` is a name -> Set-of-closures
+  // map that nothing else indexes, so before the cell recorded its own registrations
+  // (`makeApi`) there was no way to tell which of them belonged to the block going away.
+  // Measured before this: three edits to a `{js}` cell that calls `tali.onInput` left
+  // `cells.length` correctly at 2 and `listeners.k.size` at 4, so one slider event ran the
+  // callback four times, three of them painting DOM that was no longer in the document.
+  // The cost was permanent for the session and grew with every edit.
+  /** @param {Node | null} node */
+  function teardownIn(node) {
+    if (!node || !window.__talijs) return;
+    var r = /** @type {TaliJsRuntime} */ (window.__talijs);
+    /** @type {TaliJsCell[]} */
+    var kept = [];
+    r.cells.forEach(function (c) {
+      var inside = c.container && (c.container === node || (node.contains && node.contains(c.container)));
+      if (inside) {
+        try { if (c.dispose) c.dispose(); } catch (e) { console.error("tali-js: cell teardown failed", e); }
+        (c.listeners || []).forEach(function (l) {
+          var set = r.listeners[l.name];
+          if (!set) return;
+          set.delete(l.cb);
+          // An emptied name would otherwise sit in the map forever, keyed by an input the
+          // edit may have deleted along with the cell.
+          if (!set.size) delete r.listeners[l.name];
+        });
+        if (c.defines && r.inputs[c.defines] && c.container.contains(r.inputs[c.defines])) {
+          delete r.inputs[c.defines];
+        }
+      } else {
+        kept.push(c);
+      }
+    });
+    if (kept.length !== r.cells.length) {
+      r.cells = kept;
+      delete r.graph; // the dependency graph is stale once cells are removed
+    }
+  }
+
+  // Resolve EVERY outstanding invalidation and drop the whole runtime, so a
+  // `full_render` (which blows away `#tali-root` wholesale) doesn't leak the prior
+  // page's WebGL contexts / RAF loops and doesn't re-push duplicate cells onto a
+  // never-reset `r.cells`. The next `enhance()` lazily rebuilds a fresh `window.__talijs`.
+  function resetRuntime() {
+    var r = /** @type {TaliJsRuntime | null} */ (window.__talijs);
+    if (!r) return;
+    (r.cells || []).forEach(function (c) {
+      try { if (c.dispose) c.dispose(); } catch (e) { console.error("tali-js: cell teardown failed", e); }
+    });
+    window.__talijs = null;
+  }
+
+  // `{js}` itself: the author's source becomes an async function over the drawing globals.
+  //
+  // Author source receives `api` verbatim as `tali`. That is safe because the one
+  // capability author source must not have — `publish`, which SCHEDULES a downstream pass —
+  // is not on `api` at all; it is a language-only hook passed as `setup`'s fourth argument.
+  languages["application/tali-js"] = function (src, api) {
+    var fn = new AsyncFunction("tali", "Plot", "d3", "container", "invalidation", src);
+    return {
+      run: function () {
+        return fn(api, window.Plot, window.d3, api.container, api.invalidation);
+      },
+    };
+  };
+
+  // Public API for the live-preview client (web-client/client.js): two teardown hooks, one
+  // for a block about to be replaced/removed and one before a full re-mount.
+  window.taliJs = window.taliJs || {};
+  window.taliJs.teardown = teardownIn;
+  window.taliJs.reset = resetRuntime;
+
+  // Run a list of cells in document order, awaiting each — so `//| name:` outputs
+  // are stored before dependent cells run.
+  /** @param {TaliJsCell[]} cells */
+  async function runSequentially(cells) {
+    for (var i = 0; i < cells.length; i++) await cells[i].run();
+  }
+
+  // Build (and cache on `r`) the cell dependency graph: a name -> consumers map plus a
+  // global topological order via Kahn's algorithm over `producer.defines -> consumer`
+  // edges. Cells left over after Kahn's are in a dependency cycle -> diagnosed (and then
+  // excluded from scheduling). Rebuilt whenever fresh cells mount.
+  /** @param {TaliJsRuntime} r @returns {TaliJsGraph} */
+  function buildGraph(r) {
+    var cells = r.cells;
+    /** @type {Record<string, TaliJsCell[]>} */
+    var consumers = {}; // define-name -> [cells listing it in `inputs`]
+    cells.forEach(function (c) {
+      c.inputs.forEach(function (n) { (consumers[n] = consumers[n] || []).push(c); });
+    });
+    /** @type {Map<TaliJsCell, number>} */
+    var indeg = new Map();
+    cells.forEach(function (c) { indeg.set(c, 0); });
+    cells.forEach(function (c) {
+      if (c.defines) (consumers[c.defines] || []).forEach(function (cc) {
+        indeg.set(cc, (indeg.get(cc) || 0) + 1);
+      });
+    });
+    var queue = cells.filter(function (c) { return indeg.get(c) === 0; }); // doc order
+    /** @type {TaliJsCell[]} */
+    var order = [];
+    while (queue.length) {
+      var c = /** @type {TaliJsCell} */ (queue.shift());
+      order.push(c);
+      if (c.defines) (consumers[c.defines] || []).forEach(function (cc) {
+        indeg.set(cc, (indeg.get(cc) || 0) - 1);
+        if (indeg.get(cc) === 0) queue.push(cc);
+      });
+    }
+    var cyclic = cells.filter(function (c) { return order.indexOf(c) < 0; });
+    cyclic.forEach(function (c) {
+      console.error("tali-js: dependency cycle involving", c.defines || "(unnamed cell)");
+      if (c.container) {
+        var pre = document.createElement("pre");
+        pre.className = "tali-js-error";
+        pre.textContent = "tali-js: dependency cycle involving `" + (c.defines || "this cell") + "`";
+        c.container.replaceChildren(pre);
+      }
+    });
+    r.graph = { consumers: consumers, order: order, cyclic: cyclic };
+    return r.graph;
+  }
+
+  // The cells transitively downstream of one or more changed names, in topological order.
+  // BFS over the consumers map, following each hit cell's own `defines` (so n -> squared ->
+  // ... chains are followed). Cyclic cells are excluded (they never enter `order`, and show
+  // their diagnostic instead). Takes a LIST of seeds so a mount that republishes several
+  // names is one merged pass: a consumer fed by two of them must still run exactly once.
+  /** @param {TaliJsRuntime} r @param {string[]} seeds @returns {TaliJsCell[]} */
+  function downstreamInOrder(r, seeds) {
+    var g = r.graph || buildGraph(r);
+    /** @type {Set<TaliJsCell>} */
+    var hit = new Set();
+    var q = seeds.slice();
+    while (q.length) {
+      var n = /** @type {string} */ (q.shift());
+      (g.consumers[n] || []).forEach(function (c) {
+        if (!hit.has(c)) { hit.add(c); if (c.defines) q.push(c.defines); }
+      });
+    }
+    return g.order.filter(function (c) { return hit.has(c); });
+  }
+
+  // The cells a mount leaves STALE: everything downstream of a name the freshly-mounted
+  // cells publish, minus those cells themselves.
+  //
+  // A re-mount makes only the EDITED block fresh. So changing a `//| name:` producer's body
+  // (`** 2` -> `** 3`) re-ran that one cell and nothing else: it republished `squared` into
+  // the shared scope and its consumers went on painting the value the OLD code produced,
+  // until the reader happened to move a slider and `scheduleFrom` swept them up. A preview
+  // displaying a page that contradicts its own source.
+  //
+  // Excluding `mounted` is what keeps this from being a re-run of the whole graph on every
+  // mount: on a COLD load every cell is fresh, so the seeds' entire closure is the fresh set
+  // itself and this correctly returns nothing. (For the same reason it is one merged pass
+  // rather than a `scheduleFrom` per seed, which would re-run a shared consumer once per
+  // producer feeding it, repainting charts and rebuilding `import()`ed renderers for no
+  // change in what they display.)
+  /** @param {TaliJsRuntime} r @param {TaliJsCell[]} mounted @returns {TaliJsCell[]} */
+  function staleAfterMount(r, mounted) {
+    /** @type {string[]} */
+    var seeds = [];
+    mounted.forEach(function (c) { if (c.defines) seeds.push(c.defines); });
+    if (!seeds.length) return [];
+    /** @type {Set<TaliJsCell>} */
+    var already = new Set(mounted);
+    return downstreamInOrder(r, seeds).filter(function (c) { return !already.has(c); });
+  }
+
+  // Re-run exactly the closure downstream of `name`, once each, in dependency order — a
+  // single controlled pass (NOT cascading listener fires, which would be a reactive VM).
+  //
+  // Returns the pass's promise. Every caller ignores it, so an input change is
+  // fire-and-forget; it was awaited by the `animate` tick's frame pump, which was retired
+  // on 2026-08-03 along with the `pending` map that parked it.
+  /** @param {TaliJsRuntime} r @param {string} name @returns {Promise<void>} */
+  function scheduleFrom(r, name) {
+    var cells = downstreamInOrder(r, [name]);
+    return cells.length ? runSequentially(cells) : Promise.resolve();
+  }
+
+  /** @param {ParentNode | null} [root] */
+  function enhance(root) {
+    bindDefines(); // ingest any define blobs already present before running cells
+    var r = rt();
+    // Register declarative `{{< input >}}` controls (static HTML tagged data-tali-input) as
+    // named reactive inputs, BEFORE cells run so their value is available on first run.
+    // Reuses the same registerInput path as `//| viewof` cells; the change event fires the
+    // existing scheduleFrom (transitive-downstream re-run). Live-swap re-registers via the
+    // :not(...) guard. A sibling [data-tali-out] (the slider readout) tracks the value.
+    var frag = parseInputFragment();
+    /** @type {NodeListOf<HTMLElement>} */ (
+      (root || document).querySelectorAll("[data-tali-input]:not([data-tali-input-bound])")
+    ).forEach(function (el) {
+        el.setAttribute("data-tali-input-bound", "1");
+        var name = el.getAttribute("data-tali-input");
+        if (!name) return;
+        // Hydrate from the URL fragment BEFORE cells run, so a shared link restores the
+        // control (and its downstream cells) on first paint.
+        if (Object.prototype.hasOwnProperty.call(frag, name)) applyInputValue(el, frag[name]);
+        registerInput(r, name, el);
+        // Persist to the fragment on every change (shareable/deep-linkable state).
+        el.addEventListener("input", syncInputFragment);
+        // const so the null-guard survives into the `upd` input closure.
+        const out = el.parentNode && el.parentNode.querySelector("[data-tali-out]");
+        if (out) {
+          var upd = function () { out.textContent = String(readValue(el)); };
+          el.addEventListener("input", upd);
+          upd();
+        }
+      });
+    /** @type {TaliJsCell[]} */
+    var fresh = [];
+    // Every registered client-side language in ONE document-order pass, so a page mixing
+    // two languages still mounts its cells in the order they were authored (which is the
+    // producer-before-consumer convention the initial run relies on). Selecting per
+    // language would group by language instead, and a cell reading a `//| name:` published
+    // by a later-selected cell of another language would read undefined on first paint.
+    var selector = Object.keys(languages)
+      .map(function (m) { return 'script[type="' + m + '"]:not([data-tali-ran])'; })
+      .join(",");
+    /** @type {NodeListOf<HTMLElement>} */ (
+      (root || document).querySelectorAll(selector)
+    ).forEach(function (s) {
+      s.setAttribute("data-tali-ran", "1");
+      var c = setupCell(s);
+      if (c) fresh.push(c);
+    });
+    if (fresh.length) buildGraph(r); // (re)derive the graph + diagnose cycles
+    // Initial run in document order (the authoring convention is producer-before-
+    // consumer); cyclic cells are left showing their diagnostic rather than run.
+    /** @type {TaliJsCell[]} */
+    var runnable = fresh.filter(function (c) {
+      return !r.graph || r.graph.cyclic.indexOf(c) < 0;
+    });
+    // Read off the graph we just built, BEFORE anything runs, so the closure is decided
+    // against one consistent snapshot rather than against whatever a mid-pass teardown
+    // leaves behind. Then the two passes are chained: a stale consumer reads its producer's
+    // value out of the shared scope, so it must not start until that producer has resolved.
+    var stale = staleAfterMount(r, runnable);
+    runSequentially(runnable).then(function () { return runSequentially(stale); });
+  }
+
+  if (window.taliEnhancers && window.taliEnhancers.register) {
+    window.taliEnhancers.register(enhance);
+  } else {
+    document.addEventListener("DOMContentLoaded", function () { enhance(document); });
+  }
+})();
+</script>
+<script>document.addEventListener('DOMContentLoaded',function(){window.taliEnhanceCode&&window.taliEnhanceCode(document.body);});</script>
+<script>window.TALIESIN_SITE_ROOT="../../";window.TALIESIN_PAGE_URL="posts/a-star/index.html";window.TALIESIN_SEARCH_URL="../../search-index.js"</script>
+
+
+</body>
+</html>

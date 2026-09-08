@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Blog</title>
+  <id>https://andreasbogossian.com/blog.xml</id>
+  <link rel="self" href="https://andreasbogossian.com/blog.xml"/>
+  <link rel="alternate" href="https://andreasbogossian.com/blog.html"/>
+  <updated>2026-05-15T00:00:00Z</updated>
+  <author><name>Andreas Bogossian</name></author>
+  <generator>Taliesin</generator>
+  <entry>
+    <title>The Fourier Transform</title>
+    <id>https://andreasbogossian.com/posts/fourier-transform/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/posts/fourier-transform/"/>
+    <updated>2026-05-15T00:00:00Z</updated>
+    <published>2026-05-15T00:00:00Z</published>
+    <category term="Mathematics"/>
+    <summary>How mathematics hears which notes are hidden in a chord.</summary>
+  </entry>
+  <entry>
+    <title>PCA: the shape hidden in your data</title>
+    <id>https://andreasbogossian.com/posts/pca-geometry/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/posts/pca-geometry/"/>
+    <updated>2026-05-08T00:00:00Z</updated>
+    <published>2026-05-08T00:00:00Z</published>
+    <category term="Machine Learning"/>
+    <category term="Mathematics"/>
+    <summary>The geometry behind principal component analysis: how the covariance matrix encodes the shape of your data, and why eigenvectors are the natural axes to read it from.</summary>
+  </entry>
+  <entry>
+    <title>The Kruskal-Wallis test, derived from first principles</title>
+    <id>https://andreasbogossian.com/posts/Kruskal-Wallis-test/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/posts/Kruskal-Wallis-test/"/>
+    <updated>2026-04-26T00:00:00Z</updated>
+    <published>2026-04-26T00:00:00Z</published>
+    <category term="Statistics"/>
+    <summary>Deriving the Kruskal-Wallis test from scratch, using a pain management trial to show where ANOVA falls short.</summary>
+  </entry>
+  <entry>
+    <title>The EM-algorithm</title>
+    <id>https://andreasbogossian.com/posts/em-algorithm/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/posts/em-algorithm/"/>
+    <updated>2026-04-14T00:00:00Z</updated>
+    <published>2026-04-14T00:00:00Z</published>
+    <category term="Machine Learning"/>
+    <summary>A deep dive into the Expectation-Maximisation algorithm: The method behind clustering, missing data, and probabilistic models.</summary>
+  </entry>
+  <entry>
+    <title>Variational Inference &amp; the ELBO</title>
+    <id>https://andreasbogossian.com/posts/evidence-lower-bound/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/posts/evidence-lower-bound/"/>
+    <updated>2026-04-02T00:00:00Z</updated>
+    <published>2026-04-02T00:00:00Z</published>
+    <category term="Machine Learning"/>
+    <summary>A step-by-step derivation of the Evidence Lower Bound (ELBO), from intractable posteriors to the reconstruction-regularisation decomposition used in VAEs.</summary>
+  </entry>
+  <entry>
+    <title>A* Pathfinding Algorithm</title>
+    <id>https://andreasbogossian.com/posts/a-star/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/posts/a-star/"/>
+    <updated>2026-03-19T00:00:00Z</updated>
+    <published>2026-03-19T00:00:00Z</published>
+    <category term="Algorithms"/>
+    <category term="Mathematics"/>
+    <summary>A* finds the shortest path between two points by balancing actual travel cost and a heuristic estimate of remaining distance.</summary>
+  </entry>
+  <entry>
+    <title>KL Divergence</title>
+    <id>https://andreasbogossian.com/posts/KL-divergence/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/posts/KL-divergence/"/>
+    <updated>2026-03-17T00:00:00Z</updated>
+    <published>2026-03-17T00:00:00Z</published>
+    <category term="Statistics"/>
+    <category term="Mathematics"/>
+    <summary>How to measure the difference between two probability distributions, and why it sits at the heart of modern LLM alignment.</summary>
+  </entry>
+</feed>

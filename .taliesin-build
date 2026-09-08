@@ -1,0 +1,2 @@
+Taliesin build output. `taliesin build` deletes files under this directory that it did
+not produce. Delete this file to make it refuse to write here again.
