@@ -64,38 +64,29 @@ return async function makeScene3D(buildScene, invalidation, opts = {}) {
   function spriteLabel(text, cssColor, scale = 1.6) {
     const c = document.createElement("canvas");
     c.width = 320; c.height = 72;
-    paintLabel(c, text, cssColor || pageFg());
+    // The live text is held in `current` rather than captured by value, so the theme
+    // repaint below redraws what the label says NOW. Capturing `text` instead would make a
+    // relabelled sprite silently revert to its original wording on the next theme toggle.
+    let current = text;
+    paintLabel(c, current, cssColor || pageFg());
     const tex = new THREE.CanvasTexture(c);
     const spr = new THREE.Sprite(new THREE.SpriteMaterial({
       map: tex, transparent: true, depthTest: false
     }));
     spr.scale.set(scale, 0.36, 1);
-    if (!cssColor) themedLabels.push(() => { paintLabel(c, text, pageFg()); tex.needsUpdate = true; });
+    // Relabel in place: a scene that changes units under the reader repaints its own
+    // texture instead of tearing the sprite down and rebuilding it.
+    spr.setText = (next) => {
+      current = next;
+      paintLabel(c, current, cssColor || pageFg());
+      tex.needsUpdate = true;
+    };
+    if (!cssColor) themedLabels.push(() => { paintLabel(c, current, pageFg()); tex.needsUpdate = true; });
     return spr;
   }
 
   function onThemeChange() { for (const repaint of themedLabels) repaint(); }
   window.addEventListener("tali:themechange", onThemeChange);
-
-  // ctrl is created before buildScene so the callback can configure it
-  const ctrl = new OrbitControls(camera, renderer.domElement);
-  ctrl.target.set(...target);
-  ctrl.enableDamping = true;
-  ctrl.dampingFactor = 0.06;
-  ctrl.minDistance   = minDistance;
-  ctrl.maxDistance   = maxDistance;
-
-  buildScene(scene, THREE, { O, spriteLabel, ctrl });
-
-  ctrl.update();
-
-  let rafId;
-  (function animate() {
-    rafId = requestAnimationFrame(animate);
-    if (onFrame) onFrame();
-    ctrl.update();
-    renderer.render(scene, camera);
-  })();
 
   const container = document.createElement("div");
   container.style.cssText =
@@ -118,6 +109,37 @@ return async function makeScene3D(buildScene, invalidation, opts = {}) {
     "border-radius:var(--tali-radius)",
     "z-index:10",
   ].join(";");
+
+  // Bottom-LEFT is the scene's own slot; Fullscreen owns bottom-right. Handed to
+  // buildScene so a scene that needs a control of its own gets the page's chrome for free.
+  function makeButton(text, onClick) {
+    const b = document.createElement("button");
+    b.textContent = text;
+    b.style.cssText = "position:absolute;bottom:8px;left:8px;" + btnStyle;
+    b.addEventListener("click", onClick);
+    container.appendChild(b);
+    return b;
+  }
+
+  // ctrl is created before buildScene so the callback can configure it
+  const ctrl = new OrbitControls(camera, renderer.domElement);
+  ctrl.target.set(...target);
+  ctrl.enableDamping = true;
+  ctrl.dampingFactor = 0.06;
+  ctrl.minDistance   = minDistance;
+  ctrl.maxDistance   = maxDistance;
+
+  buildScene(scene, THREE, { O, spriteLabel, ctrl, makeButton });
+
+  ctrl.update();
+
+  let rafId;
+  (function animate() {
+    rafId = requestAnimationFrame(animate);
+    if (onFrame) onFrame();
+    ctrl.update();
+    renderer.render(scene, camera);
+  })();
 
   const fsBtn = document.createElement("button");
   fsBtn.textContent = "Fullscreen";
