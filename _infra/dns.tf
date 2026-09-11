@@ -18,3 +18,10 @@ resource "cloudflare_record" "www" {
 # Add any other records here (MX for email, TXT for verification, etc.)
 # Use cf-terraforming to export existing records:
 #   cf-terraforming generate --resource-type cloudflare_record --zone $ZONE_ID
+
+# t.andreasbogossian.com is NOT managed here. It is a CNAME to the readlog
+# tunnel (<TUNNEL_ID>.cfargotunnel.com), created by `cloudflared tunnel route
+# dns` because the tunnel id only exists after the tunnel is created. Terraform
+# does not manage records it does not know about, so this is drift-free, but it
+# does mean `terraform plan` will never mention it. See the readlog repo's
+# deploy/README.md.

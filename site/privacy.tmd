@@ -1,0 +1,45 @@
+---
+title: Privacy
+---
+
+This site counts readers. Here is exactly what that means, in plain language.
+
+## Nothing is stored on your device
+
+No cookies. No local storage. No session storage. Nothing this site does
+leaves anything behind on your machine, which is why there is no consent
+banner to click away: there is nothing to consent to.
+
+## What is recorded
+
+When a page loads, the site records the page you opened, its title, where you
+came from if the referring site chose to say, the campaign parameters in the
+link if it had any, your screen and window size, your time zone, your
+language, whether you prefer dark mode and reduced motion, and a rough
+connection type.
+
+## How visitors are counted without identifying anyone
+
+Counting unique readers normally requires tagging the device. Instead, the
+server combines your IP address, your browser's user agent and a secret that
+changes every day, and keeps only the resulting hash. Your IP address is
+discarded immediately and never written down. The daily secret is deleted
+after three days, and once it is gone the stored hashes cannot be traced back
+to anyone, including by me.
+
+The cost of doing it this way is real: I cannot tell whether you have visited
+before, on this device or any other, and I never will. That is the trade, and
+I would rather have it this way.
+
+## If you have Global Privacy Control turned on
+
+Nothing is sent at all. Not a reduced record, not an anonymous ping. The
+script checks and stops.
+
+## Who sees this
+
+Nobody but me. The data sits on a machine in my home, not with an analytics
+company. It is not sold, shared or fed to anything.
+
+The code that does all of this is open source and you are welcome to check
+that it does what this page says.

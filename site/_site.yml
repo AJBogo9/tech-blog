@@ -18,6 +18,8 @@ nav:
 footer:
   left:
   - text: © 2026 Andreas Bogossian
+  - text: Privacy
+    href: privacy.tmd
   - text: Source
     href: https://github.com/AJBogo9/tech-blog
   right:
