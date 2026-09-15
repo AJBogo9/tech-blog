@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Projects</title>
+  <id>https://andreasbogossian.com/projects.xml</id>
+  <link rel="self" href="https://andreasbogossian.com/projects.xml"/>
+  <link rel="alternate" href="https://andreasbogossian.com/projects.html"/>
+  <updated>2026-06-10T00:00:00Z</updated>
+  <author><name>Andreas Bogossian</name></author>
+  <generator>Taliesin</generator>
+  <entry>
+    <title>supercollider-mcp</title>
+    <id>https://andreasbogossian.com/projects/supercollider-mcp/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/projects/supercollider-mcp/"/>
+    <updated>2026-06-10T00:00:00Z</updated>
+    <published>2026-06-10T00:00:00Z</published>
+    <category term="Python"/>
+    <category term="MCP"/>
+    <category term="Music"/>
+    <summary>An MCP server that gives an LLM a synthesis engine, a feedback loop, and ears.</summary>
+  </entry>
+  <entry>
+    <title>Activity Challenge Telegram Bot</title>
+    <id>https://andreasbogossian.com/projects/activity-challenge-bot/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/projects/activity-challenge-bot/"/>
+    <updated>2025-12-05T00:00:00Z</updated>
+    <published>2025-12-05T00:00:00Z</published>
+    <category term="Python"/>
+    <category term="Kubernetes"/>
+    <category term="Backend"/>
+    <summary>A production Telegram bot running guild-based fitness competitions across Aalto societies, with a Kubernetes-deployed backend and an analytics dashboard.</summary>
+  </entry>
+  <entry>
+    <title>Hierarchical Bayesian Analysis of Aviation Safety</title>
+    <id>https://andreasbogossian.com/projects/bayesian-aviation-safety/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/projects/bayesian-aviation-safety/"/>
+    <updated>2025-11-04T00:00:00Z</updated>
+    <published>2025-11-04T00:00:00Z</published>
+    <category term="R"/>
+    <category term="Bayesian"/>
+    <category term="Statistics"/>
+    <summary>A hierarchical Bayesian study of fatality rates across aircraft manufacturers, showing partial pooling beats complete pooling by ~1,944 ELPD.</summary>
+  </entry>
+  <entry>
+    <title>iPhone Premium Analysis: Hardware vs. Price</title>
+    <id>https://andreasbogossian.com/projects/iphone-premium-analysis/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/projects/iphone-premium-analysis/"/>
+    <updated>2025-01-30T00:00:00Z</updated>
+    <published>2025-01-30T00:00:00Z</published>
+    <category term="Python"/>
+    <category term="Machine Learning"/>
+    <summary>Regression models on 1,359 smartphones to test whether Apple devices are priced above their hardware-justified value. They are.</summary>
+  </entry>
+</feed>

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://andreasbogossian.com/sitemap.xml
