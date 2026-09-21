@@ -81,6 +81,28 @@ Each post lives in `site/posts/<slug>/index.tmd`. Frontmatter fields that matter
   (`type:` is `grid` or `list`; there is no `sort:` — listings are date-descending).
 - `draft: true` — shows in preview with a DRAFT badge, never ships in a build.
 
+**Post shape: the demo comes before the theory.** Posts are written to build
+intuition first and reach for rigor second. The order is fixed:
+
+1. **The job.** Two or three sentences naming a real task someone is paid to do.
+2. **The interactive demo.** The real problem, visual and playable, before any
+   notation. The reader forms a guess, pushes on it, and finds out where the
+   guess was wrong. This section carries the post.
+3. **The theory, sized to the intuition.** Every equation has to be readable as a
+   sentence about the demo. Full derivations go in a collapsed callout, proofs
+   are cited rather than reproduced, and a property earns its bullet only if the
+   reader can watch it happen in the demo. Where the method breaks stays
+   uncollapsed: failure modes are intuition, not rigor.
+4. **Summary.**
+
+The checkable version: the demo section is longer than the theory section, and a
+collapsible notation table sits at the head of the theory section, never at the
+top of the post. Section 2 is named after the concrete problem ("The pain
+trial"), never "Example" or "Code demo". `Kruskal-Wallis-test` is the closest
+existing post. The older `Theory` then `Code demo` posts (`KL-divergence`,
+`em-algorithm`, `evidence-lower-bound`) predate this rule and were deliberately
+not retrofitted, so do not "fix" them.
+
 Posts mix Markdown, `{python}` code cells (executed via Jupyter; numpy/matplotlib/
 scikit-learn/torch), math (`$…$`/`$$…$$`, KaTeX server-side), and native reactive
 `{js}` cells for interactive visualisations. Reactive `{js}` cells use
