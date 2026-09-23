@@ -20,6 +20,12 @@ cd site/_site
 # taliesin build cannot see them: the layout is the guarantee, not this list.
 # Kept as belt-and-suspenders in case a stray copy ever lands inside site/.
 rm -rf infra _infra _beacon publish.sh requirements.txt .venv
+
+# Taliesin names every file in _assets/ after a hash of its content, so a changed file is
+# a new URL and a cached copy can never go stale. Without this, Cloudflare Pages caches
+# them for 4 hours and then makes a returning reader revalidate each one.
+printf '/_assets/*\n  Cache-Control: public, max-age=31536000, immutable\n' > _headers
+
 git init
 git remote add origin $(git -C ../.. remote get-url origin)
 git checkout -b cf-pages

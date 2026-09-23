@@ -248,7 +248,7 @@ def em_gmm(X, K=2, n_iter=30, seed=0):
             "sigma": sigma.tolist(),
             "pi":    pi.tolist(),
             "ll":    round(ll, 3),
-            "r":     r.tolist(),   # full responsibility matrix. Used for rug colouring
+            "r":     r.round(3).tolist(),   # responsibility matrix, for the rug colours
         })
 
     return history
