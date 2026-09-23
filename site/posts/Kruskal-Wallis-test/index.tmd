@@ -36,7 +36,7 @@ The Kruskal-Wallis test solves this problem. The KW test replaces raw scores wit
 
 # The pain trial
 
-This post will use a made up example: the data will have three groups of 15 patients with NRS scores at 48 hours post surgery. The @fig-pain-data shows both the theoretical (Gamma) distributions where the samples are drawn from and the actual samples. Then @tbl-pain-summary summarizes the data.
+This post will use a made up example: the data will have three groups of 15 patients with VAS scores at 48 hours post surgery. The @fig-pain-data shows both the theoretical (Gamma) distributions where the samples are drawn from and the actual samples. Then @tbl-pain-summary summarizes the data.
 
 ```{python}
 #| label: fig-pain-data
@@ -368,7 +368,7 @@ display(HTML(f"""
 """))
 ```
 
-The multimodal group's mean rank is well below 23.0 (the grand mean rank), the opioid-only group's mean rank is well above it. The NSAID + nerve block is quite close to the mean rank. The $H$-statistic is able to quantify the spread. The chi-square p-value tells us whether a deviation this large would occur by chance under the null. With $p < 0.05$, we reject. The KW-test rejects the null, ANOVA doesn't. This shows that the KW-test is able to quantify the differences between distributions when they are heavily skewed better than ANOVA. 
+The multimodal group's mean rank is well below 23.0 (the grand mean rank), the opioid-only group's mean rank is well above it. The NSAID + nerve block is quite close to the mean rank. The $H$-statistic is able to quantify the spread. The chi-square p-value tells us whether a deviation this large would occur by chance under the null. With $p < 0.05$, we reject. The KW-test rejects the null, ANOVA doesn't. In this sample, with heavily skewed distributions, the KW-test detects a difference that ANOVA misses. 
 
 ::: {.callout-note}
 ## What KW doesn't tell

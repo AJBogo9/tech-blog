@@ -83,7 +83,7 @@ $$
     = \sum_{i=1}^{n} \log \left[ \pi_{z_i} \, \mathcal{N}(x_i \mid \mu_{z_i}, \sigma_{z_i}^2) \right]
 $$
 
-Since each $z_i$ takes exactly one value in ${1, \dots, K}$, we can rewrite this using an indicator that makes the sum over k explicit
+Since each $z_i$ takes exactly one value in $\{1, \dots, K\}$, we can rewrite this using an indicator that makes the sum over k explicit
 
 $$
   \ell_c(\theta) = \sum_{i=1}^{n} \sum_{k=1}^{K}
@@ -146,7 +146,7 @@ Here
 
 ## Convergence
 
-Now to solve the optimal parameters, we iterate alternating the E and M steps until the change in the log-likelihood falls below a threshold $\epsilon$. A thing to keep in mind with the EM algorithm is that it is guaranteed to reach a _local_ maximum (or a saddle point) and not necessary the global one [@bishop2006pattern, chap. 9]. Also initialization matters because different starting points can lead to different local optima. 
+Now to solve the optimal parameters, we iterate alternating the E and M steps until the change in the log-likelihood falls below a threshold $\epsilon$ (the demo below simply runs a fixed 30 iterations). A thing to keep in mind with the EM algorithm is that it is guaranteed to reach a _local_ maximum (or a saddle point) and not necessary the global one [@bishop2006pattern, chap. 9]. Also initialization matters because different starting points can lead to different local optima. 
 
 # Code demo
 

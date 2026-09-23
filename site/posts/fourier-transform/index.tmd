@@ -146,7 +146,7 @@ The result $X[k]$ is a complex number. Its magnitude $|X[k]|$ tells you how much
 
 # Geometric intuition: winding a signal around a circle
 
-There is a nice geometric way to understand what @eq-dft is doing. The idea is that you take the signal and wind it around a circle. At sample $n$, place the value $x[n]$ on the complex plane, rotated by $k$ full turns spread over $N$ samples. Then each point becomes a point in 2D space. The sum $X[k]$ is the **centre of mass** of all these points. 
+There is a nice geometric way to understand what @eq-dft is doing. The idea is that you take the signal and wind it around a circle. At sample $n$, place the value $x[n]$ on the complex plane, rotated by $k$ full turns spread over $N$ samples. Then each point becomes a point in 2D space. The sum $X[k]$, divided by $N$, is the **centre of mass** of all these points. 
 
 When $k$ matches a hidden frequency, the wound samples bunch up on one side of the origin (large $|X[k]|$). When $k$ does not match a hidden frequency, the samples scatter evenly around the circle (small $|X[k]|$). From the figure below, you can see the chord signal that is wound around a circle. Changing the frequency $k$ shows on which frequencies $|X[k]|$ becomes non-zero. The figure below uses a synthetic 256-sample signal with notes at bin indices $k = 3, 7, 12$ which is the same ratio as the chord, but scaled to a different absolute pitch to simplify the visual.
 

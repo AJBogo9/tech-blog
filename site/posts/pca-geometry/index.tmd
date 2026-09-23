@@ -66,7 +66,7 @@ X_raw = Z * stds + means
 
 # Standardising the data
 
-For computing the PCA components, we need the covariance matrix. But for the covariance matrix, each feature needs to be standardized. The data points are standardized as
+For computing the PCA components, we need the covariance matrix. Before computing it, we standardize each feature, so the PCA runs on the correlation matrix. The data points are standardized as
 
 $$
 x_{ij} \leftarrow \frac{x_{ij} - \mu_j}{\sigma_j}
@@ -74,8 +74,8 @@ $$
 
 where $i$ indexes the player and $j$ indexes the feature (height, wingspan, or standing reach), $\mu_j$ is the mean of feature $j$ across all players, and $\sigma_j$ is its standard deviation.
 
-This step makes each variable have a mean of 0 and variance of 1. This makes the three axes comparable because otherwise larger units would artificially dominate
-the covariance matrix. The shape of the correlation stays unchanged because standardisation only rescales the values and doesn't distort them.
+This step makes each variable have a mean of 0 and variance of 1. This makes the three axes comparable because otherwise the feature with the largest spread
+(standing reach, 11 cm) would dominate the covariance matrix. The shape of the correlation stays unchanged because standardisation only rescales the values and doesn't distort them.
 
 ```{python}
 #| label: standardise
@@ -241,7 +241,7 @@ $$
 \Sigma \mathbf{v} = \lambda \mathbf{v}
 $$
 
-Applying the matrix $\Sigma$ to $\mathbf{v}$ only scales the vector by a scalar $\lambda$ and never rotates it. These eigenvectors are natural axes for the data cloud. These eigenvectors are directions along which the data varies independently with no covariance between them (orthogonal with respect to each other). The corresponding eigenvalue $\lambda$ is the variance of the data projected onto that axis. Then sorting the eigenvalues $\lambda$ from largest to smallest gives us the principal components in order: PC1 explains most of the variance, PC2 the next most etc. All principal components are orthogonal to each other. The full decomposition is:
+Applying the matrix $\Sigma$ to $\mathbf{v}$ only scales the vector by a scalar $\lambda$ and never rotates it. These eigenvectors are natural axes for the data cloud. These eigenvectors are directions along which the data is uncorrelated, with no covariance between them (orthogonal with respect to each other). The corresponding eigenvalue $\lambda$ is the variance of the data projected onto that axis. Then sorting the eigenvalues $\lambda$ from largest to smallest gives us the principal components in order: PC1 explains most of the variance, PC2 the next most etc. All principal components are orthogonal to each other. The full decomposition is:
 
 $$
 \Sigma = V \Lambda V^\top
@@ -412,10 +412,10 @@ $$
 \underbrace{Z_k}_{N \times k} = \underbrace{X}_{N \times p}\underbrace{V_k}_{p \times k}, \qquad \underbrace{\hat{X}}_{N \times p} = \underbrace{Z_k}_{N \times k}\underbrace{V_k^\top}_{k \times p}
 $$
 
-where $V_k$ contains only the first $k$ eigenvectors and $p$ is the number of features (3 in this case). In practice, the data is first projected down to $k$ dimensions, then reconstructed back into the original $p$-dimensional space. But during the reconstruction, the data is constrained to lie on a $k$-dimensional subspace, so information carried by the discarded eigenvalues is lost. The reconstruction error is exactly the sum of these discarded eigenvalues:
+where $V_k$ contains only the first $k$ eigenvectors and $p$ is the number of features (3 in this case). In practice, the data is first projected down to $k$ dimensions, then reconstructed back into the original $p$-dimensional space. But during the reconstruction, the data is constrained to lie on a $k$-dimensional subspace, so information carried by the discarded eigenvalues is lost. Scaled by $\frac{1}{N-1}$ like the covariance matrix, the reconstruction error is exactly the sum of these discarded eigenvalues:
 
 $$
-\|X - \hat{X}\|_F^2 = \sum_{i > k} \lambda_i
+\frac{1}{N-1}\|X - \hat{X}\|_F^2 = \sum_{i > k} \lambda_i
 $$
 
 ```{js}
@@ -533,4 +533,4 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
 
 # What the scout found
 
-PC1 captures nearly all variation (~80%, see @fig-scree) of the three measurements. PC1 can be thought of as an "overall size" axis. PC2 and PC3 capture the remaining ~20% of the variation. What I like about PCA is that all of this analysis could be done automatically with only the data set and a little linear algebra.
+PC1 captures most of the variation (~80%, see @fig-scree) of the three measurements. PC1 can be thought of as an "overall size" axis. PC2 and PC3 capture the remaining ~20% of the variation. What I like about PCA is that all of this analysis could be done automatically with only the data set and a little linear algebra.

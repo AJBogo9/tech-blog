@@ -19,7 +19,7 @@ Large language models like GPTs output a probability distribution over tokens at
 The **Kullback-Leibler divergence** from Q to P is defined as:
 
 $$
-D_{KL}(P||Q) = \sum_k \operatorname{log}p_k\frac{p_k}{q_k}
+D_{KL}(P||Q) = \sum_k p_k \operatorname{log}\frac{p_k}{q_k}
 $$
 
 where $p_k = P(X = k)$ and $q_k = Q(X = k)$ are the probabilities assigned by
@@ -34,7 +34,7 @@ $$
 H(P) = - \sum_k p_k \operatorname{log}p_k
 $$
 
-This is the average number of bits needed to encode samples from P using an optimal code for $P$ [@goodfellow2016]. 
+This is the average number of nats (bits, if the log is base 2) needed to encode samples from P using an optimal code for $P$ [@goodfellow2016]. 
 
 If instead if a code optimized for $Q$ was used to encode samples that came form $P$, the average code length is the **cross-entropy**:
 
