@@ -1,7 +1,7 @@
 ---
 title: "supercollider-mcp"
 date: "2026-06-10"
-description: "An MCP server that gives an LLM a synthesis engine, a feedback loop, and ears."
+description: "An MCP server that lets an LLM render SuperCollider audio from code and measure the result."
 image: "thumbnail.png"
 image-alt: "Four synthesiser waveforms stacked on a near-black background: a cyan sine, a pink ramp, a green irregular wave, and a dense orange oscillation."
 categories:
@@ -12,15 +12,15 @@ categories:
 
 <a href="https://github.com/AJBogo9/supercollider-mcp" class="btn btn-outline-secondary btn-sm">GitHub</a>
 
-The AI boom has influenced basically every generative/creative industry, music included. Tools like Suno are impressive, but they hand you a finished track. What if you want to iterate on the product and get more control of what comes out? LLMs are good at producing code, but they are not designed to produce sound directly. So why not ask an LLM to produce code that produces sound? There exist tools that fit this description. SuperCollider is an audio platform that allows you to write code to produce sound.
+The AI boom has influenced basically every generative/creative industry, music included. Tools like Suno are impressive, but they hand you a finished track, which does not help if you want to iterate on it and get more control over what comes out. LLMs are good at producing code, but they are not designed to produce sound directly. An LLM can instead produce code that produces sound. There exist tools that fit this description. SuperCollider is an audio platform that allows you to write code to produce sound.
 
-SuperCollider is an open-source platform for audio synthesis and algorithmic composition. It consists of two parts: `scsynth` (the audio server) and `sclang` (the SuperCollider language). Just generating code and playing it would be impressive, but I wanted to add a feedback loop so that the LLM can get feedback on its own composition. This is where supercollider-mcp comes into play.
+SuperCollider is an open-source platform for audio synthesis and algorithmic composition. It consists of two parts: `scsynth` (the audio server) and `sclang` (the SuperCollider language). Just generating code and playing it would be impressive, but I wanted to add a feedback loop so that the LLM can get feedback on its own composition. supercollider-mcp adds that loop.
 
 MCP (Model Context Protocol) is an open protocol for AI models to call tools in external processes. supercollider-mcp puts SuperCollider behind the protocol so that the LLM can render a score, measure the result, and play it for the composer, all from a chat. The model writes Python against the [supriya](https://github.com/supriya-project/supriya) bindings rather than sclang, which keeps every SynthDef, sequencer helper, and analysis call in one language.
 
 ## What it can make
 
-Every clip below was composed by Claude Code through the server, from a chat prompt, with no audio editing afterwards. They are short on purpose: each one is a single idea, rendered, measured, and adjusted a few times.
+Every clip below was composed by Claude Code through the server, from a chat prompt, with no audio editing afterwards. I kept them short because each one is a single idea, rendered, measured, and adjusted a few times.
 
 ```{=html}
 <div style="display:flex;flex-direction:column;gap:0.6rem;margin:0.8rem 0 1.2rem;">
@@ -78,14 +78,14 @@ The full scripts live in the repository under `examples/`.
 
 ## What is easy, and what is not
 
-A pattern emerged while making these. Language models are not good at composing a song in the sense of a melody with a harmonic story, a bridge, and a payoff. That still needs a person. What they are good at is picking a small set of rules and executing them with total consistency, and there are whole genres built exactly that way:
+While making these, I found that language models are not good at composing a song in the sense of a melody with a harmonic story, a bridge, and a payoff. That still needs a person. What they are good at is picking a small set of rules and executing them with total consistency, and there are whole genres built exactly that way:
 
-- **Ambient, drone, and choir washes**: a slow chord arc plus texture. The craft is in the sound, not the notes.
+- **Ambient, drone, and choir washes**: a slow chord arc plus texture, where the sound design matters more than the notes.
 - **Minimalism and process music**: one cell and one process (phasing, additive layering, a filter sweep).
 - **Lofi and dub techno**: a short loop where the interest comes from imperfection, space, and one thing changing slowly.
 - **Trailer cues**: a formula with a named instrument for every step.
 
-The ordering is not accidental. The lower the harmonic and melodic complexity, the better the result, because what remains is sound design and arrangement, and both of those can be measured. Genres that need a real voice, jazz voice leading, or acoustic realism (pop, jazz, orchestral) are where the tool stops today.
+The order of the list follows harmonic and melodic complexity. The lower that complexity, the better the result, because what remains is sound design and arrangement, and both of those can be measured. Genres that need a real voice, jazz voice leading, or acoustic realism (pop, jazz, orchestral) are where the tool stops today.
 
 ## How the server is built
 
@@ -125,7 +125,7 @@ The code the model writes runs in a prepared context: a library of 37 SynthDefs 
 
 ## The workflow
 
-The model can't hear, so it gets feedback two ways: one loop for whether the code is *correct*, and one for whether it *sounds good*.
+The model can't hear, so it gets feedback two ways: one loop for whether the code is correct, and one for whether it sounds good.
 
 **The correctness loop**
 
@@ -133,7 +133,7 @@ The LLM treats `sc_play` and `sc_log` as a pair: play, immediately read the log 
 
 **The quality loop**
 
-`sc_log` catches what is *broken*, but not what sounds *bad*. `sc_analyze` fills that gap. It reads a rendered file and reports measurable proxies: integrated loudness, true peak, dynamic range, crest factor, tempo, spectral balance per band, stereo width, mono compatibility, and key. Each number is judged against a target profile for the genre the model says it is making, so a quiet, wide-dynamics trailer is not flagged the way a quiet techno loop is. The lofi clip above went through three rounds of this: the first render was nearly mono and the bass swamped the chords, and the numbers said so.
+`sc_log` catches what is broken, but not what sounds bad. `sc_analyze` fills that gap. It reads a rendered file and reports measurable proxies: integrated loudness, true peak, dynamic range, crest factor, tempo, spectral balance per band, stereo width, mono compatibility, and key. Each number is judged against a target profile for the genre the model says it is making, so a quiet, wide-dynamics trailer is not flagged the way a quiet techno loop is. The lofi clip above went through three rounds of this: the first render was nearly mono and the bass swamped the chords, and the numbers said so.
 
 `sc_analyze` can't replace taste, but it catches the technical defects a person would flag and lets the model iterate toward known-good numbers. A render takes well under a second, so a round trip is cheap.
 
@@ -143,4 +143,4 @@ Songs are built over many iterations where one iteration is one conversation tur
 
 ## Summary
 
-Give a model a synthesis engine, a feedback loop, and ears, and code generation turns into music composition. Keep the musical idea small and the model will execute it well; bring the big idea yourself.
+supercollider-mcp lets a model render its code as audio and measure the result, which turns code generation into music composition. Keep the musical idea small and the model will execute it well; bring the big idea yourself.

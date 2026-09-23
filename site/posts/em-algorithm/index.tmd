@@ -1,6 +1,6 @@
 ---
 title: "The EM-algorithm"
-description: "A deep dive into the Expectation-Maximisation algorithm: The method behind clustering, missing data, and probabilistic models."
+description: "A walk through the Expectation-Maximisation algorithm, the method behind clustering, missing data, and probabilistic models."
 date: 2026-04-14
 image: "thumbnail.webp"
 image-alt: "Visualisation of the EM-algorithm fitting two Gaussian distributions to unlabelled data"
@@ -68,7 +68,7 @@ Now in order to soft label the exam scores, we want to find $\theta = \{\pi_k, \
   &= \sum_{i=1}^{n} \log \sum_{k=1}^{K} \pi_k \, \mathcal{N}(x_i \mid \mu_k, \sigma_k^2)
 \end{align*}
 
-But there is a problem: The log of a sum has no tidy closed form derivative and this is why plain maximum likelihood fails [@bishop2006pattern]. 
+But the log of a sum has no tidy closed form derivative and this is why plain maximum likelihood fails [@bishop2006pattern]. 
 
 ## The EM fix: complete-data log-likelihood
 
@@ -90,7 +90,7 @@ $$
     \mathbf{1}[z_i = k] \left[ \log \pi_k + \log \mathcal{N}(x_i \mid \mu_k, \sigma_k^2) \right]    
 $$
 
-In this notation $\mathbf{1}[z_i = k]$ is 1 when point $i$ is truly from group $k$ and 0 otherwise. Now the reason we write the likelihood in this for is because the sum of logs is tractable and can be used for optimization. But there is a catch: we still don't know $Z$, so we can't evaluate $\ell_c$ directly. Instead, we take the expectation of $\ell_c$ over the posterior of $Z$ given the data and current parameters $\theta^{(t)}$:
+In this notation $\mathbf{1}[z_i = k]$ is 1 when point $i$ is truly from group $k$ and 0 otherwise. Now the reason we write the likelihood in this for is because the sum of logs is tractable and can be used for optimization. But we still don't know $Z$, so we can't evaluate $\ell_c$ directly. Instead, we take the expectation of $\ell_c$ over the posterior of $Z$ given the data and current parameters $\theta^{(t)}$:
 
 $$
 Q(\theta \mid \theta^{(t)}) = \mathbb{E}_{Z \mid X,\,\theta^{(t)}}\!\bigl[\ell_c(\theta)\bigr]
@@ -109,7 +109,7 @@ This form is a weighted sum of logs that is differentiable and maximisable in cl
 - **E-step**: compute (estimate) the weights $r_{ik}$
 - **M-step**: maximise $Q$ over $\theta$ treating $r_{ik}$ as fixed
 
-So in summary this means that we solve the chicken-and-egg problem by estimating the responsibilities and then estimating the parameters based on the estimate of the responsibility. This way we always have one of the two unknowns locked and can create an estimate from the other unknown.
+So we solve the chicken-and-egg problem by estimating the responsibilities and then estimating the parameters based on the estimate of the responsibility. This way we always have one of the two unknowns locked and can create an estimate from the other unknown.
 
 ## E-step: compute responsibilities
 
@@ -141,7 +141,7 @@ Here
 
 - $\hat{\mu}_k$ is the responsibility-weighted mean of the data
 - $\hat{\sigma}_k^2$ is the responsibility-weighted variance around that mean
-- $\hat{\pi}_k$ is the average responsibility — the fraction of the data
+- $\hat{\pi}_k$ is the average responsibility, i.e. the fraction of the data
   "owned" by component $k$
 
 ## Convergence

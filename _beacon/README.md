@@ -10,7 +10,7 @@ Resync with:
 
 They are vendored rather than referenced so a publish never depends on a
 sibling checkout being present. They live above `site/`, so `taliesin build
-site` structurally cannot see them, the same way `_infra/` is invisible.
+site` cannot see them, the same way `_infra/` is invisible.
 
 Site and endpoint are not baked into the script: `publish.sh` passes them,
 so this copy stays byte-identical to the source and cannot drift.

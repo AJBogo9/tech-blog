@@ -10,11 +10,11 @@ categories:
 bibliography: references.bib
 ---
 
-An NBA scout records three measurements for every player he is scouting: height, wingspan and reach. The thing is that all these measures are highly correlated because
+An NBA scout records three measurements for every player he is scouting: height, wingspan and reach. All three measures are highly correlated, because
 taller players tend to have longer wingspans and higher reaches. So in practice there are three numbers (dimensions) per player, but the data could be
 represented with a single dimension representing the "overall size" of the NBA player. PCA finds this dimension automatically from the data alone.
 
-The 220 synthetic players below are drawn from exactly that structure, and the first figure plots them in raw centimetres before anything at all is done to them.
+The 220 synthetic players below are drawn from that structure, and the first figure plots them in raw centimetres before anything is done to them.
 
 {{< include ../../_includes/three-scene.tmd >}}
 
@@ -241,7 +241,7 @@ $$
 \Sigma \mathbf{v} = \lambda \mathbf{v}
 $$
 
-In practical terms, this means that applying the matrix $\Sigma$ to $\mathbf{v}$ only scales the vector by a scalar $\lambda$ and never rotates it. These eigenvectors are natural axes for the data cloud. These eigenvectors are directions along which the data varies independently with no covariance between them (orthogonal with respect to each other). The corresponding eigenvalue $\lambda$ is the variance of the data projected onto that axis. Then sorting the eigenvalues $\lambda$ from largest to smallest gives us the principal components in order: PC1 explains most of the variance, PC2 the next most etc. All principal components are orthogonal to each other. The full decomposition is:
+Applying the matrix $\Sigma$ to $\mathbf{v}$ only scales the vector by a scalar $\lambda$ and never rotates it. These eigenvectors are natural axes for the data cloud. These eigenvectors are directions along which the data varies independently with no covariance between them (orthogonal with respect to each other). The corresponding eigenvalue $\lambda$ is the variance of the data projected onto that axis. Then sorting the eigenvalues $\lambda$ from largest to smallest gives us the principal components in order: PC1 explains most of the variance, PC2 the next most etc. All principal components are orthogonal to each other. The full decomposition is:
 
 $$
 \Sigma = V \Lambda V^\top
@@ -287,7 +287,7 @@ define(
 ```{js}
 //| echo: false
 //| label: fig-3d-pca
-//| fig-cap: "Three-dimensional point cloud of standardised player measurements. Arrows show the three principal components scaled by their standard deviation √λ. Colour: PC1 (orange) explains the most variance, PC2 (green) the next, PC3 (blue) the least. The translucent plane is the PC1–PC2 subspace. Drag to rotate, scroll to zoom."
+//| fig-cap: "Three-dimensional point cloud of standardised player measurements. Arrows show the three principal components scaled by their standard deviation √λ. Colour: PC1 (orange) explains the most variance, PC2 (green) the next, PC3 (blue) the least. The translucent plane is the PC1-PC2 subspace. Drag to rotate, scroll to zoom."
 
 const pts = tali.defines.pts; if (!pts) return;
 const { pcs, evr, eigs } = tali.defines;
@@ -533,4 +533,4 @@ return makeScene3D((scene, THREE, { O, spriteLabel }) => {
 
 # What the scout found
 
-PC1 captures nearly all variation (~80%, see @fig-scree) of the three measurements. PC1 can be thought of as an "overall size" axis. PC2 and PC3 capture the remaining ~20% of the variation. The beautiful part of PCA is that all of this analysis could be done automatically with only the data set and a little bit of clever linear algebra. The method found the dominant axis automatically.
+PC1 captures nearly all variation (~80%, see @fig-scree) of the three measurements. PC1 can be thought of as an "overall size" axis. PC2 and PC3 capture the remaining ~20% of the variation. What I like about PCA is that all of this analysis could be done automatically with only the data set and a little linear algebra.
