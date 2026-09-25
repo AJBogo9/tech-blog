@@ -78,7 +78,8 @@ Each post lives in `site/posts/<slug>/index.tmd`. Frontmatter fields that matter
 - `categories:` — page-level categories survive and feed the RSS feed and card
   badges. There is **no category filter UI**: `listing.categories` was retired, and
   the only valid listing keys are `contents`, `id`, `type` and `max-items`
-  (`type:` is `grid` or `list`; there is no `sort:` — listings are date-descending).
+  (`type: list` shows each card's `image:` thumbnail, and leaving `type:` out gives the
+  same list without images; there is no `sort:`, since listings are date-descending).
 - `draft: true` — shows in preview with a DRAFT badge, never ships in a build.
 
 **Post shape: the demo comes before the theory.** Posts are written to build
