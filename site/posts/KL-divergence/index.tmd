@@ -90,6 +90,7 @@ By plotting $P$ and $Q$ the mismatch is immediately visible.
 ```{python}
 #| code-fold: true
 #| code-summary: "Show code"
+#| fig-cap: "The true distribution $P$ and the model's prediction $Q$ over the five tokens. $Q$ gives `cat` half its true probability and `on` three times its true probability."
 import matplotlib.pyplot as plt
 
 x = np.arange(len(vocab))

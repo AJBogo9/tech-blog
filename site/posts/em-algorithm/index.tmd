@@ -177,6 +177,7 @@ n = len(X)
 
 ```{python}
 #| code-fold: true
+#| fig-cap: "Histogram of the 220 exam scores, with the two Gaussians they were sampled from: group 1 (μ = 45, σ = 8) and group 2 (μ = 70, σ = 6)."
 
 import matplotlib.pyplot as plt
 from scipy.stats import norm as sp_norm
