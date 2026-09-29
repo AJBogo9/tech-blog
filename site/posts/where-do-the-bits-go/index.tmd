@@ -1,6 +1,6 @@
 ---
 title: "Where Do the Bits Go?"
-description: "How a speech codec spends its bit budget, read row by row from a real spec sheet, and why a neural codec cannot print that sheet."
+description: "Spend a speech codec's bit budget on one vowel, then see how a real codec splits its 253 bits and why a neural codec has no such breakdown."
 date: 2026-09-08
 image: "thumbnail.webp"
 image-alt: "The spectrum of a vowel drawn as a grey comb of harmonics with a bold orange envelope traced over it, labelled 46 bits for the envelope and 207 bits for everything else"
@@ -11,26 +11,9 @@ bibliography: references.bib
 draft: true
 ---
 
-A group in Lyon timed speakers of 17 languages and found that, whether a language is fast and sparse like Spanish or slow and dense like Vietnamese, speech delivers about 39 bits of linguistic information per second [@coupe2019]. A landline call sends 64,000 bits per second [@itu_g711]. Every speech codec ever designed lives in the gap between those two numbers, and the whole craft is deciding which of the missing bits are worth paying for.
-
-Here is how one codec decides. AMR-WB is the codec behind the "HD Voice" badge on most 3G and 4G calls. At its most common rate, 12.65 kbit/s, it packs each 20 ms of speech into exactly 253 bits, split like this [@tgpp_amrwb]:
-
-| Row | What it describes | Bits per 20 ms frame |
-|---|---|---:|
-| Spectral envelope (16 immittance spectral pairs) | the shape of the vocal tract | 46 |
-| Pitch lag | where in the recent past the excitation repeats | 30 |
-| Pitch filter flag | whether to smooth the repeated excitation | 4 |
-| Algebraic codebook | which pulses to add to the repeated excitation | 144 |
-| Gains | how loud each part is | 28 |
-| Voice activity flag | is anyone speaking | 1 |
-| **Total** | | **253** |
-
-If that table reads like a tax form, this post is for you. By the end you will know what each row buys, why the first row is so small, and why the newest codecs cannot print this table at all.
-
-The stakes are not academic. On a mobile network the codec's bitrate sets how many simultaneous calls one cell can carry, so halving it is the same as building half again as many towers. In a voice-agent product billed per minute, the bits that survive compression are the bits you pay to move, store and, if the agent runs on a speech language model, feed through attention one token at a time. Either way, someone has to decide where the bits go, and the decision is made with the ideas below.
+A speech codec gets a fixed number of bits for every 20 ms of a phone call, and the engineer who designs it decides which parts of the voice those bits describe. That budget limits how many calls one cell tower can carry, and in a voice-agent product it is the audio you pay to move and store every minute. For scale, speech carries about 39 bits per second of linguistic information [@coupe2019], and a landline call uses 64,000 [@itu_g711].
 
 ```{python}
-#| label: setup
 #| echo: false
 import numpy as np
 import matplotlib.pyplot as plt
@@ -60,7 +43,7 @@ def synth_vowel(fs, seconds=0.7, seed=0):
     x[np.round(np.arange(0, seconds * F0) * fs / F0).astype(int)] = 1.0
     x += 0.003 * rng.standard_normal(n)                  # a little aspiration noise
     y = np.zeros(n)
-    for i in range(n):                                    # glottal tilt: y[n] = x[n] + 0.97 y[n-1]
+    for i in range(n):                                    # glottal tilt: y[n] = x[n] + GLOTTAL_POLE y[n-1]
         y[i] = x[i] + (GLOTTAL_POLE * y[i - 1] if i else 0.0)
     for F, B in FORMANTS:
         if F >= 0.47 * fs:
@@ -94,15 +77,15 @@ def frame_spectrum_db(x, fs, start_s=0.25, frame_ms=32, nfft=2048):
 define(vowel_formants=FORMANTS, vowel_f0=F0, vowel_glottal_pole=GLOTTAL_POLE)
 ```
 
-# Two things in a voice
+# Coding one vowel
 
-Gunnar Fant's account of speech production, the **source-filter model**, is the founding idea behind almost every speech codec [@fant1960]. The source is the excitation: for a vowel, a train of pulses from the vocal folds at the pitch frequency; for a hiss, turbulent noise. The filter is the vocal tract, a tube whose shape sets a handful of resonances called **formants**. Move your tongue and the formants move, and an "ah" becomes an "ee" while the pulses from the folds carry on exactly as before.
+Take one vowel, an open "ah" spoken at a pitch of 180 Hz. It is made of two parts. The vocal folds produce a train of pulses, 180 per second, and the vocal tract (throat, mouth, tongue and lips) filters those pulses. The tract resonates at a few frequencies called **formants**. Moving the tongue moves the formants, which is how an "ah" becomes an "ee" while the pulses stay the same. This split is Gunnar Fant's source-filter model, and almost every speech codec is built on it [@fant1960].
 
-Convolution in time is multiplication in frequency, so the spectrum of a vowel is the spectrum of the excitation times the response of the tract. @fig-source-filter shows the two factors and their product for the synthetic vowel used throughout this post. The excitation contributes a comb of harmonics spaced at the pitch, fine structure that repeats every 180 Hz. The tract contributes a smooth **spectral envelope** with one hump per formant. Everything a codec does starts from this split, because the two factors have very different prices: the envelope is a few numbers per frame, the excitation is the rest of the signal.
+@fig-source-filter shows the two parts for the synthetic vowel used in this post. The pulses give a comb of harmonics every 180 Hz. The tract gives a smooth curve with one bump per formant, called the **spectral envelope**. The recorded vowel is the comb shaped by the curve. Codec engineers call the pulse part the **excitation**.
 
 ```{python}
 #| label: fig-source-filter
-#| fig-cap: "The source-filter model on the synthetic vowel used throughout this post. Top: the excitation, a pulse train at 180 Hz, whose spectrum is a comb of harmonics with a gentle downward tilt. Middle: the vocal tract filter, a smooth envelope with one hump per formant. Bottom: their product, the spectrum of the vowel. The comb is the fine structure and the envelope is the shape, and a codec prices the two very differently."
+#| fig-cap: "The synthetic vowel used in this post, split into its two parts. Top: the excitation, a pulse train at 180 Hz whose spectrum is a comb of harmonics with a gentle downward tilt. Middle: the vocal tract, a smooth envelope with one bump per formant. Bottom: the vowel, which is the comb shaped by the envelope. The dashed orange line is the envelope from the middle panel."
 #| echo: false
 fs = 16000
 freqs = np.fft.rfftfreq(2048, 1 / fs)
@@ -138,112 +121,17 @@ for ax in axes:
 plt.show()
 ```
 
-# Drawing the envelope with a predictor
+A codec can send the two parts separately. The envelope is smooth, so a handful of numbers per frame can describe it. The panel below fits the envelope with the number of coefficients you choose and rounds each coefficient to the number of bits you choose. The excitation gets a fixed 60 bits per frame (pitch, energy and voicing) that never change, so every change in the bit count comes from the envelope. The bandwidth slider sets how much of the spectrum the codec covers: 4 kHz is roughly the band of an old landline, 6.4 kHz is the band AMR-WB (the codec behind "HD Voice" calls) models in detail, and 8 kHz is the full band of 16 kHz audio.
 
-A codec does not get to see the tract. It gets samples. The trick that recovers the envelope from samples is **linear prediction**: guess each sample as a weighted sum of the previous $p$ samples,
+In the plot, the orange curve is the envelope the decoder rebuilds, the dashed white curve is the true envelope, and the envelope error is the average gap between the two in decibels. The buttons play the original and the coded vowel. The earpiece switch plays both through a telephone earpiece band, 300 to 3400 Hz.
 
-$$
-\hat{x}[n] = -\sum_{k=1}^{p} a_k\, x[n-k], \qquad e[n] = x[n] - \hat{x}[n],
-$$
-
-and choose the weights $a_k$ that make the prediction error $e[n]$ as small as possible over a frame [@makhoul1975]. The weights are cheap to find: they satisfy a small linear system built from the frame's autocorrelation, and the Levinson-Durbin recursion solves it in a few lines. The payoff is that the predictor and the vocal tract turn out to be the same object. Writing $A(z) = 1 + \sum_k a_k z^{-k}$ for the prediction filter, the smooth curve $1/|A(e^{j\omega})|$ is an all-pole estimate of the envelope, and the residual $e[n]$ is an estimate of the excitation. One least-squares fit has undone the convolution.
-
-If you come from the machine learning side you have met this before. It is an autoregressive model of order $p$ with least-squares coefficients, the AR($p$) of time series textbooks, and "predict the next sample from the past" is exactly what WaveNet did with a neural network in place of the $p$ weights [@oord2016].
-
-```{python}
-#| label: lpc-code
-def lpc(frame, order):
-    """Levinson-Durbin. Returns the coefficients of A(z) = 1 + a1 z^-1 + ... + ap z^-p
-    and the reflection coefficients found along the way."""
-    r = np.correlate(frame, frame, "full")[len(frame) - 1:len(frame) + order]
-    a, err, refl = np.array([1.0]), r[0], []
-    for i in range(1, order + 1):
-        k = -(r[i] + a[1:] @ r[i - 1:0:-1]) / err       # next reflection coefficient
-        a = np.concatenate([a, [0.0]]) + k * np.concatenate([[0.0], a[::-1]])
-        err *= 1 - k * k
-        refl.append(k)
-    return a, np.array(refl)
-
-def lpc_envelope_db(a, fs, freqs):
-    w = 2 * np.pi * freqs / fs
-    A = np.polyval(a[::-1], np.exp(-1j * w))          # A(e^{jw}) = sum_k a_k e^{-jwk}
-    return -20 * np.log10(np.abs(A))
-```
-
-How many weights? Each formant is a resonance, and a resonance needs two poles, so the rule of thumb is two coefficients per formant plus two or three for the glottal tilt. Vowels have roughly one formant per kilohertz of bandwidth, which is why AMR-WB, analysing a 6.4 kHz band at an internal rate of 12.8 kHz, uses order 16, and why order 20 is the usual choice for a full 8 kHz band [@markel_gray1976]. @fig-lpc-order shows what the choice does. Too few poles and the fit misses formants. Enough poles and it lands on the true envelope. Too many and the fit stops improving and starts bending toward individual harmonics of the excitation, which is fine structure it was never supposed to describe. Beyond the right order, every extra coefficient is a bit spent on the wrong factor, and once those coefficients are quantised the extra ones add rounding noise of their own.
-
-```{python}
-#| label: fig-lpc-order
-#| fig-cap: "The same 32 ms frame of the vowel fitted with linear prediction of order 4, 12, 20 and 40, at 16 kHz sampling. The grey trace is the frame's spectrum, the dashed white line is the true envelope of the synthesis filter, and the orange line is the all-pole fit. The number in each panel is the root-mean-square gap between fit and truth in decibels, after removing the mean level. Order 4 misses formants, order 20 lands on the envelope, and order 40 costs twice as many coefficients to fit no better, its extra poles sharpening the peaks toward individual harmonics of the pitch."
-#| echo: false
-freqs_f, X_db, frame = frame_spectrum_db(x, fs)
-H_db = true_envelope_db(fs, freqs_f)
-
-def env_error_db(fit_db, true_db):
-    d = fit_db - true_db
-    return np.sqrt(np.mean((d - d.mean()) ** 2))
-
-fig, axes = plt.subplots(2, 2, figsize=(10, 6.5), sharex=True, sharey=True, tight_layout=True)
-for ax, p in zip(axes.ravel(), [4, 12, 20, 40]):
-    a, _ = lpc(frame, p)
-    L_db = lpc_envelope_db(a, fs, freqs_f)
-    off = np.mean(H_db - L_db)
-    ax.plot(freqs_f, X_db - X_db.max(), color=GREY, lw=0.7)
-    ax.plot(freqs_f, H_db - H_db.max(), color="white", lw=1.2, ls="--", alpha=0.8)
-    ax.plot(freqs_f, L_db + off - H_db.max(), color=ORANGE, lw=2)
-    ax.set_title(f"order {p}:  envelope error {env_error_db(L_db, H_db):.1f} dB", loc="left", color=GREY)
-    ax.set_ylim(-70, 5); ax.set_xlim(0, fs / 2)
-for ax in axes[1]:
-    ax.set_xlabel("frequency (Hz)")
-for ax in axes[:, 0]:
-    ax.set_ylabel("dB")
-plt.show()
-```
-
-# Paying for the envelope
-
-Sixteen coefficients every 20 ms is the envelope's raw price. The coefficients themselves are a poor thing to transmit: a small rounding error in one $a_k$ moves the entire envelope, and a slightly larger one can push a pole outside the unit circle and make the decoder's filter ring forever. So the standards convert them into a representation that quantises gracefully. The classic choice is **line spectral frequencies**, the resonance positions expressed as sorted frequencies, each of which affects the envelope only near itself. AMR-WB uses a close cousin called immittance spectral pairs. Paliwal and Atal showed that a well-designed vector quantiser holds the average envelope error near one decibel at 24 bits per frame for an order-10 model, a level the field still calls transparent [@paliwal_atal1993]. AMR-WB spends 46 bits on its 16 parameters, under three bits each. That is the first row of the ledger, and now you can read it.
-
-The other rows describe the excitation, and they are where a waveform codec spends most of its money. AMR-WB does not send the residual sample by sample. It sends a pointer into the recent past, the **pitch lag**, saying "the excitation now looks like the excitation one period ago", and then a sparse set of corrective pulses chosen from an **algebraic codebook** so that the decoded waveform matches the original as closely as the bits allow. The pulses are the largest row by far: 144 of the 253 bits. The envelope, the thing that makes an "ah" an "ah", costs 18 percent of the frame. Waveform fidelity costs the rest.
-
-Not every codec agrees with that split. Codec 2, David Rowe's open codec for amateur radio, spends 50 of its 64 bits per frame on the envelope at its 3200 bit/s mode and describes the excitation with just a pitch, an energy and two voicing bits [@rowe_codec2]. It never tries to match the waveform, only to sound like the same vowel from the same throat, and it pays a fifth of AMR-WB's rate for it. @fig-bit-ledger puts the two ledgers side by side, with a third bar we will come back to.
-
-```{python}
-#| label: fig-bit-ledger
-#| fig-cap: "Three bit ledgers, all in bits per 20 ms of speech. Codec 2 at 3200 bit/s is nearly all envelope. AMR-WB at 12.65 kbit/s is nearly all excitation, most of it the algebraic codebook pulses that make the decoded waveform match the original. EnCodec at 12 kbit/s spends about the same number of bits per frame as AMR-WB, but on 16 learned codebooks whose meaning is not declared, so its bar has no rows to draw."
-#| echo: false
-ledgers = [
-    ("EnCodec 12 kbit/s",   [("learned codes (16 codebooks x 10 bits x 1.5 frames)", 240, "#4b5563")]),
-    ("AMR-WB 12.65 kbit/s", [("envelope (ISP)", 46, ORANGE), ("pitch lag", 30, BLUE), ("pitch filter", 4, "#5b9bd5"),
-                             ("algebraic codebook", 144, GREEN), ("gains", 28, PURPLE), ("VAD", 1, GREY)]),
-    ("Codec 2 3200 bit/s",  [("envelope (LSP)", 50, ORANGE), ("pitch", 7, BLUE), ("energy", 5, PURPLE), ("voicing", 2, GREY)]),
-]
-fig, ax = plt.subplots(figsize=(10, 3.6), tight_layout=True)
-for yi, (name, rows) in enumerate(ledgers):
-    left = 0
-    for label, bits, colour in rows:
-        ax.barh(yi, bits, left=left, color=colour, edgecolor="#111827", height=0.6)
-        if bits >= 20:
-            ax.text(left + bits / 2, yi, f"{label}\n{bits}", ha="center", va="center", fontsize=8.5, color="#111827")
-        left += bits
-    ax.text(left + 4, yi, f"{left} bits", va="center", color="white", fontsize=10)
-ax.set_yticks(range(len(ledgers))); ax.set_yticklabels([n for n, _ in ledgers])
-ax.set_xlabel("bits per 20 ms frame"); ax.set_xlim(0, 300); ax.grid(axis="y", visible=False)
-plt.show()
-```
-
-# Spend the budget yourself
-
-Below is the vowel from the figures, coded live in your browser with the machinery of this post. The envelope is fitted by linear prediction at the order you choose, its reflection coefficients are quantised to the number of bits you choose, and the excitation is a fixed 60-bit parametric description that never changes, so every movement in the ledger is yours. The bandwidth slider changes the sampling rate the codec works at, which decides how many formants are inside the band at all. Press play to hear the coded vowel; the switch routes playback through a telephone earpiece band of 300 to 3400 Hz.
-
-Two experiments are worth running. At 8 kHz, drag the order from 8 to 40 while watching the envelope error and the kilobits: the error falls until about order 20, then creeps back up while the bits keep doubling. Do the same at 4 kHz and the turn comes at order 12, because only four formants are left to describe. Then switch the earpiece on and compare 4 kHz to 8 kHz by ear; if you cannot hear the difference, ask who is paying for the second half of the band.
+Before you move anything, make two guesses. How many coefficients does this envelope need? And can adding coefficients ever make the fit worse?
 
 ```{js}
 //| viewof: lpc_order
-//| echo: false
 const wrap = document.createElement("label");
 wrap.className = "tali-input";
-wrap.append("LPC order (coefficients per frame) ");
+wrap.append("Envelope coefficients per frame ");
 const input = document.createElement("input");
 input.type = "range"; input.min = "2"; input.max = "40"; input.step = "2"; input.value = "16";
 wrap.append(input);
@@ -252,7 +140,6 @@ return wrap;
 
 ```{js}
 //| viewof: env_bits
-//| echo: false
 const wrap = document.createElement("label");
 wrap.className = "tali-input";
 wrap.append("Bits per envelope coefficient ");
@@ -264,7 +151,6 @@ return wrap;
 
 ```{js}
 //| viewof: band
-//| echo: false
 const wrap = document.createElement("label");
 wrap.className = "tali-input";
 wrap.append("Coded bandwidth: 4 kHz, 6.4 kHz or 8 kHz ");
@@ -276,7 +162,6 @@ return wrap;
 
 ```{js}
 //| viewof: earpiece
-//| echo: false
 const wrap = document.createElement("label");
 wrap.className = "tali-input";
 const input = document.createElement("input");
@@ -288,15 +173,14 @@ return wrap;
 ```{js}
 //| label: fig-bit-budget
 //| input: lpc_order, env_bits, band, earpiece
-//| echo: false
-//| fig-cap: "The bit-budget panel. Grey: the spectrum of one frame of the vowel at the chosen bandwidth. Dashed white: the true envelope of the synthesis filter. Orange: the envelope the decoder will use, fitted at your order and quantised at your bits per coefficient. The ledger underneath counts the frame: envelope bits are order times bits per coefficient, the excitation is held at 60 bits, and the total is converted to kilobits per second at 50 frames per second. The envelope error is the root-mean-square gap between the orange and white curves in decibels."
+//| fig-cap: "The bit-budget panel. Grey: the spectrum of one frame of the vowel at the chosen bandwidth. Dashed white: the true envelope of the synthesis filter. Orange: the envelope the decoder rebuilds from your coefficients after rounding. The ledger underneath counts one frame: envelope bits are coefficients times bits per coefficient, the excitation is held at 60 bits, and the total is converted to kilobits per second at 50 frames per second. The envelope error is the root-mean-square gap between the orange and white curves in decibels."
 const FORMANTS = tali.defines.vowel_formants;
 const F0 = tali.defines.vowel_f0;
 const GP = tali.defines.vowel_glottal_pole;
 if (!FORMANTS || !F0 || !GP) return;
 
 const p     = tali.value("lpc_order") ?? 16;
-const bits  = tali.value("env_bits")  ?? 4;
+const bits  = tali.value("env_bits")  ?? 5;
 const bandI = tali.value("band")      ?? 2;
 const ear   = tali.value("earpiece")  ?? false;
 const fs    = [8000, 12800, 16000][bandI];
@@ -334,7 +218,7 @@ const L = Math.floor(0.032 * fs), n0 = Math.floor(0.25 * fs);
 const frame = new Float64Array(L);
 for (let i = 0; i < L; i++) frame[i] = vowel[n0 + i] * (0.54 - 0.46 * Math.cos(2 * Math.PI * i / (L - 1)));
 
-// ---- Levinson-Durbin, same as the Python cell ----
+// ---- Levinson-Durbin, same as the Python listing ----
 function lpc(frame, order) {
   const r = new Float64Array(order + 1);
   for (let k = 0; k <= order; k++) { let s = 0; for (let i = k; i < frame.length; i++) s += frame[i] * frame[i - k]; r[k] = s; }
@@ -473,10 +357,118 @@ root.append(svg.node(), ledger, btnRow);
 return root;
 ```
 
-# The codec with no ledger
+At the starting setting (8 kHz, 16 coefficients, 5 bits) the error is about 3 dB. The orange curve has only seven bumps for eight formants: it merges the two highest into one, and the bumps above 2 kHz come out too flat. Move to 18 coefficients and the error drops to about 1 dB, and every formant gets its own bump. Keep going to 40 and the fit does not improve. The error slowly rises to about 1.7 dB while the envelope costs more than twice as much, 200 bits instead of 90. The extra coefficients start fitting single harmonics of the excitation, which is detail the envelope should not contain.
 
-The third bar in @fig-bit-ledger belongs to EnCodec, Meta's neural codec, and it has no rows because nobody drew any [@defossez2022]. A neural codec replaces the whole pipeline above with a learned one: a convolutional encoder turns 24 kHz audio into 75 vectors per second, a stack of vector quantisers replaces each vector with indices into learned codebooks, and a decoder network turns the indices back into a waveform. The bitrate is arithmetic on the stack: 75 frames per second, times the number of codebooks, times 10 bits for a codebook of 1024 entries, so 16 codebooks give 12 kbit/s and two give 1.5 kbit/s. SoundStream introduced the design [@zeghidour2021], the Descript Audio Codec pushed it to 44.1 kHz [@kumar2023], and Mimi, the codec inside the Moshi dialogue model, runs it at 12.5 frames per second so that a language model has fewer tokens to predict [@defossez2024].
+Now switch to 4 kHz. Only four formants are left inside the band, and the error drops at 10 coefficients instead of 18.
 
-Every one of those codecs still encodes a vowel, and a vowel still has an envelope and an excitation. But the quantisers are stacked residually, each coding what the previous ones missed, and the allocation between envelope and excitation is whatever the training objective found, not a row in a specification. The authors of the Descript codec observe that successive quantisers add progressively finer detail, and from that one might infer that a learned allocation spends bits on the vocal tract more efficiently than an engineered one ever could. Nothing in this post lets you check that inference. To check it you would need to measure envelope fidelity in a way that is fair to both kinds of codec, and that turns out to be harder than it sounds. It is the subject of the next post.
+The bits per coefficient matter as much as the count. At 2 or 3 bits, adding coefficients makes the envelope worse, since each coefficient adds its own rounding error. From 5 bits up, 18 coefficients stay close to the true envelope.
 
-What you can do now is read the ledger you were shown at the top. Forty-six bits draw the tract, two hundred and six chase the waveform, and one says whether anyone is talking. When the next codec spec sheet, or the next codec paper, puts a bitrate in front of you, the question to ask is the one this post has been asking all along: where do the bits go?
+Last, turn on the earpiece and compare 4 kHz with 8 kHz by ear. The earpiece cuts everything above 3.4 kHz, so on that handset the bits spent above 4 kHz buy little that you can hear.
+
+## Three real ledgers
+
+The panel spends most of its bits on the envelope. Real codecs do not agree on that split. AMR-WB, the codec behind the "HD Voice" label on most 3G and 4G calls, packs each 20 ms of speech into 253 bits at its most common rate, 12.65 kbit/s [@tgpp_amrwb]:
+
+| Row | What it describes | Bits per 20 ms frame |
+|---|---|---:|
+| Spectral envelope (16 immittance spectral pairs) | the shape of the vocal tract | 46 |
+| Pitch lag | where in the recent past the excitation repeats | 30 |
+| Pitch filter flag | whether to smooth the repeated excitation | 4 |
+| Algebraic codebook | which pulses to add to the repeated excitation | 144 |
+| Gains | how loud each part is | 28 |
+| Voice activity flag | is anyone speaking | 1 |
+| **Total** | | **253** |
+
+The first row is the envelope: 16 coefficients in 46 bits, under three bits each. The panel could not get a good fit at that price, and the next section explains how AMR-WB does. The other 207 bits describe the excitation. AMR-WB does not send the excitation sample by sample. It sends the **pitch lag**, a pointer that says the excitation now looks like the excitation one pitch period ago, and then a few correcting pulses from the **algebraic codebook**, chosen so that the decoded waveform matches the original as closely as the bits allow. Those pulses are the largest row, 144 of the 253 bits. So AMR-WB spends 18 percent of the frame on the shape of the vocal tract and most of the rest on matching the waveform.
+
+Codec 2, David Rowe's open codec used for digital voice on amateur radio, makes the opposite choice. In its 3200 bit/s mode it spends 50 of its 64 bits per frame on the envelope and describes the excitation with a pitch, an energy and two voicing bits [@rowe_codec2]. It does not try to match the waveform, only to sound like the same vowel from the same voice, and it runs at a quarter of AMR-WB's rate. The panel above is built the same way as Codec 2. @fig-bit-ledger puts the ledgers side by side.
+
+```{python}
+#| label: fig-bit-ledger
+#| fig-cap: "Three bit ledgers, in bits per 20 ms of speech. Codec 2 at 3200 bit/s spends most of its frame on the envelope. AMR-WB at 12.65 kbit/s spends most of its frame on the excitation, mainly the algebraic codebook pulses that make the decoded waveform match the original. EnCodec at 12 kbit/s uses about as many bits per frame as AMR-WB, spread over 16 learned codebooks with no documented meaning, so its bar has no rows."
+#| echo: false
+ledgers = [
+    ("EnCodec 12 kbit/s",   [("learned codes (16 codebooks x 10 bits x 1.5 frames)", 240, "#4b5563")]),
+    ("AMR-WB 12.65 kbit/s", [("envelope (ISP)", 46, ORANGE), ("pitch lag", 30, BLUE), ("pitch filter", 4, "#5b9bd5"),
+                             ("algebraic codebook", 144, GREEN), ("gains", 28, PURPLE), ("VAD", 1, GREY)]),
+    ("Codec 2 3200 bit/s",  [("envelope (LSP)", 50, ORANGE), ("pitch", 7, BLUE), ("energy", 5, PURPLE), ("voicing", 2, GREY)]),
+]
+fig, ax = plt.subplots(figsize=(10, 3.6), tight_layout=True)
+for yi, (name, rows) in enumerate(ledgers):
+    left = 0
+    for label, bits, colour in rows:
+        ax.barh(yi, bits, left=left, color=colour, edgecolor="#111827", height=0.6)
+        if bits >= 20:
+            ax.text(left + bits / 2, yi, f"{label}\n{bits}", ha="center", va="center", fontsize=8.5, color="#111827")
+        left += bits
+    ax.text(left + 4, yi, f"{left} bits", va="center", color="white", fontsize=10)
+ax.set_yticks(range(len(ledgers))); ax.set_yticklabels([n for n, _ in ledgers])
+ax.set_xlabel("bits per 20 ms frame"); ax.set_xlim(0, 300); ax.grid(axis="y", visible=False)
+plt.show()
+```
+
+The grey bar is EnCodec, a neural codec from Meta [@defossez2022]. A neural codec replaces the whole pipeline with learned parts. An encoder network turns 24 kHz audio into 75 vectors per second, a stack of vector quantisers replaces each vector with indices into learned codebooks, and a decoder network turns the indices back into audio. The bitrate follows from the stack: 75 frames per second, times the number of codebooks, times 10 bits for a codebook with 1024 entries. Sixteen codebooks give 12 kbit/s and two give 1.5 kbit/s. SoundStream introduced the design [@zeghidour2021], the Descript Audio Codec extended it to 44.1 kHz audio [@kumar2023], and Mimi, the codec inside the Moshi dialogue model, runs at 12.5 frames per second so that a language model has fewer tokens to predict [@defossez2024].
+
+These codecs still code vowels that have an envelope and an excitation. But each quantiser in the stack codes what the ones before it missed, and the split between envelope and excitation is whatever training found. Nobody wrote it down, so there is no table like AMR-WB's to read.
+
+# Linear prediction
+
+::: {.callout-note collapse="true"}
+## Notation used in this section
+
+| Symbol | Meaning |
+|--------|---------|
+| $x[n]$ | the $n$-th sample of the speech frame |
+| $p$ | number of coefficients per frame (the first slider) |
+| $a_k$ | the $k$-th prediction coefficient, $k = 1, \ldots, p$ |
+| $\hat{x}[n]$ | the prediction of $x[n]$ from the previous $p$ samples |
+| $e[n]$ | the prediction error, or residual |
+| $A(z)$ | the prediction error filter, $1 + \sum_k a_k z^{-k}$ |
+| $\omega$ | frequency in radians per sample |
+:::
+
+The panel never sees the vocal tract, only samples. It finds the envelope with **linear prediction**: predict each sample as a weighted sum of the previous $p$ samples,
+
+$$
+\hat{x}[n] = -\sum_{k=1}^{p} a_k\, x[n-k], \qquad e[n] = x[n] - \hat{x}[n],
+$$
+
+and choose the weights $a_k$ that make the prediction error $e[n]$ as small as possible over the frame [@makhoul1975]. $p$ is the first slider. With $A(z) = 1 + \sum_k a_k z^{-k}$, the orange curve in the panel is $1/|A(e^{j\omega})|$, and $e[n]$ is what is left of the vowel once the envelope is removed, which is an estimate of the excitation. So one least-squares fit separates the two parts of @fig-source-filter: the weights describe the tract and the residual describes the pulses.
+
+In machine learning terms this is an autoregressive model of order $p$, the AR($p$) model from time series, fitted by least squares. WaveNet also predicts each sample from the samples before it, with a neural network in place of the $p$ weights [@oord2016].
+
+::: {.callout-note collapse="true"}
+## Levinson-Durbin in Python
+
+The weights solve a small linear system built from the frame's autocorrelation. The Levinson-Durbin recursion solves it in $O(p^2)$ operations and produces the reflection coefficients that the panel rounds along the way. The panel runs a JavaScript copy of this function.
+
+```python
+def lpc(frame, order):
+    """Levinson-Durbin. Returns the coefficients of A(z) = 1 + a1 z^-1 + ... + ap z^-p
+    and the reflection coefficients found along the way."""
+    r = np.correlate(frame, frame, "full")[len(frame) - 1:len(frame) + order]
+    a, err, refl = np.array([1.0]), r[0], []
+    for i in range(1, order + 1):
+        k = -(r[i] + a[1:] @ r[i - 1:0:-1]) / err       # next reflection coefficient
+        a = np.concatenate([a, [0.0]]) + k * np.concatenate([[0.0], a[::-1]])
+        err *= 1 - k * k
+        refl.append(k)
+    return a, np.array(refl)
+```
+:::
+
+The error dropped at 18 coefficients because each formant is a resonance, and a resonance needs a pair of poles in $1/A(z)$, which costs two coefficients. The synthetic vowel has eight formants below 8 kHz plus one extra pole for the downward tilt of the excitation, so it needs 17 coefficients, and 18 is the first slider setting that covers them. At 4 kHz four formants remain, which needs 9, so the drop comes at 10. Real speech has roughly one formant per kilohertz of bandwidth plus a few poles for the shape of the glottal pulse, which is why 16 kHz speech is usually analysed with 18 to 20 coefficients [@markel_gray1976] and why AMR-WB uses 16 for its 6.4 kHz band.
+
+Past that count, extra coefficients hurt. The fit has more poles than there are formants, so it spends the spare ones on the strongest harmonics of the excitation. That is the slow rise in the error after 18 coefficients.
+
+The bits slider does not round the $a_k$ themselves. A small rounding error in one $a_k$ moves the whole envelope, and a slightly larger one can push a pole outside the unit circle, where the decoder's filter becomes unstable and its output grows without bound. The panel rounds the reflection coefficients from the recursion instead, after an arcsine warp, and the filter stays stable as long as each of them stays between $-1$ and $1$. Rounding one coefficient at a time is still wasteful: at the 6.4 kHz band, 16 coefficients need 6 bits each, 96 bits in total, to bring the panel's error near 1 dB.
+
+Standards do better in two steps. First they convert the coefficients into **line spectral frequencies**, the resonance positions written as a sorted list of frequencies, where each value moves the envelope only near its own frequency. AMR-WB uses a close relative called immittance spectral pairs. Then they round the values jointly with a vector quantiser. Paliwal and Atal kept the average envelope error near 1 dB, the level the field treats as transparent, at 24 bits per frame for 10 coefficients [@paliwal_atal1993]. The same approach is how AMR-WB fits its 16 coefficients into 46 bits.
+
+# Summary
+
+- A vowel is a train of pulses (the excitation) shaped by the vocal tract (the envelope), and a codec can pay for the two separately.
+- The envelope needs about two coefficients per formant. Past that, extra coefficients fit harmonics of the excitation, and the error rises while the bit count grows.
+- How the coefficients are rounded matters as much as how many there are. Standards round line spectral frequencies jointly, which fits AMR-WB's envelope into 46 of its 253 bits.
+- AMR-WB spends most of its frame matching the waveform. Codec 2 spends most of its frame on the envelope and runs at a quarter of the rate.
+- Neural codecs such as EnCodec split their bits too, but training chooses the split and nothing documents it. Measuring that split in a way that is fair to both kinds of codec is the subject of the next post.
