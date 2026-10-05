@@ -18,8 +18,6 @@ nav:
 footer:
   left:
   - text: © 2026 Andreas Bogossian
-  - text: Source
-    href: https://github.com/AJBogo9/tech-blog
   right:
   - { icon: linkedin, href: https://www.linkedin.com/in/andreas-bogossian/ }
   - { icon: github, href: https://github.com/AJBogo9 }
