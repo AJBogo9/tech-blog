@@ -1,7 +1,7 @@
 ---
 title: "Quiet Roads for Road Cycling"
 date: "2026-10-05"
-description: "A map of the state roads in Uusimaa with asphalt, a speed limit of 80 km/h or less and little traffic, scored from open Väylävirasto data, with the nearest train or metro station for each."
+description: "A map of quiet, well-paved roads around Helsinki for road cycling, with the nearest train or metro station for each road."
 image: "thumbnail.png"
 image-alt: "A map of the Helsinki region and western Uusimaa with roads drawn in shades of blue and rail and metro stations marked as white circles."
 categories:
@@ -13,25 +13,21 @@ categories:
 <a href="https://ajbogo9.github.io/road-cycling-finland/" class="btn btn-outline-secondary btn-sm">Open the map</a>
 <a href="https://github.com/AJBogo9/road-cycling-finland" class="btn btn-outline-secondary btn-sm">GitHub</a>
 
-I like road cycling and wanted quiet countryside roads with good asphalt that I can reach by train or metro from Espoo. Väylävirasto, the Finnish Transport Infrastructure Agency, publishes the data for this: speed limits, daily traffic counts, the wearing course and measured pavement condition for state roads. I built a pipeline that joins those layers, scores each stretch of road and maps the ones that pass.
+I wanted to find quiet countryside roads with good asphalt that I can reach from Espoo by train or metro. Väylävirasto, the Finnish Transport Infrastructure Agency, publishes open data on the roads the state maintains. I used it to pick out roads around Helsinki.
 
 <iframe src="https://ajbogo9.github.io/road-cycling-finland/?embed" title="Map of quiet roads for road cycling in Uusimaa" loading="lazy" allow="fullscreen" style="display:block; width:100%; height:480px; margin:0 0 1.25rem; border:0; border-radius:8px;"></iframe>
 
-Darker blue means a higher score. Click a road to see its speed limit, traffic, condition and nearest station. Zoom with Ctrl and the scroll wheel or with two fingers. The corner button shows the map full screen; on an iPhone, use the Open the map button above instead.
+A road is on the map if it meets all of these:
 
-## What it does
+| Data | Limit |
+|---|---|
+| Surface | asphalt, including soft asphalt |
+| Speed limit | 80 km/h or less |
+| Traffic | 1000 vehicles a day or fewer |
+| Pavement condition | class 3 or better, on a scale of 1 to 5 |
 
-A stretch of road passes when it has:
+Darker blue roads score higher. Traffic counts most in the score, then pavement condition. Click a road to see its values and the straight-line distance to the nearest station. On an iPhone, use the Open the map link at the top for a bigger map.
 
-- asphalt, normal or soft;
-- a speed limit of 80 km/h or less;
-- at most 1000 vehicles a day;
-- a pavement condition of class 3 or better, on a scale of 1 to 5.
+Väylävirasto keeps each value as a stretch of road address: a road number, a road part and a distance along that part. Every point on the road lines carries its address too, so my Python pipeline cuts each road part wherever a value changes and gives each piece the values that cover it. If a piece gets two different values, for example one for each side of the road, it keeps the one that is worse for cycling.
 
-The score from 0 to 100 weighs traffic most, then condition, speed limit and surface. In the first run on 5 October 2026, 2,693 of the 9,130 km of state road in the mapped area passed.
-
-## How it works
-
-Väylävirasto stores each attribute as intervals of a road address: road number, road part, and distance along the part. The road geometry carries the same address at its vertices, so my Python pipeline (geopandas, shapely) cuts each road part at every interval end and gives each piece the values that cover it. Where two values overlap, such as the two sides of a road, the piece keeps the one worse for cycling.
-
-Rail stations come from Fintraffic's Digitraffic API and metro stations from HSL's GTFS feed. A rail station counts only if a passenger train left it on the day of the fetch, because the station list also marks stations with no regular passenger trains. A GitHub Actions workflow fetches the data again every week and publishes the map to GitHub Pages.
+The rail stations come from Fintraffic's Digitraffic API. Its list includes some stations where no regular passenger train stops, such as Porvoo. I only count a station if a passenger train left it on the day of the weekly fetch. The metro stations come from HSL.
