@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Publications</title>
+  <id>https://andreasbogossian.com/publications.xml</id>
+  <link rel="self" href="https://andreasbogossian.com/publications.xml"/>
+  <link rel="alternate" href="https://andreasbogossian.com/publications.html"/>
+  <updated>2025-09-01T00:00:00Z</updated>
+  <author><name>Andreas Bogossian</name></author>
+  <generator>Taliesin</generator>
+  <entry>
+    <title>Knowledge Graph Enhanced Recommender Systems</title>
+    <id>https://andreasbogossian.com/publications/knowledge-graph-recommender-systems/</id>
+    <link rel="alternate" href="https://andreasbogossian.com/publications/knowledge-graph-recommender-systems/"/>
+    <updated>2025-09-01T00:00:00Z</updated>
+    <published>2025-09-01T00:00:00Z</published>
+    <category term="Thesis"/>
+    <category term="Recommender Systems"/>
+    <category term="Knowledge Graphs"/>
+    <summary>B.Sc. thesis (Aalto University, graded 5/5): a literature review of knowledge graph-enhanced recommender systems against collaborative, content-based and hybrid filtering.</summary>
+  </entry>
+</feed>
