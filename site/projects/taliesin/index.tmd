@@ -1,0 +1,58 @@
+---
+title: "Taliesin"
+date: "2026-10-10"
+description: "A Rust dev server that renders Markdown with executable code cells to HTML and patches the open preview block by block. This site is built with it."
+image: "thumbnail.png"
+image-alt: "The Taliesin logo, a light capital T on a near-black background."
+categories:
+  - Rust
+  - Markdown
+  - Developer tools
+---
+
+<a href="https://github.com/AJBogo9/taliesin" class="btn btn-outline-secondary btn-sm">GitHub</a>
+<a href="https://guide.taliesin.sh/" class="btn btn-outline-secondary btn-sm">User guide</a>
+
+Taliesin turns `.tmd` files into static HTML. A `.tmd` file is Markdown with Python cells that run at build time and JavaScript cells that run in the browser, written in the same syntax Quarto uses.
+
+Until July 2026 I wrote this blog in Quarto. Quarto chains other programs together. Pandoc parses the Markdown, a Jupyter kernel runs the code, and a Deno layer drives both, each started as a fresh process on every render. Taliesin's first commit is a problem statement about editing posts with live demos in Quarto.
+
+## The edit loop
+
+::: {}
+| In Quarto | Cause | In Taliesin |
+|---|---|---|
+| No way to click a rendered paragraph and land on its source line | Pandoc drops source positions when it builds its syntax tree | Every block keeps its source position, and Ctrl-click in the preview opens that line in VS Code |
+| Every save reloads the whole preview | The output is a new page each time | A save swaps only the blocks that changed; scroll position and running demos stay as they were |
+| Each render waits for programs to start | Deno, Pandoc and a kernel start on every render | One server and one kernel stay running, and a save re-runs code from the first changed cell onward |
+:::
+
+On a post with a three.js scene halfway down, fixing a typo above the scene in Quarto reloaded the page, lost my place and restarted the scene. Taliesin sends the same fix as a patch to one paragraph and never touches the scene.
+
+## How a save reaches the browser
+
+The server is written in Rust. It parses each file with [comrak](https://github.com/kivikakk/comrak), a CommonMark parser that reports the source position of every node, and gives each top-level block an id tied to that position.
+
+When a file changes on disk, the server parses it again and runs the code cells on the warm kernel, starting from the first cell whose code changed. Each result is cached under a hash of the cell's code, every cell above it in the same language, and the interpreter, so an edit upstream invalidates everything below it. The new block list is then diffed against the previous one, and only the changed blocks go over a websocket. The browser swaps those blocks in place and leaves the rest of the page alone.
+
+Speed was the reason to build Taliesin. The [guide](https://guide.taliesin.sh/using/choosing#sec-speed) measures each part of this loop on a 16-core machine.
+
+::: {}
+| Measurement | Result |
+|---|---:|
+| Build a 17-page snapshot of this blog | 0.35 s |
+| Start `taliesin preview` on one document | about 40 ms |
+| Re-render and diff after a small edit | 2.9 ms |
+| From saving the file to the change showing in the open tab | about 35 ms |
+| Data sent for a small edit | 3.2 KB, against 288 KB for the full page |
+:::
+
+The portability table I published in July had no committed script behind it, and a month later its counts no longer reproduced. Since then, each number in the guide names the script, benchmark or test that produced it.
+
+## Cutting it down
+
+The first plan scoped the project to my own documents, about 30 of them at the start, rather than to Quarto's feature set. Over the summer it grew a slide-deck engine, a VS Code companion extension and many Quarto options.
+
+In August, before the 1.0 release, I removed roughly 40% of the codebase. The cuts included the slide engine, parts of the companion, and options and lints that none of my documents used. HTML is the only output, and PDF, LaTeX and Word export are permanently out of scope.
+
+Taliesin 1.0 came out on 20 August 2026, and 1.0.1 is the current release, with prebuilt binaries for Linux and macOS. Bug reports are welcome. I do not take feature requests, and the AGPL-3.0 licence lets anyone who wants a feature fork the tool and add it.
