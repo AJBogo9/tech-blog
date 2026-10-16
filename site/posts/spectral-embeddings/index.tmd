@@ -1,0 +1,106 @@
+---
+title: "Spectral embeddings: who spoke when"
+description: "How meeting transcription works out who spoke when from the eigenvectors of a voice similarity matrix, and why it loses the person who spoke least."
+date: 2026-09-30
+image: "thumbnail.webp"
+image-alt: "Similarity matrix of meeting segments with three large speaker blocks and one thin block for a quiet speaker, next to an eigenvalue plot where the count stops at three speakers and leaves the fourth eigenvalue out"
+categories:
+  - Machine Learning
+  - Mathematics
+bibliography: references.bib
+draft: true
+---
+
+{{< include _demo/lib.tmd >}}
+
+A transcription service receives a meeting recording and has to return a transcript in which every line says who spoke it. It does not know the voices in advance, and usually not even how many people were in the room. This step is called speaker diarization. Google's Recorder app (for recordings of medium length) and NVIDIA's NeMo toolkit both do it with a spectral embedding, which is built from the eigenvectors of a matrix of voice similarities [@wang2022highly; @park2020auto].
+
+# Who spoke when
+
+The meeting below lasts 5 minutes and has four people. Three of them take turns; the fourth says little, in interjections of 3 seconds. The recording is cut into 200 segments of 1.5 seconds. In a real system a neural network turns each segment into a vector, a voice embedding, and segments of the same voice point in similar directions. Here the vectors are synthetic: each person has a direction in 24 dimensions, and each segment is that direction plus noise. Two segments of the same person have a cosine similarity of 0.50 on average, two segments of different people 0.01.
+
+From there the demo follows the recipe Google published in 2018 [@wang2018speaker]:
+
+1. Compute the similarity of every pair of segments. The top left of the figure shows this 200 by 200 matrix sorted by speaker, so the blocks are visible; the software only has it in time order.
+2. Clean the matrix up: keep each segment's 20 percent strongest similarities, shrink the rest, and multiply the matrix by itself, so that two segments similar to the same other segments become more similar. (Google's recipe also blurs the matrix first; the demo skips that.)
+3. Compute the eigenvectors of the cleaned matrix. Each eigenvector gives every segment one number, and these numbers are the segment's coordinates in the spectral embedding. The strips in the middle of the figure show the first five eigenvectors along the meeting's time axis, under the row of who spoke.
+4. Count the speakers where the eigenvalues drop most sharply, at the largest ratio between an eigenvalue and the next one (top right).
+5. Group the segments' coordinates into that many clusters with k-means, and give each cluster a speaker label (the "clustering" row).
+
+Before moving anything, guess how little the quiet person can talk before the software loses them.
+
+{{< include _demo/diarization.tmd >}}
+
+Things to try:
+
+1. By default the quiet person talks for 30 seconds, and the software finds all four people. In the strips, eigenvector 3 is bright wherever the blue speaker talks and faint elsewhere, and eigenvector 4 does the same for the teal, quiet speaker. Eigenvectors 1 and 2 share the orange and red speakers between them.
+2. Lower the talk time to 18 seconds. The count drops to 3, the teal speaker vanishes from the clustering row, and their segments go to the others. The wrong segments line up with the marks in the strip for eigenvector 4.
+3. Switch the number of speakers to "from the invite". With the count given, 4 segments are wrong.
+4. With the count still given, lower the talk time further. The quiet speaker is found down to 9 seconds. At 6 seconds eigenvector 4 stops following them, and the fourth cluster takes segments from the other speakers instead: 33 are wrong.
+5. Set the talk time to 0: someone was invited and did not speak. Told there are 4 speakers, the software splits a real speaker in two, and 39 segments are wrong.
+6. Go back to counting from the eigenvalues at 30 seconds and turn on overlapping speech, where the first segment of a new turn often mixes both voices. The count drops to 3 with 31 segments wrong, and the quiet speaker is counted again only from 33 seconds.
+
+At 18 seconds the fourth eigenvector still follows the quiet speaker, but the counting rule decides that three eigenvectors are enough. The score does not flag it either: 6.5 percent of the segments are wrong in a transcript that has lost one of four participants. The score counts time, and the missing person had 6 percent of it. The diarization error rate, the standard score in the field, also counts time.
+
+Toolkits accept the count when it is known: pyannote as `num_speakers`, or `min_speakers` and `max_speakers` for a bound, and NeMo as `oracle_num_speakers`. Step 5 shows the risk of an exact number: the people invited are not always the people who speak.
+
+The exact talk times hold only for this synthetic meeting. Real voice embeddings also vary with the microphone and the room, and production systems add steps the demo leaves out, such as smoothing the labels over time.
+
+# Why the quiet speaker disappears
+
+::: {.callout-note collapse="true"}
+## Notation used in this section
+
+| Symbol | Meaning |
+|---|---|
+| $A$ | the cleaned similarity matrix |
+| $\lambda_1 \ge \lambda_2 \ge \ldots$ | eigenvalues of $A$, largest first |
+| $u_1, u_2, \ldots$ | the matching eigenvectors, one number per segment |
+| $k$ | number of speakers the software uses |
+| $n_s$ | number of segments spoken by speaker $s$ |
+| $a_s$ | similarity between two segments of speaker $s$ in an ideal meeting |
+| $\mathbf{1}_s$ | vector with 1 on speaker $s$'s segments and 0 elsewhere |
+:::
+
+## Eigenvectors are speakers
+
+With $k$ speakers, segment $i$ gets the coordinates $(u_1(i), \ldots, u_k(i))$, scaled to unit length, and k-means clusters these points [@ng2001spectral]. In the demo, they are a vertical slice through the eigenvector strips.
+
+Take an ideal meeting: two segments of speaker $s$ always have similarity $a_s$, and segments of different speakers have similarity 0. Then $A$ is made of constant blocks, one per speaker, and
+
+$$
+A \mathbf{1}_s = n_s a_s \mathbf{1}_s .
+$$
+
+Each speaker's indicator is an eigenvector, with eigenvalue $n_s a_s$: the speaker's number of segments times how alike those segments sound. After scaling, all of a speaker's segments sit at one point, on their own axis. Real segments are noisy, so the eigenvectors are only close to the indicators, and a floor of small eigenvalues, about 2.5 in the demo, appears under the speakers' ones. Speakers with similar eigenvalues get mixed eigenvectors, like eigenvectors 1 and 2 in the demo; k-means does not mind, because the pair spans the same two directions.
+
+The quiet speaker's eigenvalue grows with their talk time: 7.30 at 15 seconds, 16.40 at 30 and 32.63 at 60. The three main speakers, with 51 to 66 segments each, sit close together, between 39.7 and 45.9, because the thresholding in step 2 keeps only 40 entries per row; without it they spread from 39.7 to 64.5.
+
+## The count
+
+The software sets the number of speakers at the largest ratio between neighbouring eigenvalues [@wang2018speaker]:
+
+$$
+\hat{k} = \arg\max_{k} \frac{\lambda_k}{\lambda_{k+1}} .
+$$
+
+With three main speakers and a quiet one, the choice is between $\lambda_3 / \lambda_4$, which stops at three, and $\lambda_4 / \lambda_5$, which keeps the quiet speaker. The second wins when
+
+$$
+\lambda_4 > \sqrt{\lambda_3 \, \lambda_5} ,
+$$
+
+so the quiet speaker's eigenvalue has to beat the geometric mean of the smallest main speaker's eigenvalue and the noise floor. At 18 seconds, $\lambda_4 = 8.83$ against $\sqrt{39.72 \times 2.74} = 10.43$, and the speaker is lost; at 21 seconds, 10.38 against 10.30, and they are kept. The last line of the readout shows both numbers.
+
+How far a noisy eigenvector turns away from the ideal one depends on a different gap: it is bounded by the size of the noise divided by the distance between its eigenvalue and the others [@davis1970rotation]. At 18 seconds $\lambda_4 = 8.83$ is well clear of the floor at 2.74, and eigenvector 4 carries 92 percent of its weight on the quiet speaker. At 6 seconds $\lambda_4 = 2.85$ sits on the floor (2.81), and the eigenvector mixes with the noise. From 9 seconds up it follows the quiet speaker, whether the count keeps them or not.
+
+## Where it breaks
+
+- **Overlapping speech.** A segment where two people talk is similar to both and blurs the blocks. At 30 seconds, overlap lowers the quiet speaker's eigenvalue from 16.40 to 10.79 and raises the floor from 2.57 to 3.53, which puts $\lambda_4$ under the bar of 11.36. A 3-second interjection has two segments, and the first is often mixed.
+- **The threshold.** The 20 percent kept per row is a tuned number. Park and colleagues pick it per recording, searching for a threshold that keeps few entries and still gives a large eigenvalue gap, and NeMo ships their method [@park2020auto]. In this meeting it does not help: with anything from 2 to 100 percent kept per row, the quiet speaker is never counted below 21 seconds.
+
+# Summary
+
+- A spectral embedding gives each segment the values of the top eigenvectors of a similarity matrix as coordinates. In an ideal meeting each eigenvector is one speaker, with an eigenvalue of talk time times how alike their segments sound.
+- The largest eigenvalue ratio keeps a quiet speaker only if their eigenvalue beats $\sqrt{\lambda_3 \lambda_5}$. Below that, the eigenvectors can still hold the speaker while the count drops them, and an error score that counts time barely notices.
+- When the number of speakers is known, pass it, or bounds on it. When it is not, look at the eigenvalue just below the chosen gap before trusting the transcript.

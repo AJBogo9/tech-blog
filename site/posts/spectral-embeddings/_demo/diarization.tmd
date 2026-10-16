@@ -1,0 +1,211 @@
+{{< input name="dz_quiet" type="slider" min="0" max="60" step="3" value="30" label="Quiet speaker's talk time (seconds)" >}}
+
+{{< input name="dz_count" type="select" options="from the eigenvalues,from the invite (4)" value="from the eigenvalues" label="Number of speakers" >}}
+
+{{< input name="dz_overlap" type="checkbox" value="false" label="Overlapping speech at turn changes" >}}
+
+```{js}
+//| input: se, dz_quiet, dz_count, dz_overlap
+//| label: fig-se-diarization
+//| fig-cap: "Speaker diarization of a synthetic 5 minute meeting cut into 200 segments of 1.5 seconds. Top left, the similarity matrix between segments, sorted by speaker. Top right, its largest eigenvalues, with the line where the number of speakers is set. Below, along the meeting's time axis: who spoke, the first five eigenvectors (purple positive, green negative, faint near zero), the speaker the clustering assigned to each segment, and the segments it got wrong."
+const se = tali.get("se");
+if (!se) return;
+const opts = { q: Math.round(tali.value("dz_quiet") / 1.5), overlap: tali.value("dz_overlap"), known: tali.value("dz_count") !== "from the eigenvalues" };
+
+// compute begin
+const S = 4, N = 200, SHOW = 5;
+
+// synthetic meeting: speakers 0 to 2 take turns, the quiet speaker 3 cuts in
+// with q segments as interjections of 2 segments (3 s). a segment's voice
+// embedding is normalize(speaker direction + gaussian noise / sqrt(dim)).
+function meeting({ q, overlap, dim = 24, noise = 1, seed = 23 }) {
+  const rMean = se.rng(seed), rTurn = se.rng(seed + 1), rWho = se.rng(seed + 2);
+  const rNoise = se.rng(seed + 3), rOv = se.rng(seed + 4), rQ = se.rng(seed + 5);
+  const means = [];
+  for (let s = 0; s < 5; s++) {
+    const m = Float64Array.from({ length: dim }, () => rMean.normal());
+    const l = se.norm(m); for (let c = 0; c < dim; c++) m[c] /= l;
+    means.push(m);
+  }
+  const R = S - 1, truth = [];
+  let cur = 0;
+  while (truth.length < N) {
+    const len = 2 + Math.floor(-Math.log(1 - rTurn()) * 4);
+    for (let t = 0; t < len && truth.length < N; t++) truth.push(cur);
+    cur = (cur + 1 + Math.floor(rWho() * (R - 1))) % R;
+  }
+  const slots = rQ.shuffle(Array.from({ length: Math.floor(N / 3) }, (_, i) => 3 * i));
+  let left = q;
+  for (const s of slots) {
+    if (left <= 0) break;
+    const len = Math.min(2, left);
+    for (let t = 0; t < len; t++) truth[s + t] = S - 1;
+    left -= len;
+  }
+  const X = truth.map((s) => {
+    const z = Float64Array.from(means[s]);
+    for (let c = 0; c < dim; c++) z[c] += (noise * rNoise.normal()) / Math.sqrt(dim);
+    return z;
+  });
+  if (overlap) {
+    // the first segment of a new turn also carries the previous voice
+    for (let i = 1; i < N; i++) if (truth[i] !== truth[i - 1] && rOv() < 0.7) {
+      const a = means[truth[i]], b = means[truth[i - 1]];
+      for (let c = 0; c < dim; c++) X[i][c] = 0.5 * a[c] + 0.5 * b[c] + (noise * rNoise.normal()) / Math.sqrt(dim);
+    }
+  }
+  for (const x of X) { const l = se.norm(x); for (let c = 0; c < dim; c++) x[c] /= l; }
+  return { X, truth };
+}
+
+// the refinement of Wang et al. 2018 without the blur: diagonal set to the row
+// maximum, keep the top 20 % of each row (the rest times 0.01), symmetrise with
+// max, multiply the matrix by itself, then divide each row by its maximum.
+function refine(X, p = 0.2) {
+  const A = se.zeros(N, N);
+  for (let i = 0; i < N; i++) for (let j = i; j < N; j++) { const v = se.dot(X[i], X[j]); A[i][j] = v; A[j][i] = v; }
+  for (let i = 0; i < N; i++) {
+    let m = -Infinity;
+    for (let j = 0; j < N; j++) if (j !== i && A[i][j] > m) m = A[i][j];
+    A[i][i] = m;
+  }
+  const keep = Math.round(p * N), Y = se.zeros(N, N);
+  for (let i = 0; i < N; i++) {
+    const thr = Float64Array.from(A[i]).sort()[N - keep];
+    for (let j = 0; j < N; j++) Y[i][j] = A[i][j] >= thr ? A[i][j] : 0.01 * A[i][j];
+  }
+  for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) { const m = Math.max(Y[i][j], Y[j][i]); Y[i][j] = m; Y[j][i] = m; }
+  const Z = se.zeros(N, N);
+  for (let i = 0; i < N; i++) for (let j = i; j < N; j++) { const v = se.dot(Y[i], Y[j]); Z[i][j] = v; Z[j][i] = v; }
+  // R^-1 Z (R = row maxima) has the eigenvalues of the symmetric R^-1/2 Z R^-1/2
+  const rmax = Float64Array.from(Z, (r) => r.reduce((a, b) => Math.max(a, b), -Infinity));
+  const M = se.zeros(N, N);
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) M[i][j] = Z[i][j] / Math.sqrt(rmax[i] * rmax[j]);
+  return { Z, rmax, M };
+}
+
+// most segments right under a one-to-one matching of clusters to speakers
+function matchLabels(truth, pred, kp) {
+  const C = Array.from({ length: kp }, () => new Int32Array(S));
+  for (let i = 0; i < N; i++) C[pred[i]][truth[i]]++;
+  let layer = new Map([[0, { v: 0, map: [] }]]);
+  for (let a = 0; a < kp; a++) {
+    const next = new Map();
+    const put = (used, v, map) => { const o = next.get(used); if (!o || o.v < v) next.set(used, { v, map }); };
+    for (const [used, st] of layer) {
+      put(used, st.v, [...st.map, -1]);
+      for (let b = 0; b < S; b++) if (!(used & (1 << b))) put(used | (1 << b), st.v + C[a][b], [...st.map, b]);
+    }
+    layer = next;
+  }
+  let best = null;
+  for (const st of layer.values()) if (!best || st.v > best.v) best = st;
+  return best;
+}
+
+function diarize({ q, overlap, known }) {
+  const t0 = performance.now();
+  const { X, truth } = meeting({ q, overlap });
+  const { Z, rmax, M } = refine(X);
+  const { values, vectors } = se.eigh(M);
+  const desc = Array.from(values).reverse();
+  // count: the largest ratio lambda_k / lambda_k+1 for k up to 8, stopping once
+  // lambda_k is below 1 % of lambda_1 (the rule of Google's spectralcluster library)
+  let k = 1, ratio = 0;
+  for (let j = 1; j <= 8; j++) {
+    if (desc[j - 1] < 0.01 * desc[0]) break;
+    const r = desc[j - 1] / desc[j];
+    if (r > ratio) { ratio = r; k = j; }
+  }
+  const counted = k;
+  if (known) k = S;
+  // the embedding: eigenvectors of R^-1 Z, one coordinate per eigenvector
+  const top = vectors.slice(N - Math.max(k, SHOW)).reverse().map((u) => se.signFix(Float64Array.from(u, (x, i) => x / Math.sqrt(rmax[i]))));
+  const Yk = se.rowNormalize(Array.from({ length: N }, (_, i) => top.slice(0, k).map((v) => v[i])));
+  const km = se.kmeans(Yk, k, { seed: 5, restarts: 6 });
+  const best = matchLabels(truth, km.labels, k);
+  let extra = S;
+  const colourOf = best.map.map((b) => (b >= 0 ? b : extra++));
+  const pred = km.labels.map((a) => colourOf[a]);
+  // share of each eigenvector's squared weight on the quiet speaker's segments
+  const quietWeight = top.slice(0, SHOW).map((v) => {
+    let a = 0, b = 0;
+    for (let i = 0; i < N; i++) { b += v[i] * v[i]; if (truth[i] === S - 1) a += v[i] * v[i]; }
+    return a / b;
+  });
+  const spoke = new Set(truth).size, quietSegs = truth.filter((s) => s === S - 1).length;
+  return { truth, pred, Z, rmax, desc, k, counted, ratio, top, quietWeight, spoke, quietSegs, errors: N - best.v, ms: performance.now() - t0 };
+}
+// compute end
+
+const res = diarize(opts);
+const W = se.width(), narrow = W < 560;
+const root = document.createElement("div");
+root.style.cssText = `display:flex;flex-direction:column;gap:12px;max-width:${W}px`;
+const top = document.createElement("div");
+top.style.cssText = `display:flex;gap:16px;align-items:flex-start;${narrow ? "flex-direction:column" : ""}`;
+
+// similarity matrix, sorted by true speaker
+const order = Array.from({ length: N }, (_, i) => i).sort((a, b) => res.truth[a] - res.truth[b] || a - b);
+const heatSize = narrow ? Math.min(W, 300) : 240;
+const viridis = d3.scaleSequential(d3.interpolateViridis).domain([0, 1]);
+const heat = se.heatCanvas(N, N, (i, j) => viridis(Math.max(0, res.Z[order[i]][order[j]] / res.rmax[order[i]])), { size: N, title: "Similarity matrix between segments, sorted by speaker" });
+heat.style.width = heatSize + "px"; heat.style.height = heatSize + "px";
+const heatBox = document.createElement("div");
+heatBox.style.cssText = `display:flex;flex-direction:column;gap:4px;width:${heatSize}px;flex:none`;
+const heatCap = document.createElement("div");
+heatCap.style.cssText = "font-size:0.8em;opacity:0.8";
+heatCap.textContent = "similarity between segments, sorted by speaker";
+heatBox.append(heatCap, heat);
+
+// eigenvalues, with the line where the count is set
+const eig = res.desc.slice(0, 10).map((v, i) => ({ i: i + 1, v, used: i < res.k }));
+const eigPlot = Plot.plot({
+  width: narrow ? W : W - heatSize - 16, height: 250, marginLeft: 44, marginBottom: 36, marginTop: 30,
+  x: { label: "eigenvalue number", domain: [0.5, 10.5], ticks: d3.range(1, 11), tickFormat: "d" },
+  y: { label: "eigenvalue", grid: true, zero: true },
+  marks: [
+    Plot.ruleX([res.k + 0.5], { stroke: se.cat[2], strokeWidth: 2 }),
+    Plot.text([res.k + 0.5], { x: (d) => d, frameAnchor: "top", dy: -18, text: () => (opts.known ? "told: 4 speakers" : `largest ratio: ${res.k} speaker${res.k === 1 ? "" : "s"}`), fill: se.cat[2] }),
+    Plot.dot(eig, { x: "i", y: "v", r: 4, fill: (d) => (d.used ? se.cat[0] : "currentColor"), fillOpacity: (d) => (d.used ? 1 : 0.45) }),
+  ],
+});
+top.append(heatBox, eigPlot);
+
+// timeline: truth, the eigenvectors, the clustering, the errors
+const rows = ["who spoke", ...res.top.slice(0, SHOW).map((_, j) => `eigenvector ${j + 1}`), "clustering", "wrong"];
+const segs = [];
+for (let i = 0; i < N; i++) {
+  const t = i * 1.5;
+  segs.push({ row: "who spoke", t, fill: se.cat[res.truth[i]], op: 1 });
+  res.top.slice(0, SHOW).forEach((v, j) => {
+    const m = d3.max(v, Math.abs);
+    segs.push({ row: `eigenvector ${j + 1}`, t, fill: v[i] >= 0 ? se.cat[6] : se.cat[4], op: Math.abs(v[i]) / m });
+  });
+  segs.push({ row: "clustering", t, fill: se.cat[res.pred[i] % se.cat.length], op: 1 });
+  if (res.pred[i] !== res.truth[i]) segs.push({ row: "wrong", t, fill: "currentColor", op: 1 });
+}
+const timeline = Plot.plot({
+  width: W, height: 36 + rows.length * 22, marginLeft: 92, marginBottom: 32, marginTop: 4,
+  x: { label: "time (s)", domain: [0, N * 1.5] },
+  y: { domain: rows, label: null, padding: 0.12 },
+  marks: [Plot.rect(segs, { x1: "t", x2: (d) => d.t + 1.5, y: "row", fill: "fill", fillOpacity: "op" })],
+});
+
+const readout = document.createElement("div");
+readout.id = "dz-readout";
+readout.style.cssText = "font-size:0.9em;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:2px;text-align:left";
+const pct = (x) => (100 * x).toFixed(1) + " %";
+const lines = [
+  `${res.spoke} people spoke. ` + (opts.known ? "Told the count: 4. " : `Counted from the eigenvalues: ${res.counted} (largest ratio, eigenvalue ${res.counted} over ${res.counted + 1}: ${res.ratio.toFixed(2)}). `) +
+    `Wrong segments: ${res.errors} of ${N} (${pct(res.errors / N)}).`,
+  res.quietSegs > 0
+    ? `The quiet speaker talks for ${res.quietSegs} segments (${(1.5 * res.quietSegs).toFixed(0)} s, ${pct(res.quietSegs / N)} of the meeting); eigenvector 4 puts ${pct(res.quietWeight[3])} of its weight on them.`
+    : "The quiet speaker says nothing.",
+  `Eigenvalues: ${res.desc.slice(0, 6).map((v) => v.toFixed(2)).join(", ")}. Fourth ${res.desc[3].toFixed(2)}, geometric mean of third and fifth ${Math.sqrt(res.desc[2] * res.desc[4]).toFixed(2)}.`,
+];
+for (const l of lines) { const p = document.createElement("div"); p.textContent = l; readout.append(p); }
+root.append(top, timeline, readout);
+root.__demo = { diarize, res };
+return root;
+```
