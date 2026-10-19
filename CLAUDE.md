@@ -104,6 +104,27 @@ existing post. The older `Theory` then `Code demo` posts (`KL-divergence`,
 `em-algorithm`, `evidence-lower-bound`) predate this rule and were deliberately
 not retrofitted, so do not "fix" them.
 
+**A photo of the real thing, where the text first names it.** When the job or the
+story names a physical thing the reader may not have seen (a grid battery, a city's
+street grid), one real photo of it goes there as a `#fig-` figure, so the caption
+renders. The caption states a fact that ties the photo to the problem (a size, a
+constraint, where a name comes from) and ends with the credit: author, licence link,
+a link to the source page, and "cropped" if it was. Examples: `fleet-revenue-split`
+(a battery site) and `a-star` (Manhattan from the ISS, at the Manhattan distance).
+
+- Only the specific object the text names. No stock filler or mood shots (a
+  lightbulb, people at a dashboard, power lines at sunset): eyetracking studies find
+  readers skip them. No AI-generated images.
+- No photo for a topic with no physical object (`KL-divergence`,
+  `evidence-lower-bound`). A figure does that job.
+- One per post is the norm, two at most, and never one that pushes the demo off the
+  first screens.
+- Licence: our own photo, public domain, CC0, CC BY or CC BY-SA, usually from
+  Wikimedia Commons. Never an image taken from a search engine's image results.
+- Re-encode to WebP about 1200 px wide and under about 300 KB: Taliesin copies
+  images unchanged. ImageMagick 6 on this machine ignores `-quality` for WebP, so
+  encode with Pillow.
+
 Posts mix Markdown, `{python}` code cells (executed via Jupyter; numpy/matplotlib/
 scikit-learn/torch), math (`$…$`/`$$…$$`, KaTeX server-side), and native reactive
 `{js}` cells for interactive visualisations. Reactive `{js}` cells use
