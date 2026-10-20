@@ -1,0 +1,21 @@
+---
+title: "Math Symbols for Ulauncher"
+date: "2026-10-20"
+description: "A Ulauncher extension that finds a math symbol by its LaTeX name and copies it to the clipboard."
+image: "thumbnail.png"
+image-alt: "The Ulauncher window with the query m sigma. The first results are σ with \\sigma and Σ with \\Sigma, each with its Unicode name and code point, and more sigma variants follow."
+categories:
+  - Python
+  - Mathematics
+  - Developer tools
+---
+
+<a href="https://github.com/AJBogo9/ulauncher-math-symbols" class="btn btn-outline-secondary btn-sm">GitHub</a>
+
+Type `m sum` in [Ulauncher](https://ulauncher.io), press Enter, and ∑ is on the clipboard.
+
+<video src="demo.mp4" autoplay loop muted playsinline controls aria-label="Searching m alpha, m sigma and m gamma in Ulauncher, then opening the copy actions for γ with Alt+Enter" style="display:block; width:100%; height:auto; margin:0 0 1.25rem; border-radius:8px;"></video>
+
+The extension finds a symbol by its LaTeX name (`\mathbb{R}` for ℝ), a nickname (`expectation` for 𝔼) or words of its Unicode name (`not equal` for ≠).
+
+It needs Ulauncher 6 (still in beta). To install it, open Extensions in Ulauncher's preferences, click Add extension and paste the GitHub link.
