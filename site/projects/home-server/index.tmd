@@ -1,0 +1,95 @@
+---
+title: "Home Server"
+date: "2026-10-28"
+description: "An old laptop at home that runs my password manager, music, files and ad blocking for the home network."
+image: "thumbnail.png"
+image-alt: "A diagram of the home server. My phone and laptop reach it over Tailscale and devices at home use it for DNS. Inside run Vaultwarden, Pi-hole, Navidrome, Nextcloud, Homepage and Uptime Kuma, with a USB drive for weekly backups and Telegram for alerts."
+categories:
+  - Docker
+  - Linux
+  - Self-hosting
+---
+
+I run the services I use every day on an old laptop at home with Ubuntu Server. It keeps my passwords, my music and my files, and it blocks ads for every device on the home network. I reach it from anywhere over [Tailscale](https://tailscale.com), a VPN that puts my devices on one private network.
+
+<figure class="tali-figure tali-figure-center">
+<svg viewBox="0 0 480 420" role="img" aria-label="My phone and laptop reach the laptop at home over Tailscale. Devices at home get Pi-hole as their DNS server through the router. The laptop runs Vaultwarden, Pi-hole, Navidrome, Nextcloud, Homepage and Uptime Kuma. It backs up to a USB drive every week, and Uptime Kuma sends alerts to Telegram." style="display:block; width:100%; max-width:560px; height:auto; margin:0 auto; font-family:inherit;" fill="none" stroke="currentColor">
+<defs><marker id="hs-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" stroke="none"/></marker></defs>
+<g stroke-width="1.5">
+<rect x="20" y="10" width="200" height="46" rx="8"/>
+<rect x="260" y="10" width="200" height="46" rx="8"/>
+<rect x="10" y="110" width="460" height="210" rx="12"/>
+<rect x="20" y="364" width="200" height="46" rx="8"/>
+<rect x="260" y="364" width="200" height="46" rx="8"/>
+</g>
+<g stroke-width="1" fill="currentColor" fill-opacity="0.07">
+<rect x="24" y="150" width="206" height="44" rx="6"/>
+<rect x="250" y="150" width="206" height="44" rx="6"/>
+<rect x="24" y="205" width="206" height="44" rx="6"/>
+<rect x="250" y="205" width="206" height="44" rx="6"/>
+<rect x="24" y="260" width="206" height="44" rx="6"/>
+<rect x="250" y="260" width="206" height="44" rx="6"/>
+</g>
+<g stroke-width="1.5" marker-end="url(#hs-arrow)">
+<line x1="120" y1="56" x2="120" y2="108"/>
+<line x1="360" y1="56" x2="360" y2="148"/>
+<line x1="120" y1="320" x2="120" y2="362"/>
+<line x1="360" y1="304" x2="360" y2="362"/>
+</g>
+<g fill="currentColor" stroke="none" font-size="15">
+<text x="120" y="38" text-anchor="middle">My phone and laptop</text>
+<text x="360" y="38" text-anchor="middle">Devices at home</text>
+<text x="128" y="88" font-size="13">Tailscale</text>
+<text x="352" y="88" font-size="13" text-anchor="end">DNS via the router</text>
+<text x="24" y="136" font-weight="600">Laptop at home: Ubuntu Server</text>
+<text x="36" y="169" font-weight="600" font-size="14">Vaultwarden</text>
+<text x="36" y="186" font-size="13" fill-opacity="0.75">passwords</text>
+<text x="262" y="169" font-weight="600" font-size="14">Pi-hole</text>
+<text x="262" y="186" font-size="13" fill-opacity="0.75">DNS and ad blocking</text>
+<text x="36" y="224" font-weight="600" font-size="14">Navidrome</text>
+<text x="36" y="241" font-size="13" fill-opacity="0.75">music</text>
+<text x="262" y="224" font-weight="600" font-size="14">Nextcloud</text>
+<text x="262" y="241" font-size="13" fill-opacity="0.75">files</text>
+<text x="36" y="279" font-weight="600" font-size="14">Homepage</text>
+<text x="36" y="296" font-size="13" fill-opacity="0.75">dashboard</text>
+<text x="262" y="279" font-weight="600" font-size="14">Uptime Kuma</text>
+<text x="262" y="296" font-size="13" fill-opacity="0.75">monitoring</text>
+<text x="128" y="346" font-size="13">weekly backup</text>
+<text x="352" y="346" font-size="13" text-anchor="end">alerts</text>
+<text x="120" y="392" text-anchor="middle">USB drive</text>
+<text x="360" y="392" text-anchor="middle">Telegram</text>
+</g>
+</svg>
+<figcaption>Every service runs as a Docker container. Devices at home get Pi-hole as their DNS server from the router.</figcaption>
+</figure>
+
+## What runs on it
+
+| Service | What I use it for |
+|---|---|
+| [Vaultwarden](https://github.com/dani-garcia/vaultwarden) | Passwords, synced to the Bitwarden apps and browser extension |
+| [Navidrome](https://www.navidrome.org) | Streaming my music library to my phone |
+| [Nextcloud](https://nextcloud.com) | Files, like a self-hosted Google Drive |
+| [Pi-hole](https://pi-hole.net) | DNS and ad blocking for every device at home |
+| [Homepage](https://gethomepage.dev) | One dashboard with a link to each service and its status |
+| [Uptime Kuma](https://github.com/louislam/uptime-kuma) | Checks every service and messages me on Telegram when one goes down |
+
+One Docker Compose file in a git repository defines all six containers. Git holds only the configuration. The data lives on the server and in the backups.
+
+## Backups
+
+Every Sunday at 2 a.m. a script copies the data to a USB drive. The password and file databases are SQLite files that the services write to all the time, so a plain copy can catch one halfway through a write. The script takes a snapshot with SQLite's online backup instead. Every run also pings Uptime Kuma. If a backup fails, or no backup arrives for about eight days, Uptime Kuma sends an alert to Telegram.
+
+The backup is one copy on one drive, plugged into the server itself. An offsite copy is the next step.
+
+## What broke
+
+I worked through each of these with Claude Code, an AI coding assistant, over SSH.
+
+**The empty password vault.** One day in September the Bitwarden app on my phone showed no passwords. The data on the server was fine. The app had updated itself to a version that needs a newer Vaultwarden. The server still ran the image I had pulled in April, because a `:latest` tag only changes when you pull it again. Pulling the new image and logging in again brought the vault back. Nothing updates the server automatically, so the mismatch will come back unless I update it when the apps update.
+
+**Updating all services at once.** Running `docker compose pull` for the whole stack would have moved Nextcloud forward several major versions in one step. Nextcloud refuses to skip a major version, so it would have stayed down. Now I update one service at a time and keep a copy of its database and old image first. Nextcloud goes up one major version at a time.
+
+**The home internet outage.** My devices on Tailscale send their DNS lookups to Pi-hole at home. When the home connection dropped, my laptop on a phone hotspot could not look up any name. It looked as if Tailscale had broken the internet. A public DNS server as a fallback would let ads through. Tailscale asks all its DNS servers at once and uses the fastest answer, so the public server would answer some lookups first. Until there is a second resolver, `sudo tailscale set --accept-dns=false` turns off Tailscale's DNS on that device and gets name lookups working again.
+
+**The backup drive after a reboot.** The kernel log after one reboot showed the USB drive mount and then drop off the USB bus 47 seconds later. It came back as a new device, and nothing mounted it again. Without a check, the next backup would have written into an empty folder on the laptop's own disk. The script checks that the drive is mounted before it copies anything, so a backup in that state stops and sends the alert.
