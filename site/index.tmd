@@ -8,7 +8,7 @@ listing:
 ---
 
 ::: {.intro}
-<img src="me.svg" alt="Andreas Bogossian" width="120" height="120" style="float:right;width:clamp(84px,24vw,120px);height:auto;margin:0.3rem 0 1rem 1.25rem;border-radius:50%">
+<img src="me.webp" alt="Andreas Bogossian" width="120" height="120" style="float:right;width:clamp(84px,24vw,120px);height:auto;margin:0.3rem 0 1rem 1.25rem;border-radius:50%">
 
 I'm a final-year M.Sc. student in machine learning at Aalto University and a research
 assistant there, writing two first-author papers on forecasting and model evaluation. I
