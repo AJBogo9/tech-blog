@@ -1,10 +1,29 @@
 ---
 title: "Andreas Bogossian"
-hero:
-  eyebrow: "ML · STATISTICS · ALGORITHMS"
-  headline: "Machine learning, worked out from first principles"
-  lead: "Notes on concepts I'm working to understand, mostly statistics and the math underneath the models, built up from running code."
-  actions:
-    - { text: "Read the posts", href: "blog.tmd", primary: true }
-    - { text: "Projects", href: "projects.tmd" }
+listing:
+  id: recent
+  contents: posts
+  type: list
+  max-items: 4
 ---
+
+::: {.intro}
+<img src="me.svg" alt="Andreas Bogossian" width="120" height="120" style="float:right;width:clamp(84px,24vw,120px);height:auto;margin:0.3rem 0 1rem 1.25rem;border-radius:50%">
+
+I'm a final-year M.Sc. student in machine learning at Aalto University and a research
+assistant there, writing two first-author papers on forecasting and model evaluation. I
+write about machine learning and statistics, worked out from first principles and built
+up from running code.
+
+I built [Taliesin](projects/taliesin/index.tmd), the Rust tool this site is made with,
+using AI coding tools.
+
+[Email](mailto:contact@andreasbogossian.com) · [GitHub](https://github.com/AJBogo9) · [LinkedIn](https://www.linkedin.com/in/andreas-bogossian/)
+:::
+
+## Recent posts
+
+::: {#recent}
+:::
+
+[All posts](blog.tmd)
