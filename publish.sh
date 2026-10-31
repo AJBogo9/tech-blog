@@ -7,13 +7,10 @@ taliesin build site
 # artifact here, after the build and before the push. Local previews stay
 # clean. The script verifies its own work and exits non-zero on a partial
 # injection, which `set -e` turns into a stopped publish.
-#
-# Disabled until readlog is live: the endpoint has no DNS yet and the privacy
-# page describing the beacon was removed. Restore both together.
-# ./_beacon/inject-beacon.sh site/_site \
-#   --site andreasbogossian.com \
-#   --endpoint https://t.andreasbogossian.com/e \
-#   --beacon _beacon/b.js
+./_beacon/inject-beacon.sh site/_site \
+  --site andreasbogossian.com \
+  --endpoint https://t.andreasbogossian.com/e \
+  --beacon _beacon/b.js
 
 cd site/_site
 # Deploy internals (publish.sh, requirements.txt, _infra/) live above site/, so
