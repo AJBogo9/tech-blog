@@ -19,10 +19,6 @@ language, whether you prefer dark mode and reduced motion, a rough
 connection type, your browser's user-agent string, and the country your
 connection comes from, as Cloudflare reports it.
 
-Some links I hand out, for example the one in a job application, carry a tag
-that names where I gave the link. When you open such a link, I can see that
-the tagged link was opened, and which pages were read after it.
-
 ## How visitors are counted without identifying anyone
 
 Counting unique readers normally requires tagging the device. Instead, the
