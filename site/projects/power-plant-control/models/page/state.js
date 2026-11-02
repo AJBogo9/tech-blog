@@ -129,11 +129,25 @@ export function say(text, request = null) {
   if (!request) noticeTimer = setTimeout(() => store.set({ notice: null }), 4000);
 }
 
+// what a static copy puts in front of its keys (scopeStorage): its own address
+let scope = '';
+
+/**
+ * a static copy keeps the person's choices under its own address, so two copies on one website that
+ * hold a model of the same file name keep theirs apart
+ * @param {string} prefix
+ */
+export function scopeStorage(prefix) {
+  scope = prefix;
+}
+
 // the person's choices this browser keeps per model (localStorage); storage may be blocked
 export const storage = {
+  /** @param {string} key the key as the page names it, which the store keeps it under */
+  key: (key) => scope + key,
   get(key, fallback) {
     try {
-      const value = localStorage.getItem(key);
+      const value = localStorage.getItem(scope + key);
       return value === null ? fallback : JSON.parse(value);
     } catch {
       return fallback;
@@ -141,7 +155,7 @@ export const storage = {
   },
   set(key, value) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      localStorage.setItem(scope + key, JSON.stringify(value));
     } catch {
       // not kept
     }

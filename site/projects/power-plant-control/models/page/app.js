@@ -6,7 +6,7 @@
 
 import { html, render, useState, useEffect, useLayoutEffect, useRef, useMemo } from './vendor/htm-preact.js';
 import { Canvas } from './canvas.js';
-import { isPick, parsePlace, PICK, placeHash } from './place.js';
+import { isPick, modelIn, parsePlace, PICK, placeHash } from './place.js';
 import { activeAt, matchedIn, rowId, search, stepActive } from './search.js';
 import { ago, pickModels, split } from './picker.js';
 import { copyText, host, onHost } from './host.js';
@@ -19,7 +19,7 @@ import { createPanes, modes, over } from './panes.js';
 import { Inspector, reference } from './inspector.js';
 import { Banners } from './whatif.js';
 import { api, configureApi, failed, plain, quiet, useApi } from './api.js';
-import { appsPart, say, setter, storage, store, useStore } from './state.js';
+import { appsPart, say, scopeStorage, setter, storage, store, useStore } from './state.js';
 import { placesOf, reducePlaces } from './places.js';
 import { pushPlace, readTrail, replacePlace, startTrail, stepPlace } from './trail.js';
 import { COMMANDS, claudeMenu, contextOf, gestureHint, keySheet, keysOf, palette, runCommand as runIn, short, tipParts } from './commands.js';
@@ -31,7 +31,7 @@ import { createRuns, keptView } from './runs.js';
 import { choicesOf, connect, createShare, listen, listenTurns, socketUrl, takeLateToken, takeToken, themeOf, watchTheme } from './session.js';
 import { createMarks, rendered, renders } from './marks.js';
 import { scriptRuns, typeset } from './math.js';
-import { createSiteFetch, readSite } from './site.js';
+import { createSiteFetch, pickable as pickableIn, readSite } from './site.js';
 
 const marks = createMarks();
 // whether the page drew its first system: the marks may have dropped the "first" mark since
@@ -46,9 +46,8 @@ let token = null;
 // a static copy's site.json (`slxkit export`), read by start(); null for a page a server serves
 /** @type {import('./site.js').Site | null} */
 let site = null;
-// another model can be opened from this page: never in VS Code, and in a static copy only when it
-// holds several
-const pickable = () => !host.embedded && (!site || site.models.length > 1);
+// another model can be opened from this page (site.js)
+const pickable = () => pickableIn(host.embedded, site);
 // in a frame of a page that scrolls past it, and not full screen: the wheel and one finger scroll
 // that page (canvas.js)
 const framedNow = () => host.framed && !document.fullscreenElement;
@@ -395,7 +394,7 @@ function App() {
     hold: false,
     onData: (m) => {
       // the views this tab had before a reload
-      if (store.get().systems.length === 0) canvas.current.keep(`slxkit:views:${m.file}`);
+      if (store.get().systems.length === 0) canvas.current.keep(storage.key(`slxkit:views:${m.file}`));
       // the first outline goes to the place the address names; a later one leaves a system a
       // save took away for its nearest parent
       dispatchPlace({ type: 'loaded', systems: m.systems, hash: location.hash });
@@ -1201,7 +1200,8 @@ function pickerAddress(asked) {
 // static copy reads its site.json first and its files in place of a server
 export async function start() {
   /** @type {any} */ (window).slxkit = hooks;
-  modelPath = parsePlace(location.hash)?.model ?? null;
+  // the model in the address, whether or not the token still stands in front of it
+  modelPath = modelIn(location.hash);
   const root = document.getElementById('app');
   if (host.site) {
     try {
@@ -1210,6 +1210,8 @@ export async function start() {
       return render(html`<p class="message">Cannot read this copy of the model: ${e.message}</p>`, root);
     }
     configureApi({ token: null, modelPath, fetch: createSiteFetch({ site, model: modelPath }) });
+    // the choices kept per model, under this copy's address
+    scopeStorage(`${location.pathname}|`);
   } else {
     token = takeToken();
     configureApi({ token, modelPath });

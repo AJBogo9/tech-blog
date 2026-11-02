@@ -101,6 +101,14 @@ export function createSiteFetch({ site, model, read = (url, init) => fetch(url, 
 }
 
 /**
+ * another model can be opened from the page: never in a VS Code tab, which is one file, and in a
+ * static copy only when it holds several
+ * @param {boolean} embedded
+ * @param {Site | null} site
+ */
+export const pickable = (embedded, site) => !embedded && (!site || site.models.length > 1);
+
+/**
  * the live channel of a copy: it opens and says version 1, the only version a copy has, and never
  * closes by itself
  */

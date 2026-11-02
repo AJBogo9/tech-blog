@@ -35,6 +35,10 @@ export function splitToken(hash) {
   return { token: found[1], rest: found[2] ? `#${found[2]}` : '' };
 }
 
+// the model an address names, after the token the server puts in front of a place
+// (`#t=<hex>/m/<path>/s/...`); null for the server's own model
+export const modelIn = (hash) => parsePlace(splitToken(hash).rest)?.model ?? null;
+
 // the address that shows the picker
 export const PICK = '#/pick';
 export const isPick = (hash) => hash === PICK;
