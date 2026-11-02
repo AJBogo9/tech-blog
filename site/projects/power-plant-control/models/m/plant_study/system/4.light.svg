@@ -1,0 +1,219 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="9.41 2 841.09 739" width="841.09" height="739" font-family="Atkinson Hyperlegible Next, DejaVu Sans, sans-serif" style="font-kerning:none" font-size="10" data-model="plant_study" data-system="4" data-theme="light" data-paint="css">
+<rect class="paper" x="9.41" y="2" width="841.09" height="739"/>
+<g class="areas">
+</g>
+<g class="notes">
+<g class="ann note" data-sid="64">
+<text class="note" x="368" y="22.84">UPPER SECTION</text>
+</g>
+<g class="ann note" data-sid="70" data-box="40 395 276 336" data-align="left top">
+<text class="note" x="41" y="405.84">EQUATIONS</text>
+<text class="note" x="41" y="418.84">(1) <tspan class="tex">$T_1 \frac{df_p}{dt} + f_p = k_0 u$</tspan></text>
+<text class="note" x="41" y="431.84">(2) <tspan class="tex">$\frac{dp_b}{dt} = \frac{f_p - f_b}{T_s}$</tspan></text>
+<text class="note" x="41" y="444.84">(3) <tspan class="tex">$f_b = k_1 \sqrt{p_b^2 - p_{hp}^2}$</tspan></text>
+<text class="note" x="41" y="457.84">(4) <tspan class="tex">$\frac{dp_{hp}}{dt} = k_2\,(f_b - f_t)$</tspan></text>
+<text class="note" x="41" y="470.84">(5) <tspan class="tex">$f_t = k_3 z_1 p_{hp}$</tspan></text>
+<text class="note" x="41" y="483.84">Each State-Space block holds one state:</text>
+<text class="note" x="41" y="496.84"><tspan class="tex">$\dot x = Ax + Bu$</tspan> and <tspan class="tex">$y = x$</tspan>. With <tspan class="tex">$A = 0$</tspan></text>
+<text class="note" x="41" y="509.84">it is a plain integrator (<tspan class="tex">$p_b$</tspan> and <tspan class="tex">$p_{hp}$</tspan>).</text>
+</g>
+</g>
+<g class="blocks">
+<g class="blk" data-sid="5" data-type="Inport">
+<rect class="body" x="35" y="100" width="20" height="20" fill="#ffffff" stroke="#cc2626" stroke-width="1"/>
+<text class="caption" x="45" y="113.5" text-anchor="middle" fill="#cc2626">1</text>
+<text class="name" x="45" y="134.84" text-anchor="middle" fill="#cc2626">u: fuel feed</text>
+</g>
+<g class="blk" data-sid="6" data-type="Inport">
+<rect class="body" x="45" y="325" width="20" height="20" fill="#ffffff" stroke="#8c40bf" stroke-width="1"/>
+<text class="caption" x="55" y="338.5" text-anchor="middle" fill="#8c40bf">2</text>
+<text class="name" data-text="z_1: valve setting" x="55" y="359.84" text-anchor="middle" fill="#8c40bf">z<tspan dy="2" font-size="7">1</tspan><tspan dy="-2">: valve setting</tspan></text>
+</g>
+<g class="blk" data-sid="15" data-type="Product">
+<rect class="body" x="580" y="220" width="30" height="20" fill="#ffffff" stroke="#b34d00" stroke-width="1"/>
+<text class="caption" x="595" y="233.5" text-anchor="middle" fill="#b34d00">×</text>
+<text class="name" data-text="f_t: flow into" x="595" y="254.84" text-anchor="middle" fill="#b34d00">f<tspan dy="2" font-size="7">t</tspan><tspan dy="-2">: flow into</tspan></text>
+<text class="name" x="595" y="267.84" text-anchor="middle" fill="#b34d00">the turbine</text>
+</g>
+<g class="blk" data-sid="7" data-type="Fcn" data-tex="k_{1}\,\sqrt{u_{1}\,u_{1}-u_{2}\,u_{2}}">
+<rect class="body" x="495" y="120" width="40" height="20" fill="#ffffff" stroke="#b34d00" stroke-width="1"/>
+<text class="caption" x="515" y="132.1" text-anchor="middle" font-size="6" fill="#b34d00">k1 * sqrt(u[…</text>
+<text class="name" data-text="f_b: flow out" x="515" y="154.84" text-anchor="middle" fill="#b34d00">f<tspan dy="2" font-size="7">b</tspan><tspan dy="-2">: flow out</tspan></text>
+<text class="name" x="515" y="167.84" text-anchor="middle" fill="#b34d00">of the boiler</text>
+</g>
+<g class="blk" data-sid="11" data-type="Mux">
+<rect class="body" x="425" y="110" width="30" height="35" fill="#ffffff" stroke="#0d66cc" stroke-width="1"/>
+<text class="caption" x="440" y="131" text-anchor="middle" fill="#0d66cc">mux</text>
+</g>
+<g class="blk" data-sid="12" data-type="Sum">
+<rect class="body" x="245" y="103" width="25" height="29" fill="#ffffff" stroke="#b34d00" stroke-width="1"/>
+<text class="port" x="248" y="112.8" font-size="8" fill="#b34d00">+</text>
+<text class="port" x="248" y="127.8" font-size="8" fill="#b34d00">−</text>
+<text class="name" x="257.5" y="146.84" text-anchor="middle" fill="#b34d00">Net flow into</text>
+<text class="name" x="257.5" y="159.84" text-anchor="middle" fill="#b34d00">the boiler</text>
+<text class="attr" data-text="f_p − f_b" x="257.5" y="174.84" text-anchor="middle" fill="#b34d00">f<tspan dy="2" font-size="7">p</tspan><tspan dy="-2"> − f</tspan><tspan dy="2" font-size="7">b</tspan></text>
+</g>
+<g class="blk" data-sid="13" data-type="Sum">
+<rect class="body" x="600" y="122" width="20" height="36" fill="#ffffff" stroke="#b34d00" stroke-width="1"/>
+<text class="port" x="603" y="132.8" font-size="8" fill="#b34d00">+</text>
+<text class="port" x="603" y="152.8" font-size="8" fill="#b34d00">−</text>
+<text class="name" x="610" y="87.84" text-anchor="middle" fill="#b34d00">Net flow into</text>
+<text class="name" x="610" y="100.84" text-anchor="middle" fill="#b34d00">the high-pressure</text>
+<text class="name" x="610" y="113.84" text-anchor="middle" fill="#b34d00">header</text>
+</g>
+<g class="blk" data-sid="14" data-type="Gain" data-tex="k_{3}">
+<rect class="body" x="665" y="213" width="45" height="24" fill="#ffffff" stroke="#b34d00" stroke-width="1"/>
+<text class="caption" x="687.5" y="228.5" text-anchor="middle" fill="#b34d00">k3</text>
+<text class="name" x="687.5" y="251.84" text-anchor="middle" fill="#b34d00">Turbine flow</text>
+<text class="name" data-text="at z_1 = 1" x="687.5" y="264.84" text-anchor="middle" fill="#b34d00">at z<tspan dy="2" font-size="7">1</tspan><tspan dy="-2"> = 1</tspan></text>
+</g>
+<g class="blk" data-sid="10" data-type="StateSpace" data-tex="\begin{aligned}\dot{x}&amp;=\frac{1}{\mathrm{Ts}}\,u\\y&amp;=x\end{aligned}">
+<rect class="body" x="305" y="95" width="75" height="50" fill="#deedff" stroke="#0d66cc" stroke-width="1"/>
+<text class="caption" x="342.5" y="117" text-anchor="middle" fill="#0d66cc">x′ = Ax+Bu</text>
+<text class="caption" x="342.5" y="130" text-anchor="middle" fill="#0d66cc">y = Cx+Du</text>
+<text class="name" data-text="p_b: boiler" x="342.5" y="159.84" text-anchor="middle" fill="#0d66cc">p<tspan dy="2" font-size="7">b</tspan><tspan dy="-2">: boiler</tspan></text>
+<text class="name" x="342.5" y="172.84" text-anchor="middle" fill="#0d66cc">pressure</text>
+</g>
+<g class="blk" data-sid="9" data-type="StateSpace" data-tex="\begin{aligned}\dot{x}&amp;=k_{2}\,u\\y&amp;=x\end{aligned}">
+<rect class="body" x="660" y="116" width="75" height="48" fill="#deedff" stroke="#0d66cc" stroke-width="1"/>
+<text class="caption" x="697.5" y="137" text-anchor="middle" fill="#0d66cc">x′ = Ax+Bu</text>
+<text class="caption" x="697.5" y="150" text-anchor="middle" fill="#0d66cc">y = Cx+Du</text>
+<text class="name" data-text="p_hp: high-pressure" x="697.5" y="178.84" text-anchor="middle" fill="#0d66cc">p<tspan dy="2" font-size="7">hp</tspan><tspan dy="-2">: high-pressure</tspan></text>
+<text class="name" x="697.5" y="191.84" text-anchor="middle" fill="#0d66cc">header pressure</text>
+</g>
+<g class="blk" data-sid="16" data-type="Saturate">
+<rect class="body" x="625" y="290" width="30" height="20" fill="#fff5bf" stroke="#8c40bf" stroke-width="1"/>
+<text class="caption" x="640" y="298.15" text-anchor="middle" font-size="6.15" fill="#8c40bf">sat</text>
+<text class="caption" x="640" y="306.15" text-anchor="middle" font-size="6.15" fill="#8c40bf">[0.8, 1.2]</text>
+<text class="name" data-text="Valve z_1 limits" x="660" y="303.34" fill="#8c40bf">Valve z<tspan dy="2" font-size="7">1</tspan><tspan dy="-2"> limits</tspan></text>
+<text class="attr" x="660" y="318.34" fill="#8c40bf">[0.8, 1.2]</text>
+</g>
+<g class="blk" data-sid="8" data-type="StateSpace" data-tex="\begin{aligned}\dot{x}&amp;=-\frac{1}{T_{1}}\,x+\frac{k_{0}}{T_{1}}\,u\\y&amp;=x\end{aligned}">
+<rect class="body" x="110" y="88" width="75" height="44" fill="#ffe8d1" stroke="#b34d00" stroke-width="1"/>
+<text class="caption" x="147.5" y="107" text-anchor="middle" fill="#b34d00">x′ = Ax+Bu</text>
+<text class="caption" x="147.5" y="120" text-anchor="middle" fill="#b34d00">y = Cx+Du</text>
+<text class="name" data-text="f_p: steam" x="147.5" y="146.84" text-anchor="middle" fill="#b34d00">f<tspan dy="2" font-size="7">p</tspan><tspan dy="-2">: steam</tspan></text>
+<text class="name" x="147.5" y="159.84" text-anchor="middle" fill="#b34d00">production</text>
+</g>
+<g class="blk" data-sid="17" data-type="Outport">
+<rect class="body" x="805" y="30" width="20" height="20" fill="#ffffff" stroke="#cc2626" stroke-width="1"/>
+<text class="caption" x="815" y="43.5" text-anchor="middle" fill="#cc2626">1</text>
+<text class="name" x="815" y="64.84" text-anchor="middle" fill="#cc2626">u</text>
+</g>
+<g class="blk" data-sid="18" data-type="Outport">
+<rect class="body" x="805" y="130" width="20" height="20" fill="#ffffff" stroke="#0d66cc" stroke-width="1"/>
+<text class="caption" x="815" y="143.5" text-anchor="middle" fill="#0d66cc">2</text>
+<text class="name" data-text="p_hp" x="815" y="164.84" text-anchor="middle" fill="#0d66cc">p<tspan dy="2" font-size="7">hp</tspan></text>
+</g>
+<g class="blk" data-sid="19" data-type="Outport">
+<rect class="body" x="810" y="315" width="20" height="20" fill="#ffffff" stroke="#0d66cc" stroke-width="1"/>
+<text class="caption" x="820" y="328.5" text-anchor="middle" fill="#0d66cc">3</text>
+<text class="name" data-text="p_b" x="820" y="349.84" text-anchor="middle" fill="#0d66cc">p<tspan dy="2" font-size="7">b</tspan></text>
+</g>
+<g class="blk" data-sid="20" data-type="Outport">
+<rect class="body" x="815" y="360" width="20" height="20" fill="#ffffff" stroke="#b34d00" stroke-width="1"/>
+<text class="caption" x="825" y="373.5" text-anchor="middle" fill="#b34d00">4</text>
+<text class="name" data-text="f_p" x="825" y="394.84" text-anchor="middle" fill="#b34d00">f<tspan dy="2" font-size="7">p</tspan></text>
+</g>
+<g class="blk" data-sid="21" data-type="Outport">
+<rect class="body" x="815" y="445" width="20" height="20" fill="#ffffff" stroke="#8c40bf" stroke-width="1"/>
+<text class="caption" x="825" y="458.5" text-anchor="middle" fill="#8c40bf">5</text>
+<text class="name" data-text="z_1" x="825" y="479.84" text-anchor="middle" fill="#8c40bf">z<tspan dy="2" font-size="7">1</tspan></text>
+</g>
+<g class="blk" data-sid="22" data-type="Outport">
+<rect class="body" x="820" y="520" width="20" height="20" fill="#ffffff" stroke="#b34d00" stroke-width="1"/>
+<text class="caption" x="830" y="533.5" text-anchor="middle" fill="#b34d00">6</text>
+<text class="name" data-text="f_t" x="830" y="554.84" text-anchor="middle" fill="#b34d00">f<tspan dy="2" font-size="7">t</tspan></text>
+</g>
+</g>
+<g class="lines">
+<g class="ln" data-src="16.y1" data-dst="15.u2">
+<polyline class="seg" points="640,290 640,285 640,235 615,235" fill="none" stroke="#8c40bf" stroke-width="1"/>
+<polygon class="arrow" points="610,235 617,238 617,232" fill="#8c40bf"/>
+</g>
+<g class="ln" data-src="14.y1" data-dst="15.u1">
+<polyline class="seg" points="665,225 660,225 615,225" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="610,225 617,228 617,222" fill="#b34d00"/>
+<text class="lname" data-text="k_3·p_hp" x="637.5" y="219.16" text-anchor="middle" font-size="9" fill="#b34d00">k<tspan dy="1.8" font-size="6.3">3</tspan><tspan dy="-1.8">·p</tspan><tspan dy="1.8" font-size="6.3">hp</tspan></text>
+</g>
+<g class="ln" data-src="9.y1" data-dst="14.u1 11.u2 18.u1">
+<polyline class="seg" points="735,140 740,140" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polyline class="seg" points="740,140 740,225" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polyline class="seg" points="740,225 715,225" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polygon class="arrow" points="710,225 717,228 717,222" fill="#0d66cc"/>
+<polyline class="seg" points="740,225 740,270 400,270 400,135 420,135" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polygon class="arrow" points="425,135 418,132 418,138" fill="#0d66cc"/>
+<polyline class="seg" points="740,140 800,140" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polygon class="arrow" points="805,140 798,137 798,143" fill="#0d66cc"/>
+<circle class="branch" cx="740" cy="140" r="2" fill="#0d66cc"/>
+<circle class="branch" cx="740" cy="225" r="2" fill="#0d66cc"/>
+<text class="lname" data-text="p_hp" x="740" y="134.16" text-anchor="middle" font-size="9" fill="#0d66cc">p<tspan dy="1.8" font-size="6.3">hp</tspan></text>
+</g>
+<g class="ln" data-src="13.y1" data-dst="9.u1">
+<polyline class="seg" points="620,140 625,140 655,140" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="660,140 653,137 653,143" fill="#b34d00"/>
+</g>
+<g class="ln" data-src="7.y1" data-dst="12.u2 13.u1">
+<polyline class="seg" points="535,130 540,130" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polyline class="seg" points="540,130 540,70 211,70 211,125 240,125" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="245,125 238,122 238,128" fill="#b34d00"/>
+<polyline class="seg" points="540,130 595,130" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="600,130 593,127 593,133" fill="#b34d00"/>
+<circle class="branch" cx="540" cy="130" r="2" fill="#b34d00"/>
+<text class="lname" data-text="f_b" x="540" y="124.16" text-anchor="middle" font-size="9" fill="#b34d00">f<tspan dy="1.8" font-size="6.3">b</tspan></text>
+</g>
+<g class="ln" data-src="11.y1" data-dst="7.u1">
+<polyline class="seg" points="455,130 460,130 490,130" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polygon class="arrow" points="495,130 488,127 488,133" fill="#0d66cc"/>
+</g>
+<g class="ln" data-src="12.y1" data-dst="10.u1">
+<polyline class="seg" points="270,120 275,120 300,120" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="305,120 298,117 298,123" fill="#b34d00"/>
+</g>
+<g class="ln" data-src="10.y1" data-dst="11.u1 19.u1">
+<polyline class="seg" points="380,120 385,120" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polyline class="seg" points="385,120 420,120" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polygon class="arrow" points="425,120 418,117 418,123" fill="#0d66cc"/>
+<polyline class="seg" points="385,120 385,325 805,325" fill="none" stroke="#0d66cc" stroke-width="1"/>
+<polygon class="arrow" points="810,325 803,322 803,328" fill="#0d66cc"/>
+<circle class="branch" cx="385" cy="120" r="2" fill="#0d66cc"/>
+<text class="lname" data-text="p_b" x="385" y="114.16" text-anchor="middle" font-size="9" fill="#0d66cc">p<tspan dy="1.8" font-size="6.3">b</tspan></text>
+</g>
+<g class="ln" data-src="8.y1" data-dst="12.u1 20.u1">
+<polyline class="seg" points="185,110 190,110 200,110" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polyline class="seg" points="200,110 240,110" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="245,110 238,107 238,113" fill="#b34d00"/>
+<polyline class="seg" points="200,110 200,370 810,370" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="815,370 808,367 808,373" fill="#b34d00"/>
+<circle class="branch" cx="200" cy="110" r="2" fill="#b34d00"/>
+<text class="lname" data-text="f_p" x="195" y="104.16" text-anchor="middle" font-size="9" fill="#b34d00">f<tspan dy="1.8" font-size="6.3">p</tspan></text>
+</g>
+<g class="ln" data-src="15.y1" data-dst="13.u2 22.u1">
+<polyline class="seg" points="580,230 575,230 575,200" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polyline class="seg" points="575,200 575,150 595,150" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="600,150 593,147 593,153" fill="#b34d00"/>
+<polyline class="seg" points="575,200 505,200 505,530 815,530" fill="none" stroke="#b34d00" stroke-width="1"/>
+<polygon class="arrow" points="820,530 813,527 813,533" fill="#b34d00"/>
+<circle class="branch" cx="575" cy="200" r="2" fill="#b34d00"/>
+<text class="lname" data-text="f_t" x="575" y="209.16" text-anchor="middle" font-size="9" fill="#b34d00">f<tspan dy="1.8" font-size="6.3">t</tspan></text>
+</g>
+<g class="ln" data-src="5.y1" data-dst="8.u1 17.u1">
+<polyline class="seg" points="55,110 60,110 90,110" fill="none" stroke="#cc2626" stroke-width="1"/>
+<polyline class="seg" points="90,110 105,110" fill="none" stroke="#cc2626" stroke-width="1"/>
+<polygon class="arrow" points="110,110 103,107 103,113" fill="#cc2626"/>
+<polyline class="seg" points="90,110 90,40 800,40" fill="none" stroke="#cc2626" stroke-width="1"/>
+<polygon class="arrow" points="805,40 798,37 798,43" fill="#cc2626"/>
+<circle class="branch" cx="90" cy="110" r="2" fill="#cc2626"/>
+<text class="lname" x="75" y="104.16" text-anchor="middle" font-size="9" fill="#cc2626">u</text>
+</g>
+<g class="ln" data-src="6.y1" data-dst="16.u1 21.u1">
+<polyline class="seg" points="65,335 70,335 435,335" fill="none" stroke="#8c40bf" stroke-width="1"/>
+<polyline class="seg" points="435,335 640,335 640,315" fill="none" stroke="#8c40bf" stroke-width="1"/>
+<polygon class="arrow" points="640,310 637,317 643,317" fill="#8c40bf"/>
+<polyline class="seg" points="435,335 435,455 810,455" fill="none" stroke="#8c40bf" stroke-width="1"/>
+<polygon class="arrow" points="815,455 808,452 808,458" fill="#8c40bf"/>
+<circle class="branch" cx="435" cy="335" r="2" fill="#8c40bf"/>
+<text class="lname" data-text="z_1" x="252.5" y="329.16" text-anchor="middle" font-size="9" fill="#8c40bf">z<tspan dy="1.8" font-size="6.3">1</tspan></text>
+</g>
+</g>
+</svg>
