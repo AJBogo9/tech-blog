@@ -469,7 +469,7 @@ function WhatIfBar({ whatifs, asked, on, run }) {
     <button class="quiet ask" data-command="askClaude" aria-disabled=${asking}
       data-tip=${asking ? 'Claude sees the request in its view; this banner goes once the model holds these values' : 'Mark these values for Claude and copy a request for the chat'}
       onClick=${() => run('askClaude')}>${asking ? 'Asked Claude' : 'Ask Claude to apply'}</button>
-    ${editBatch(whatifs) && html`<button class="quiet" data-tip="Copy the set_param operations for slxkit apply" onClick=${on.copyEdit}>Copy as edit</button>`}
+    ${editBatch(whatifs) && html`<button class="quiet" data-tip="Copy the set_param operations for slxkit edit" onClick=${on.copyEdit}>Copy as edit</button>`}
     <button class="quiet" data-tip="Back to the model's values" onClick=${on.clearAll}>Clear</button>
   </div>`;
 }

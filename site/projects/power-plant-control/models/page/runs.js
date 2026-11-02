@@ -380,7 +380,7 @@ export function createRuns({ store, api, say, share, copy, marks, plotWidth, lat
     },
     copyEdit() {
       const batch = editBatch(whatifs());
-      if (batch) copy(batch).then((ok) => say(ok ? 'Copied the set_param operations for slxkit apply' : 'Could not copy'));
+      if (batch) copy(batch).then((ok) => say(ok ? 'Copied the set_param operations for slxkit edit' : 'Could not copy'));
     },
   };
   return {
