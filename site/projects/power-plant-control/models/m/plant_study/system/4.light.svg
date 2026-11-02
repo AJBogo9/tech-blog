@@ -4,18 +4,19 @@
 </g>
 <g class="notes">
 <g class="ann note" data-sid="64">
-<text class="note" x="368" y="22.84">UPPER SECTION</text>
+<text class="note" x="408.5" y="22.84" text-anchor="middle">UPPER SECTION</text>
 </g>
-<g class="ann note" data-sid="70" data-box="40 395 276 336" data-align="left top">
-<text class="note" x="41" y="405.84">EQUATIONS</text>
-<text class="note" x="41" y="418.84">(1) <tspan class="tex">$T_1 \frac{df_p}{dt} + f_p = k_0 u$</tspan></text>
-<text class="note" x="41" y="431.84">(2) <tspan class="tex">$\frac{dp_b}{dt} = \frac{f_p - f_b}{T_s}$</tspan></text>
-<text class="note" x="41" y="444.84">(3) <tspan class="tex">$f_b = k_1 \sqrt{p_b^2 - p_{hp}^2}$</tspan></text>
-<text class="note" x="41" y="457.84">(4) <tspan class="tex">$\frac{dp_{hp}}{dt} = k_2\,(f_b - f_t)$</tspan></text>
-<text class="note" x="41" y="470.84">(5) <tspan class="tex">$f_t = k_3 z_1 p_{hp}$</tspan></text>
-<text class="note" x="41" y="483.84">Each State-Space block holds one state:</text>
-<text class="note" x="41" y="496.84"><tspan class="tex">$\dot x = Ax + Bu$</tspan> and <tspan class="tex">$y = x$</tspan>. With <tspan class="tex">$A = 0$</tspan></text>
-<text class="note" x="41" y="509.84">it is a plain integrator (<tspan class="tex">$p_b$</tspan> and <tspan class="tex">$p_{hp}$</tspan>).</text>
+<g class="ann note" data-sid="70" data-box="40 395 276 336" data-align="left middle">
+<text class="note" x="41" y="507.84">EQUATIONS</text>
+<text class="note" x="41" y="520.84">(1) <tspan class="tex">$T_1 \frac{df_p}{dt} + f_p = k_0 u$</tspan></text>
+<text class="note" x="41" y="533.84">(2) <tspan class="tex">$\frac{dp_b}{dt} = \frac{f_p - f_b}{T_s}$</tspan></text>
+<text class="note" x="41" y="546.84">(3) <tspan class="tex">$f_b = k_1 \sqrt{p_b^2 - p_{hp}^2}$</tspan></text>
+<text class="note" x="41" y="559.84">(4) <tspan class="tex">$\frac{dp_{hp}}{dt} = k_2\,(f_b - f_t)$</tspan></text>
+<text class="note" x="41" y="572.84">(5) <tspan class="tex">$f_t = k_3 z_1 p_{hp}$</tspan></text>
+<text class="note" x="41" y="585.84"></text>
+<text class="note" x="41" y="598.84">Each State-Space block holds one state:</text>
+<text class="note" x="41" y="611.84"><tspan class="tex">$\dot x = Ax + Bu$</tspan> and <tspan class="tex">$y = x$</tspan>. With <tspan class="tex">$A = 0$</tspan></text>
+<text class="note" x="41" y="624.84">it is a plain integrator (<tspan class="tex">$p_b$</tspan> and <tspan class="tex">$p_{hp}$</tspan>).</text>
 </g>
 </g>
 <g class="blocks">

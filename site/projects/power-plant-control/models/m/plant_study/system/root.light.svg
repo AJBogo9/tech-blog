@@ -4,34 +4,34 @@
 </g>
 <g class="notes">
 <g class="ann note" data-sid="58">
-<text class="note" x="422" y="27.84">POWER PLANT</text>
+<text class="note" x="483" y="27.84" text-anchor="middle">POWER PLANT</text>
 </g>
 <g class="ann note" data-sid="67">
-<text class="note" x="21" y="40.84">READING THIS COPY</text>
-<text class="note" x="21" y="53.84">Name = symbol: description</text>
-<text class="note" x="21" y="66.84">Under a name: its formula, or values</text>
-<text class="note" x="21" y="79.84">read live from its parameters</text>
-<text class="note" x="21" y="92.84">Parameters: study/param_study.m</text>
-<text class="note" x="21" y="105.84"></text>
-<text class="note" x="21" y="118.84">LINE COLOUR = THE SIGNAL</text>
-<text class="note" x="21" y="131.84">blue: pressure p (bar)</text>
-<text class="note" x="21" y="144.84">orange: flow f (kg/s)</text>
-<text class="note" x="21" y="157.84">purple: valve setting z (0 to 1)</text>
-<text class="note" x="21" y="170.84">red: fuel feed u (kg/s)</text>
-<text class="note" x="21" y="183.84">grey: logging only</text>
-<text class="note" x="21" y="196.84"></text>
-<text class="note" x="21" y="209.84">FILL = THE BLOCK'S JOB</text>
-<text class="note" x="21" y="222.84">blue or orange: a state of the plant</text>
-<text class="note" x="21" y="235.84">green: input you set</text>
-<text class="note" x="21" y="248.84">lilac: controller</text>
-<text class="note" x="21" y="261.84">yellow: limit (saturation)</text>
+<text class="note" x="21" y="48.84">READING THIS COPY</text>
+<text class="note" x="21" y="61.84">Name = symbol: description</text>
+<text class="note" x="21" y="74.84">Under a name: its formula, or values</text>
+<text class="note" x="21" y="87.84">read live from its parameters</text>
+<text class="note" x="21" y="100.84">Parameters: study/param_study.m</text>
+<text class="note" x="21" y="113.84"></text>
+<text class="note" x="21" y="126.84">LINE COLOUR = THE SIGNAL</text>
+<text class="note" x="21" y="139.84">blue: pressure p (bar)</text>
+<text class="note" x="21" y="152.84">orange: flow f (kg/s)</text>
+<text class="note" x="21" y="165.84">purple: valve setting z (0 to 1)</text>
+<text class="note" x="21" y="178.84">red: fuel feed u (kg/s)</text>
+<text class="note" x="21" y="191.84">grey: logging only</text>
+<text class="note" x="21" y="204.84"></text>
+<text class="note" x="21" y="217.84">FILL = THE BLOCK'S JOB</text>
+<text class="note" x="21" y="230.84">blue or orange: a state of the plant</text>
+<text class="note" x="21" y="243.84">green: input you set</text>
+<text class="note" x="21" y="256.84">lilac: controller</text>
+<text class="note" x="21" y="269.84">yellow: limit (saturation)</text>
 </g>
-<g class="ann note" data-sid="68" data-box="520 645 390 154" data-align="left top">
-<text class="note" x="521" y="655.84">EQUATIONS</text>
-<text class="note" x="521" y="668.84">(6) <tspan class="tex">$\frac{dp_{bp}}{dt} = k_4\,(f_t + f_{out} - f_c - f_{in})$</tspan></text>
-<text class="note" x="521" y="681.84">(12) <tspan class="tex">$z_2 = k_{in}\,(p_{bp} - p_{bp0})$</tspan></text>
-<text class="note" x="521" y="694.84">(13) <tspan class="tex">$z_3 = k_{out}\,(p_{bp0} - p_{bp})/p_a$</tspan></text>
-<text class="note" x="521" y="707.84">(1) to (5) are in Upper section, (7) to (9) in Steam accumulator.</text>
+<g class="ann note" data-sid="68" data-box="520 645 390 154" data-align="left middle">
+<text class="note" x="521" y="699.34">EQUATIONS</text>
+<text class="note" x="521" y="712.34">(6) <tspan class="tex">$\frac{dp_{bp}}{dt} = k_4\,(f_t + f_{out} - f_c - f_{in})$</tspan></text>
+<text class="note" x="521" y="725.34">(12) <tspan class="tex">$z_2 = k_{in}\,(p_{bp} - p_{bp0})$</tspan></text>
+<text class="note" x="521" y="738.34">(13) <tspan class="tex">$z_3 = k_{out}\,(p_{bp0} - p_{bp})/p_a$</tspan></text>
+<text class="note" x="521" y="751.34">(1) to (5) are in Upper section, (7) to (9) in Steam accumulator.</text>
 </g>
 <g class="ann note" data-sid="69">
 <text class="note" x="801" y="235.84">Each logging block keeps only the</text>

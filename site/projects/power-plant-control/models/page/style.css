@@ -267,6 +267,8 @@ input.search:not(:placeholder-shown) + kbd { display: none; }
 /* display style, in the row's flow rather than as a centred block */
 .canvas .math-note .katex-display, .canvas .math-note .katex-display > .katex,
 .canvas .math-caption-box .katex-display, .canvas .math-caption-box .katex-display > .katex { display: inline-block; margin: 0; text-align: inherit; }
+/* a note's equation broken with \\: its lines centred on each other, as MATLAB's MathJax sets them */
+.canvas .math-note .katex-display > .katex { text-align: center; }
 /* a block's parameters typeset in place of its caption; clicks go to the block's frame below */
 .canvas .blk.typeset > text.caption { display: none; }
 .canvas foreignObject.math-caption { overflow: visible; pointer-events: none; }

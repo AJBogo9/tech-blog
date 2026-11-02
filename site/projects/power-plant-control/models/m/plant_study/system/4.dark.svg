@@ -4,18 +4,19 @@
 </g>
 <g class="notes">
 <g class="ann note" data-sid="64">
-<text class="note" x="368" y="22.84">UPPER SECTION</text>
+<text class="note" x="408.5" y="22.84" text-anchor="middle">UPPER SECTION</text>
 </g>
-<g class="ann note" data-sid="70" data-box="40 395 276 336" data-align="left top">
-<text class="note" x="41" y="405.84">EQUATIONS</text>
-<text class="note" x="41" y="418.84">(1) <tspan class="tex">$T_1 \frac{df_p}{dt} + f_p = k_0 u$</tspan></text>
-<text class="note" x="41" y="431.84">(2) <tspan class="tex">$\frac{dp_b}{dt} = \frac{f_p - f_b}{T_s}$</tspan></text>
-<text class="note" x="41" y="444.84">(3) <tspan class="tex">$f_b = k_1 \sqrt{p_b^2 - p_{hp}^2}$</tspan></text>
-<text class="note" x="41" y="457.84">(4) <tspan class="tex">$\frac{dp_{hp}}{dt} = k_2\,(f_b - f_t)$</tspan></text>
-<text class="note" x="41" y="470.84">(5) <tspan class="tex">$f_t = k_3 z_1 p_{hp}$</tspan></text>
-<text class="note" x="41" y="483.84">Each State-Space block holds one state:</text>
-<text class="note" x="41" y="496.84"><tspan class="tex">$\dot x = Ax + Bu$</tspan> and <tspan class="tex">$y = x$</tspan>. With <tspan class="tex">$A = 0$</tspan></text>
-<text class="note" x="41" y="509.84">it is a plain integrator (<tspan class="tex">$p_b$</tspan> and <tspan class="tex">$p_{hp}$</tspan>).</text>
+<g class="ann note" data-sid="70" data-box="40 395 276 336" data-align="left middle">
+<text class="note" x="41" y="507.84">EQUATIONS</text>
+<text class="note" x="41" y="520.84">(1) <tspan class="tex">$T_1 \frac{df_p}{dt} + f_p = k_0 u$</tspan></text>
+<text class="note" x="41" y="533.84">(2) <tspan class="tex">$\frac{dp_b}{dt} = \frac{f_p - f_b}{T_s}$</tspan></text>
+<text class="note" x="41" y="546.84">(3) <tspan class="tex">$f_b = k_1 \sqrt{p_b^2 - p_{hp}^2}$</tspan></text>
+<text class="note" x="41" y="559.84">(4) <tspan class="tex">$\frac{dp_{hp}}{dt} = k_2\,(f_b - f_t)$</tspan></text>
+<text class="note" x="41" y="572.84">(5) <tspan class="tex">$f_t = k_3 z_1 p_{hp}$</tspan></text>
+<text class="note" x="41" y="585.84"></text>
+<text class="note" x="41" y="598.84">Each State-Space block holds one state:</text>
+<text class="note" x="41" y="611.84"><tspan class="tex">$\dot x = Ax + Bu$</tspan> and <tspan class="tex">$y = x$</tspan>. With <tspan class="tex">$A = 0$</tspan></text>
+<text class="note" x="41" y="624.84">it is a plain integrator (<tspan class="tex">$p_b$</tspan> and <tspan class="tex">$p_{hp}$</tspan>).</text>
 </g>
 </g>
 <g class="blocks">
@@ -68,32 +69,32 @@
 <text class="name" data-text="at z_1 = 1" x="687.5" y="264.84" text-anchor="middle" fill="#ca824d">at z<tspan dy="2" font-size="7">1</tspan><tspan dy="-2"> = 1</tspan></text>
 </g>
 <g class="blk" data-sid="10" data-type="StateSpace" data-tex="\begin{aligned}\dot{x}&amp;=\frac{1}{\mathrm{Ts}}\,u\\y&amp;=x\end{aligned}">
-<rect class="body" x="305" y="95" width="75" height="50" fill="#5f666d" stroke="#dbe8f7" stroke-width="1"/>
+<rect class="body" x="305" y="95" width="75" height="50" fill="#5f666d" stroke="#629cde" stroke-width="1"/>
 <text class="caption" x="342.5" y="117" text-anchor="middle" fill="#dbe8f7">x′ = Ax+Bu</text>
 <text class="caption" x="342.5" y="130" text-anchor="middle" fill="#dbe8f7">y = Cx+Du</text>
-<text class="name" data-text="p_b: boiler" x="342.5" y="159.84" text-anchor="middle" fill="#dbe8f7">p<tspan dy="2" font-size="7">b</tspan><tspan dy="-2">: boiler</tspan></text>
-<text class="name" x="342.5" y="172.84" text-anchor="middle" fill="#dbe8f7">pressure</text>
+<text class="name" data-text="p_b: boiler" x="342.5" y="159.84" text-anchor="middle" fill="#629cde">p<tspan dy="2" font-size="7">b</tspan><tspan dy="-2">: boiler</tspan></text>
+<text class="name" x="342.5" y="172.84" text-anchor="middle" fill="#629cde">pressure</text>
 </g>
 <g class="blk" data-sid="9" data-type="StateSpace" data-tex="\begin{aligned}\dot{x}&amp;=k_{2}\,u\\y&amp;=x\end{aligned}">
-<rect class="body" x="660" y="116" width="75" height="48" fill="#5f666d" stroke="#dbe8f7" stroke-width="1"/>
+<rect class="body" x="660" y="116" width="75" height="48" fill="#5f666d" stroke="#629cde" stroke-width="1"/>
 <text class="caption" x="697.5" y="137" text-anchor="middle" fill="#dbe8f7">x′ = Ax+Bu</text>
 <text class="caption" x="697.5" y="150" text-anchor="middle" fill="#dbe8f7">y = Cx+Du</text>
-<text class="name" data-text="p_hp: high-pressure" x="697.5" y="178.84" text-anchor="middle" fill="#dbe8f7">p<tspan dy="2" font-size="7">hp</tspan><tspan dy="-2">: high-pressure</tspan></text>
-<text class="name" x="697.5" y="191.84" text-anchor="middle" fill="#dbe8f7">header pressure</text>
+<text class="name" data-text="p_hp: high-pressure" x="697.5" y="178.84" text-anchor="middle" fill="#629cde">p<tspan dy="2" font-size="7">hp</tspan><tspan dy="-2">: high-pressure</tspan></text>
+<text class="name" x="697.5" y="191.84" text-anchor="middle" fill="#629cde">header pressure</text>
 </g>
 <g class="blk" data-sid="16" data-type="Saturate">
-<rect class="body" x="625" y="290" width="30" height="20" fill="#5f5e4f" stroke="#e2cfef" stroke-width="1"/>
+<rect class="body" x="625" y="290" width="30" height="20" fill="#5f5e4f" stroke="#b483d5" stroke-width="1"/>
 <text class="caption" x="640" y="298.15" text-anchor="middle" font-size="6.15" fill="#e2cfef">sat</text>
 <text class="caption" x="640" y="306.15" text-anchor="middle" font-size="6.15" fill="#e2cfef">[0.8, 1.2]</text>
-<text class="name" data-text="Valve z_1 limits" x="660" y="303.34" fill="#e2cfef">Valve z<tspan dy="2" font-size="7">1</tspan><tspan dy="-2"> limits</tspan></text>
-<text class="attr" x="660" y="318.34" fill="#e2cfef">[0.8, 1.2]</text>
+<text class="name" data-text="Valve z_1 limits" x="660" y="303.34" fill="#b483d5">Valve z<tspan dy="2" font-size="7">1</tspan><tspan dy="-2"> limits</tspan></text>
+<text class="attr" x="660" y="318.34" fill="#b483d5">[0.8, 1.2]</text>
 </g>
 <g class="blk" data-sid="8" data-type="StateSpace" data-tex="\begin{aligned}\dot{x}&amp;=-\frac{1}{T_{1}}\,x+\frac{k_{0}}{T_{1}}\,u\\y&amp;=x\end{aligned}">
-<rect class="body" x="110" y="88" width="75" height="44" fill="#6b645d" stroke="#f4e4d9" stroke-width="1"/>
+<rect class="body" x="110" y="88" width="75" height="44" fill="#6b645d" stroke="#ca824d" stroke-width="1"/>
 <text class="caption" x="147.5" y="107" text-anchor="middle" fill="#f4e4d9">x′ = Ax+Bu</text>
 <text class="caption" x="147.5" y="120" text-anchor="middle" fill="#f4e4d9">y = Cx+Du</text>
-<text class="name" data-text="f_p: steam" x="147.5" y="146.84" text-anchor="middle" fill="#f4e4d9">f<tspan dy="2" font-size="7">p</tspan><tspan dy="-2">: steam</tspan></text>
-<text class="name" x="147.5" y="159.84" text-anchor="middle" fill="#f4e4d9">production</text>
+<text class="name" data-text="f_p: steam" x="147.5" y="146.84" text-anchor="middle" fill="#ca824d">f<tspan dy="2" font-size="7">p</tspan><tspan dy="-2">: steam</tspan></text>
+<text class="name" x="147.5" y="159.84" text-anchor="middle" fill="#ca824d">production</text>
 </g>
 <g class="blk" data-sid="17" data-type="Outport">
 <rect class="body" x="805" y="30" width="20" height="20" fill="#1b1d1f" stroke="#de7272" stroke-width="1"/>
@@ -128,8 +129,8 @@
 </g>
 <g class="lines">
 <g class="ln" data-src="16.y1" data-dst="15.u2">
-<polyline class="seg" points="640,290 640,285 640,235 615,235" fill="none" stroke="#e2cfef" stroke-width="1"/>
-<polygon class="arrow" points="610,235 617,238 617,232" fill="#e2cfef"/>
+<polyline class="seg" points="640,290 640,285 640,235 615,235" fill="none" stroke="#b483d5" stroke-width="1"/>
+<polygon class="arrow" points="610,235 617,238 617,232" fill="#b483d5"/>
 </g>
 <g class="ln" data-src="14.y1" data-dst="15.u1">
 <polyline class="seg" points="665,225 660,225 615,225" fill="none" stroke="#ca824d" stroke-width="1"/>
@@ -137,17 +138,17 @@
 <text class="lname" data-text="k_3·p_hp" x="637.5" y="219.16" text-anchor="middle" font-size="9" fill="#ca824d">k<tspan dy="1.8" font-size="6.3">3</tspan><tspan dy="-1.8">·p</tspan><tspan dy="1.8" font-size="6.3">hp</tspan></text>
 </g>
 <g class="ln" data-src="9.y1" data-dst="14.u1 11.u2 18.u1">
-<polyline class="seg" points="735,140 740,140" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polyline class="seg" points="740,140 740,225" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polyline class="seg" points="740,225 715,225" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polygon class="arrow" points="710,225 717,228 717,222" fill="#dbe8f7"/>
-<polyline class="seg" points="740,225 740,270 400,270 400,135 420,135" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polygon class="arrow" points="425,135 418,132 418,138" fill="#dbe8f7"/>
-<polyline class="seg" points="740,140 800,140" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polygon class="arrow" points="805,140 798,137 798,143" fill="#dbe8f7"/>
-<circle class="branch" cx="740" cy="140" r="2" fill="#dbe8f7"/>
-<circle class="branch" cx="740" cy="225" r="2" fill="#dbe8f7"/>
-<text class="lname" data-text="p_hp" x="740" y="134.16" text-anchor="middle" font-size="9" fill="#dbe8f7">p<tspan dy="1.8" font-size="6.3">hp</tspan></text>
+<polyline class="seg" points="735,140 740,140" fill="none" stroke="#629cde" stroke-width="1"/>
+<polyline class="seg" points="740,140 740,225" fill="none" stroke="#629cde" stroke-width="1"/>
+<polyline class="seg" points="740,225 715,225" fill="none" stroke="#629cde" stroke-width="1"/>
+<polygon class="arrow" points="710,225 717,228 717,222" fill="#629cde"/>
+<polyline class="seg" points="740,225 740,270 400,270 400,135 420,135" fill="none" stroke="#629cde" stroke-width="1"/>
+<polygon class="arrow" points="425,135 418,132 418,138" fill="#629cde"/>
+<polyline class="seg" points="740,140 800,140" fill="none" stroke="#629cde" stroke-width="1"/>
+<polygon class="arrow" points="805,140 798,137 798,143" fill="#629cde"/>
+<circle class="branch" cx="740" cy="140" r="2" fill="#629cde"/>
+<circle class="branch" cx="740" cy="225" r="2" fill="#629cde"/>
+<text class="lname" data-text="p_hp" x="740" y="134.16" text-anchor="middle" font-size="9" fill="#629cde">p<tspan dy="1.8" font-size="6.3">hp</tspan></text>
 </g>
 <g class="ln" data-src="13.y1" data-dst="9.u1">
 <polyline class="seg" points="620,140 625,140 655,140" fill="none" stroke="#ca824d" stroke-width="1"/>
@@ -171,22 +172,22 @@
 <polygon class="arrow" points="305,120 298,117 298,123" fill="#ca824d"/>
 </g>
 <g class="ln" data-src="10.y1" data-dst="11.u1 19.u1">
-<polyline class="seg" points="380,120 385,120" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polyline class="seg" points="385,120 420,120" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polygon class="arrow" points="425,120 418,117 418,123" fill="#dbe8f7"/>
-<polyline class="seg" points="385,120 385,325 805,325" fill="none" stroke="#dbe8f7" stroke-width="1"/>
-<polygon class="arrow" points="810,325 803,322 803,328" fill="#dbe8f7"/>
-<circle class="branch" cx="385" cy="120" r="2" fill="#dbe8f7"/>
-<text class="lname" data-text="p_b" x="385" y="114.16" text-anchor="middle" font-size="9" fill="#dbe8f7">p<tspan dy="1.8" font-size="6.3">b</tspan></text>
+<polyline class="seg" points="380,120 385,120" fill="none" stroke="#629cde" stroke-width="1"/>
+<polyline class="seg" points="385,120 420,120" fill="none" stroke="#629cde" stroke-width="1"/>
+<polygon class="arrow" points="425,120 418,117 418,123" fill="#629cde"/>
+<polyline class="seg" points="385,120 385,325 805,325" fill="none" stroke="#629cde" stroke-width="1"/>
+<polygon class="arrow" points="810,325 803,322 803,328" fill="#629cde"/>
+<circle class="branch" cx="385" cy="120" r="2" fill="#629cde"/>
+<text class="lname" data-text="p_b" x="385" y="114.16" text-anchor="middle" font-size="9" fill="#629cde">p<tspan dy="1.8" font-size="6.3">b</tspan></text>
 </g>
 <g class="ln" data-src="8.y1" data-dst="12.u1 20.u1">
-<polyline class="seg" points="185,110 190,110 200,110" fill="none" stroke="#f4e4d9" stroke-width="1"/>
-<polyline class="seg" points="200,110 240,110" fill="none" stroke="#f4e4d9" stroke-width="1"/>
-<polygon class="arrow" points="245,110 238,107 238,113" fill="#f4e4d9"/>
-<polyline class="seg" points="200,110 200,370 810,370" fill="none" stroke="#f4e4d9" stroke-width="1"/>
-<polygon class="arrow" points="815,370 808,367 808,373" fill="#f4e4d9"/>
-<circle class="branch" cx="200" cy="110" r="2" fill="#f4e4d9"/>
-<text class="lname" data-text="f_p" x="195" y="104.16" text-anchor="middle" font-size="9" fill="#f4e4d9">f<tspan dy="1.8" font-size="6.3">p</tspan></text>
+<polyline class="seg" points="185,110 190,110 200,110" fill="none" stroke="#ca824d" stroke-width="1"/>
+<polyline class="seg" points="200,110 240,110" fill="none" stroke="#ca824d" stroke-width="1"/>
+<polygon class="arrow" points="245,110 238,107 238,113" fill="#ca824d"/>
+<polyline class="seg" points="200,110 200,370 810,370" fill="none" stroke="#ca824d" stroke-width="1"/>
+<polygon class="arrow" points="815,370 808,367 808,373" fill="#ca824d"/>
+<circle class="branch" cx="200" cy="110" r="2" fill="#ca824d"/>
+<text class="lname" data-text="f_p" x="195" y="104.16" text-anchor="middle" font-size="9" fill="#ca824d">f<tspan dy="1.8" font-size="6.3">p</tspan></text>
 </g>
 <g class="ln" data-src="15.y1" data-dst="13.u2 22.u1">
 <polyline class="seg" points="580,230 575,230 575,200" fill="none" stroke="#ca824d" stroke-width="1"/>

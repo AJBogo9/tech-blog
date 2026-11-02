@@ -4,15 +4,15 @@
 </g>
 <g class="notes">
 <g class="ann note" data-sid="58">
-<text class="note" x="422" y="27.84">POWER PLANT</text>
+<text class="note" x="483" y="27.84" text-anchor="middle">POWER PLANT</text>
 </g>
 <g class="ann note" data-sid="59">
-<text class="note" x="420" y="447.84">Flow from/to</text>
-<text class="note" x="420" y="460.84">the battery</text>
+<text class="note" x="447" y="447.84" text-anchor="middle">Flow from/to</text>
+<text class="note" x="447" y="460.84" text-anchor="middle">the battery</text>
 </g>
 <g class="ann note" data-sid="60">
-<text class="note" x="426" y="507.84">Pressure of</text>
-<text class="note" x="426" y="520.84">the battery</text>
+<text class="note" x="451.5" y="507.84" text-anchor="middle">Pressure of</text>
+<text class="note" x="451.5" y="520.84" text-anchor="middle">the battery</text>
 </g>
 <g class="ann note" data-sid="71">
 <text class="note" x="21" y="222.84">Exercise 9: PID control of the fuel and the valve,</text>

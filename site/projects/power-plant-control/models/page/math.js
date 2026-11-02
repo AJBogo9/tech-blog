@@ -169,6 +169,8 @@ function typesetNotes(notes, katex, inks) {
           row.append(node.textContent ?? '');
         }
       }
+      // an empty line keeps a line's height, as HTML's <p><br></p>
+      if (!row.hasChildNodes()) row.append(document.createElementNS(HTML, 'br'));
       box.append(row);
     }
     object.append(box);

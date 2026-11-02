@@ -4,15 +4,16 @@
 </g>
 <g class="notes">
 <g class="ann note" data-sid="43">
-<text class="note" x="221" y="37.84">STEAM ACCUMULATOR</text>
+<text class="note" x="262" y="37.84" text-anchor="middle">STEAM ACCUMULATOR</text>
 </g>
-<g class="ann note" data-sid="71" data-box="40 460 414 210" data-align="left top">
-<text class="note" x="41" y="470.84">EQUATIONS</text>
-<text class="note" x="41" y="483.84">(7) <tspan class="tex">$f_{in} = k_5 z_2 \sqrt{p_{cp}^2 - p_a^2}$</tspan></text>
-<text class="note" x="41" y="496.84">(8) <tspan class="tex">$f_{out} = k_6 z_3 p_a$</tspan></text>
-<text class="note" x="41" y="509.84">(9) <tspan class="tex">$\frac{dp_a}{dt} = (h_1 p_a + h_2)\,\frac{f_{in} - f_{out}}{m_a}$</tspan></text>
-<text class="note" x="41" y="522.84">Both limits are [0, 0], so <tspan class="tex">$z_2 = z_3 = 0$</tspan>:</text>
-<text class="note" x="41" y="535.84">the accumulator is off in plant.slx.</text>
+<g class="ann note" data-sid="71" data-box="40 460 414 210" data-align="left middle">
+<text class="note" x="41" y="529.34">EQUATIONS</text>
+<text class="note" x="41" y="542.34">(7) <tspan class="tex">$f_{in} = k_5 z_2 \sqrt{p_{cp}^2 - p_a^2}$</tspan></text>
+<text class="note" x="41" y="555.34">(8) <tspan class="tex">$f_{out} = k_6 z_3 p_a$</tspan></text>
+<text class="note" x="41" y="568.34">(9) <tspan class="tex">$\frac{dp_a}{dt} = (h_1 p_a + h_2)\,\frac{f_{in} - f_{out}}{m_a}$</tspan></text>
+<text class="note" x="41" y="581.34"></text>
+<text class="note" x="41" y="594.34">Both limits are [0, 0], so <tspan class="tex">$z_2 = z_3 = 0$</tspan>:</text>
+<text class="note" x="41" y="607.34">the accumulator is off in plant.slx.</text>
 </g>
 </g>
 <g class="blocks">
