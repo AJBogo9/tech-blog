@@ -1,0 +1,139 @@
+---
+title: "The fault inside the alarm limits"
+description: "A worn extruder screw hides inside every alarm limit of a cable line. A feature built from physics catches it, and PCA finds the same direction from data alone."
+date: 2026-11-02
+image: "thumbnail.webp"
+image-alt: "A box of dashed red lines seen edge-on, with a thin vertical sheet of blue dots and orange dots drifting off its left side"
+draft: true
+categories:
+  - Statistics
+  - Machine Learning
+bibliography: references.bib
+---
+
+A process engineer at a cable plant watches the signals of the extrusion lines. The job is to catch a fault early, before it ruins cable, without raising so many alarms that the operators stop listening. A worn extruder screw is one of the hardest faults to catch, because the line itself hides it.
+
+# The worn screw
+
+Let's say the line coats a copper conductor in plastic to make an 8 mm cable. The conductor runs off a reel, through a crosshead where the extruder wraps molten plastic around it, through a cooling trough and a diameter gauge, and onto a take-up reel. The extruder is a long screw turning in a heated barrel. It melts plastic pellets and pushes the melt forward, and the faster it turns, the more plastic comes out. A sensor at the end of the screw reads the melt pressure. It rises with the plastic pushed through the crosshead each hour and falls when the melt runs hotter.
+
+![Two screws used for extruding polymers, out of their barrels. The ridges, called flights, push the melt forward. As their tips wear, a gap opens to the barrel wall, melt slips back through it, and each turn pushes out less. Photo: Iqmanuelnavarro, [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Husillos_de_extrusion.JPG), cropped.](extrusion-screws.webp){#fig-screws}
+
+A controller holds the diameter at its set point. When the gauge reads a thin cable, the controller turns the screw faster, and when it reads a thick one, slower. The line speed is set by the product the plant is making, so it changes from one run to the next.
+
+The demo simulates a month of this line, one sample per hour. On day 21 the screw starts to wear, and by the end of the month each turn pushes out 13 % less plastic. A real screw takes months to wear that far, and the demo squeezes it into ten days. The controller makes up for it by turning the screw faster, so the cable stays in spec. On the last day the line runs its fastest product. A new screw would manage it, but the worn one reaches its top speed and the diameter drops below its limit.
+
+Each signal has alarm limits at its mean plus and minus a number of standard deviations, measured over normal running. Before you step through, move the slider and try to find limits that catch the wear without false alarms.
+
+```{js}
+//| label: fig-worn-screw
+//| fig-cap: "A month of a simulated cable line, one dot per hour. Step through, move the alarm limits, and drag the 3D view."
+const el = document.createElement("div");
+const m = await import("./line-model.js");
+const { mountStepper } = await import("./stepper.js");
+mountStepper(el, m.simulateLine());
+return el;
+```
+
+There are no such limits. A worn screw turns faster than a new one at the same line speed. It still turns slower than a new screw on a faster product. The worn hours sit inside the range that normal running covers anyway. Only the tightest setting catches them, and by then the limits ring through about half of normal running.
+
+A plant that makes a few products over and over could set limits for each product. That cuts the cloud into slices, one per speed. Apart from its fastest product, the demo's line rarely comes back to a speed, so there is little to slice. A real plant with many products, ramps and start-ups is closer to this line than to a plant with a few products.
+
+Steps 2 and 3 put all the hours into one picture. Each hour becomes a point with three coordinates: line speed, screw speed and melt pressure. Normal running fills a thin sheet, because the three signals are tied together. Seen from the front, the worn hours blend into the cloud. Turned to its edge, the sheet is a line and the worn hours sit beside it, still inside the box of limits.
+
+The sheet has a physical reason. At a fixed diameter, the plastic the screw pushes out has to match the plastic the cable carries away, so the screw speed grows in step with the line speed. With wear, the screw turns faster for the same line speed. Step 4 measures the break with one number, the output per screw turn, and it crosses its alarm line days before the diameter leaves spec. PCA finds the same direction from normal running without being told any physics.
+
+# Why the sheet catches it
+
+::: {.callout-note collapse="true"}
+## Notation used in this post
+
+| Symbol | Meaning |
+|--------|---------|
+| $v$ | Line speed, m/min |
+| $N$ | Screw speed, rpm |
+| $P$ | Melt pressure, bar |
+| $D$, $d$ | Cable and conductor diameter, mm |
+| $\rho$ | Density of the plastic, kg/m³ |
+| $q$ | Output per screw turn of a new screw |
+| $w$ | Wear: the share of output per turn the screw has lost |
+| $\hat q$ | Output per screw turn measured on the line |
+| $\mu$, $\sigma$ | Mean and standard deviation of a signal in normal running |
+| $k$ | Width of the alarm limits in standard deviations |
+| $x$ | One hour's signals, each scaled by its $\mu$ and $\sigma$ |
+| $\hat x$ | The projection of $x$ onto the plane PCA fits to normal running |
+| $\mathrm{SPE}$ | Squared distance of $x$ from that plane |
+:::
+
+## The control loop
+
+The controller in @fig-loop cancels whatever pushes the diameter away from its set point, and the push shows up in the screw speed instead. The loop moves the fault into the signal it adjusts. That is why the diameter in step 1 stays flat.
+
+```{js}
+//| label: fig-loop
+//| fig-cap: "The line in the demo. A gauge measures the diameter, and a controller changes the screw speed to keep it at the set point."
+const el = document.createElement("div");
+const { drawLoopDiagram } = await import("./figures.js");
+drawLoopDiagram(el);
+return el;
+```
+
+## Plastic in = plastic out
+
+Per hour, the plastic the cable carries away equals the plastic the screw pushes out:
+
+$$\underbrace{\rho \,\tfrac{\pi}{4}\left(D^2 - d^2\right) v}_{\text{plastic out with the cable}} = \underbrace{q\,(1-w)\,N}_{\text{plastic out of the screw}}$$
+
+With $D$ held at its set point and $w = 0$, the left side grows in proportion to $v$, so $N$ does too. That proportion is the sheet in step 3. Dividing the measured plastic out by the screw speed gives the output per screw turn:
+
+$$\hat q = \frac{\rho \,\tfrac{\pi}{4}\left(D^2 - d^2\right) v}{N} = q\,(1-w)$$
+
+It equals $q$ for a new screw and falls with the wear. The bottom chart in step 4 shows it. Because it uses the measured diameter, it keeps falling on the last day, when the worn screw can no longer hold the diameter.
+
+## Alarm limits
+
+A limit at $\mu \pm k\sigma$ rings on a share of normal samples. For Gaussian noise and $k = 3$ that share is 0.27 %, one sample in about 370 [@montgomery2020]. On this line, the spread $\sigma$ of the screw speed comes from the products, and the noise adds little to it. The limits are then wide enough to hide a screw that turns 15 % faster. The sheet is a limit that moves with the speed, and it carries over to many signals at once.
+
+## Monitoring with PCA
+
+PCA finds the directions in which the data varies most (the [PCA post](../pca-geometry/index.tmd) explains how). Fitted to the scaled signals of normal running, its first two directions span the sheet. The third is the direction in which normal running barely varies, and it lands on the physics direction of step 4. The alarm statistic is the squared distance from the plane of the first two,
+
+$$\mathrm{SPE} = \lVert x - \hat x \rVert^2,$$
+
+and @fig-spe shows its square root, the distance itself, for every hour. Its alarm line is empirical; Jackson and Mudholkar derived the limit for Gaussian data [@jackson1979], and MacGregor and Kourti describe how plants use the whole scheme [@macgregor1995].
+
+```{js}
+//| label: fig-spe
+//| fig-cap: "The distance of each hour of the demo from the plane PCA fits to normal running. The alarm line sits where the squared distance is 1.2 times its largest value in normal running, an empirical choice."
+const el = document.createElement("div");
+const m = await import("./line-model.js");
+const { drawSpeChart } = await import("./figures.js");
+drawSpeChart(el, m.simulateLine());
+return el;
+```
+
+::: {.callout-note collapse="true"}
+## Movement within the sheet: Hotelling's $T^2$
+
+SPE measures how far an hour is from the plane. Hotelling's $T^2$ measures how far it is from normal running within the plane:
+
+$$T^2 = \frac{t_1^2}{\lambda_1} + \frac{t_2^2}{\lambda_2}$$
+
+where $t_1$ and $t_2$ are the coordinates of $x$ along the first two directions and $\lambda_1$, $\lambda_2$ their variances in normal running. $T^2$ flags an hour that sits on the sheet at a speed or pressure the line never ran. The worn screw moves straight off the sheet, so $T^2$ does not see it and SPE does. Qin's review covers both statistics and their limits [@qin2003].
+:::
+
+## Where it breaks
+
+A fault that moves the points along the sheet looks like a change of product, and SPE misses it.
+
+On a real extruder, more melt slips back over the flights when the head pressure is high, so the output per turn falls a little as the line speeds up. The real sheet is then curved, and a flat plane fits it worst at the slowest and fastest products. A strong curve needs a physics model of the screw or a nonlinear method.
+
+A model refitted every week learns the worn screw as normal. The reference period has to be one the plant knows was healthy.
+
+Each cable size and material needs its own normal data, because a different conductor, wall, density or screw tilts the sheet. Giving PCA the plastic needed per hour instead of the line speed puts every size on one sheet. The output per screw turn divides the size out from the start.
+
+A diameter gauge that drifts to read thin leaves the same mark as wear. The controller turns the screw faster, and the point leaves the sheet the same way. The real cable is now thicker and takes more plastic. Its melt pressure rises above what the measured throughput and the melt temperature predict, and with wear it does not.
+
+# What the engineer gets
+
+Alarm limits watch one signal at a time, and a controller hides a slow fault from all of them. The fault shows in the relation between the signals. Plastic in = plastic out gives that relation from physics, and PCA finds it from normal running alone. In the demo, the distance from the sheet raised the alarm about a week before the cable left spec.
