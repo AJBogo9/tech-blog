@@ -1,0 +1,120 @@
+/* the design system's tokens, written by slxkit-render's token table (page spec 3.2) */
+:root {
+  color-scheme: light dark;
+  --paper: #ffffff;
+  --surface: #f3f4f6;
+  --surface-2: #eaebed;
+  --raised: #ffffff;
+  --rule: #e0e2e5;
+  --edge: #c5c7ca;
+  --ink: #1c1e20;
+  --ink-2: #5c5e60;
+  --ink-3: #7e8083;
+  --accent: #007b7b;
+  --accent-hover: #006a6a;
+  --on-accent: #ffffff;
+  --good: #25793f;
+  --warn: #9b5e11;
+  --bad: #c22826;
+  --trace-1: #006fbd;
+  --trace-2: #c46016;
+  --trace-3: #298646;
+  --trace-4: #c03a51;
+  --trace-5: #7c50a8;
+  --trace-6: #827f11;
+  --shadow: 0 2px 6px rgb(0 0 0 / 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1b1d1f;
+    --surface: #212325;
+    --surface-2: #2a2b2e;
+    --raised: #242528;
+    --rule: #303234;
+    --edge: #494a4d;
+    --ink: #e4e6e9;
+    --ink-2: #aaacaf;
+    --ink-3: #818386;
+    --accent: #61bdba;
+    --accent-hover: #7acbc9;
+    --on-accent: #101214;
+    --good: #65c67d;
+    --warn: #edb25a;
+    --bad: #f2716a;
+    --trace-1: #5cabf2;
+    --trace-2: #f49752;
+    --trace-3: #62c37a;
+    --trace-4: #ec7380;
+    --trace-5: #b691e1;
+    --trace-6: #c5c463;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1b1d1f;
+  --surface: #212325;
+  --surface-2: #2a2b2e;
+  --raised: #242528;
+  --rule: #303234;
+  --edge: #494a4d;
+  --ink: #e4e6e9;
+  --ink-2: #aaacaf;
+  --ink-3: #818386;
+  --accent: #61bdba;
+  --accent-hover: #7acbc9;
+  --on-accent: #101214;
+  --good: #65c67d;
+  --warn: #edb25a;
+  --bad: #f2716a;
+  --trace-1: #5cabf2;
+  --trace-2: #f49752;
+  --trace-3: #62c37a;
+  --trace-4: #ec7380;
+  --trace-5: #b691e1;
+  --trace-6: #c5c463;
+  --shadow: none;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+/* the drawings' default paint, written by slxkit-render's table (page spec 5) */
+:where(svg[data-paint="css"][data-theme="light"] rect.paper:not([fill])) { fill: #ffffff; }
+:where(svg[data-paint="css"][data-theme="light"] rect.body:not([fill])) { fill: #ffffff; stroke: #1c1e20; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="light"] circle.body:not([fill])) { fill: #ffffff; stroke: #1c1e20; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="light"] polyline.body:not([fill])) { fill: #ffffff; stroke: #1c1e20; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="light"] polyline.seg:not([fill])) { fill: none; stroke: #1c1e20; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="light"] polygon.arrow:not([fill])) { fill: #1c1e20; }
+:where(svg[data-paint="css"][data-theme="light"] circle.branch:not([fill])) { fill: #1c1e20; }
+:where(svg[data-paint="css"][data-theme="light"] polyline.chevron:not([fill])) { fill: none; stroke: #5c5e60; stroke-width: 1.5px; }
+:where(svg[data-paint="css"][data-theme="light"] circle.pport:not([fill])) { fill: none; stroke: #5c5e60; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="light"] text.name:not([fill])) { fill: #1c1e20; }
+:where(svg[data-paint="css"][data-theme="light"] text.attr:not([fill])) { fill: #1c1e20; }
+:where(svg[data-paint="css"][data-theme="light"] text.caption:not([fill])) { fill: #1c1e20; }
+:where(svg[data-paint="css"][data-theme="light"] text.port:not([fill])) { fill: #5c5e60; }
+:where(svg[data-paint="css"][data-theme="light"] text.note:not([fill])) { fill: #1c1e20; }
+:where(svg[data-paint="css"][data-theme="light"] text.lname:not([fill])) { fill: #5c5e60; }
+:where(svg[data-paint="css"][data-theme="light"] text.title:not([fill])) { fill: #5c5e60; }
+:where(svg[data-paint="css"][data-theme="dark"] rect.paper:not([fill])) { fill: #1b1d1f; }
+:where(svg[data-paint="css"][data-theme="dark"] rect.body:not([fill])) { fill: #1b1d1f; stroke: #e4e6e9; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="dark"] circle.body:not([fill])) { fill: #1b1d1f; stroke: #e4e6e9; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="dark"] polyline.body:not([fill])) { fill: #1b1d1f; stroke: #e4e6e9; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="dark"] polyline.seg:not([fill])) { fill: none; stroke: #e4e6e9; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="dark"] polygon.arrow:not([fill])) { fill: #e4e6e9; }
+:where(svg[data-paint="css"][data-theme="dark"] circle.branch:not([fill])) { fill: #e4e6e9; }
+:where(svg[data-paint="css"][data-theme="dark"] polyline.chevron:not([fill])) { fill: none; stroke: #aaacaf; stroke-width: 1.5px; }
+:where(svg[data-paint="css"][data-theme="dark"] circle.pport:not([fill])) { fill: none; stroke: #aaacaf; stroke-width: 1px; }
+:where(svg[data-paint="css"][data-theme="dark"] text.name:not([fill])) { fill: #e4e6e9; }
+:where(svg[data-paint="css"][data-theme="dark"] text.attr:not([fill])) { fill: #e4e6e9; }
+:where(svg[data-paint="css"][data-theme="dark"] text.caption:not([fill])) { fill: #e4e6e9; }
+:where(svg[data-paint="css"][data-theme="dark"] text.port:not([fill])) { fill: #aaacaf; }
+:where(svg[data-paint="css"][data-theme="dark"] text.note:not([fill])) { fill: #e4e6e9; }
+:where(svg[data-paint="css"][data-theme="dark"] text.lname:not([fill])) { fill: #aaacaf; }
+:where(svg[data-paint="css"][data-theme="dark"] text.title:not([fill])) { fill: #aaacaf; }
+@font-face { font-family: "Atkinson Hyperlegible Next"; src: url("fonts/AtkinsonHyperlegibleNext.woff2?v=7bce00e9e35eecde") format("woff2"); font-weight: 400 600; font-display: block; }
+@font-face { font-family: "Atkinson Hyperlegible Mono"; src: url("fonts/AtkinsonHyperlegibleMono.woff2?v=3e2f9b64a1dbd272") format("woff2"); font-weight: 400 600; font-display: block; }
+@font-face { font-family: "DejaVu Sans"; src: url("fonts/DejaVuSans-fallback.woff2?v=720ccd57f18db998") format("woff2"); font-weight: 400; unicode-range: U+AD, U+B5, U+108-109, U+114-115, U+11C-11D, U+124-125, U+128-129, U+12C-12D, U+134-135, U+138, U+13F-140, U+149-14F, U+156-157, U+15C-15D, U+166-169, U+16C-16D, U+17F-191, U+193-217, U+21C-236, U+238-2C5, U+2C8, U+2CA-2D7, U+2DE-2E9, U+2EC-2EE, U+2F3, U+2F7, U+305, U+309, U+30D-311, U+313-325, U+329-34F, U+351-353, U+357-358, U+35A, U+35C-362, U+370-377, U+37A-37F, U+384-38A, U+38C, U+38E-393, U+395-3A1, U+3A3-3A8, U+3AA-3BB, U+3BD-3BF, U+3C1-525, U+531-556, U+559-55F, U+561-587, U+589-58A, U+5B0-5C3, U+5C6-5C7, U+5D0-5EA, U+5F0-5F4, U+606-607, U+609-60A, U+60C, U+615, U+61B, U+61F, U+621-63A, U+640-655, U+657, U+65A, U+660-670, U+674, U+679-6BF, U+6C6-6C8, U+6CB-6CC, U+6CE, U+6D0, U+6D5, U+6F0-6F9, U+7C0-7E7, U+7EB-7F5, U+7F8-7FA, U+E3F, U+E81-E82, U+E84, U+E87-E88, U+E8A, U+E8D, U+E94-E97, U+E99-E9F, U+EA1-EA3, U+EA5, U+EA7, U+EAA-EAB, U+EAD-EB9, U+EBB-EBD, U+EC0-EC4, U+EC6, U+EC8-ECD, U+ED0-ED9, U+EDC-EDD, U+10A0-10C5, U+10D0-10FC, U+1401-1407, U+1409-141B, U+141D-1435, U+1437-144A, U+144C-1452, U+1454-14BD, U+14C0-14EA, U+14EC-1507, U+1510-153E, U+1540-1550, U+1552-156A, U+1574-1585, U+158A-1596, U+15A0-15AF, U+15DE, U+15E1, U+1646-1647, U+166E-1676, U+1680-169C, U+1D00-1D14, U+1D16-1D23, U+1D26-1D2E, U+1D30-1D5B, U+1D5D-1D6A, U+1D77-1D78, U+1D7B, U+1D7D, U+1D85, U+1D9B-1DBF, U+1DC4-1DC9, U+1E00-1E7F, U+1E86-1E9D, U+1E9F-1EF1, U+1EF4-1EFB, U+1F00-1F15, U+1F18-1F1D, U+1F20-1F45, U+1F48-1F4D, U+1F50-1F57, U+1F59, U+1F5B, U+1F5D, U+1F5F-1F7D, U+1F80-1FB4, U+1FB6-1FC4, U+1FC6-1FD3, U+1FD6-1FDB, U+1FDD-1FEF, U+1FF2-1FF4, U+1FF6-1FFE, U+2000-2008, U+200A-2012, U+2015-2017, U+201B, U+201F, U+2023-2025, U+2027-202F, U+2031-2038, U+203B-2043, U+2045-2064, U+206A-2071, U+2074-208E, U+2090-209C, U+20A0-20AB, U+20AD-20B5, U+20B8, U+20BA, U+20BD, U+20D0-20D1, U+20D6-20D7, U+20DB-20DC, U+20E1, U+2100-2109, U+210B-2112, U+2114-2121, U+2123-212D, U+212F-2149, U+214B, U+214E, U+2150-2185, U+2189, U+2190-2201, U+2203-220E, U+2210, U+2213-2214, U+2216-2218, U+221B-221D, U+221F-222A, U+222C-2247, U+2249-225F, U+2261-2263, U+2266-2311, U+2318-2319, U+231C-2321, U+2324-2328, U+232B-232C, U+2373-2375, U+237A, U+237D, U+2387, U+2394, U+239B-23AE, U+23CE-23CF, U+23E3, U+23E5, U+23E8, U+2422-2423, U+2460-2469, U+2500-25C9, U+25CB-2669, U+266B-269C, U+269E-26B8, U+26C0-26C3, U+26E2, U+2701-2704, U+2706-2709, U+270C-2727, U+2729-274B, U+274D, U+274F-2752, U+2756, U+2758-275E, U+2761-2794, U+2798-27AF, U+27B1-27BE, U+27C5-27C6, U+27E0, U+27E6-27EB, U+27F0-28FF, U+2906-2907, U+290A-290B, U+2940-2941, U+2983-2984, U+29CE-29D5, U+29EB, U+29FA-29FB, U+2A00-2A02, U+2A0C-2A1C, U+2A2F, U+2A6A-2A6B, U+2A7D-2AA0, U+2AAE-2ABA, U+2AF9-2AFA, U+2B00-2B1A, U+2B1F-2B24, U+2B53-2B54, U+2C60-2C77, U+2C79-2C7F, U+2D00-2D25, U+2D30-2D65, U+2D6F, U+2E18, U+2E1F, U+2E22-2E25, U+2E2E, U+4DC0-4DFF, U+A4D0-A4FF, U+A644-A647, U+A64C-A64D, U+A650-A651, U+A654-A657, U+A662-A66E, U+A68A-A68D, U+A694-A695, U+A698-A699, U+A708-A716, U+A71B-A71F, U+A722-A72B, U+A730-A741, U+A746-A74B, U+A74E-A753, U+A756-A757, U+A764-A767, U+A780-A783, U+A789-A78E, U+A790-A791, U+A7A0-A7AA, U+A7F8-A7FF, U+EF00-EF19, U+F000-F003, U+F400-F426, U+F428-F441, U+F6C5, U+FB00-FB06, U+FB13-FB17, U+FB1D-FB36, U+FB38-FB3C, U+FB3E, U+FB40-FB41, U+FB43-FB44, U+FB46-FB4F, U+FB52-FBA3, U+FBAA-FBAD, U+FBD3-FBDC, U+FBDE-FBDF, U+FBE4-FBE9, U+FBFC-FBFF, U+FE00-FE0F, U+FE20-FE23, U+FE70-FE74, U+FE76-FEFC, U+FEFF, U+FFF9-FFFD, U+10300-1031E, U+10320-10323, U+1D300-1D356, U+1D538-1D539, U+1D53B-1D53E, U+1D540-1D544, U+1D546, U+1D54A-1D550, U+1D552-1D56B, U+1D5A0-1D5D3, U+1D7D8-1D7EB, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1F030-1F093, U+1F0A0-1F0AE, U+1F0B1-1F0BE, U+1F0C1-1F0CF, U+1F0D1-1F0DF, U+1F311-1F318, U+1F42D-1F42E, U+1F431, U+1F435, U+1F600-1F623, U+1F625-1F62B, U+1F62D-1F640, U+1F643; font-display: block; }
+:root {
+  --font: "Atkinson Hyperlegible Next", "DejaVu Sans", sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", "DejaVu Sans", monospace;
+}

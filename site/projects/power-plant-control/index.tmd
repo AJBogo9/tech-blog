@@ -1,0 +1,55 @@
+---
+title: "Controlling a Steam Power Plant"
+date: "2026-10-30"
+description: "PID and PI controllers for a steam power plant in Simulink, from a course at Aalto. The models open on this page, without MATLAB."
+image: "thumbnail.webp"
+image-alt: "The top level of the power plant model in Simulink: the upper section and the steam accumulator as subsystems, the back-pressure header between them, the controllers and steps that drive them, a legend of the colours and the equations of the back-pressure header."
+categories:
+  - Simulink
+  - Control Engineering
+draft: true
+---
+
+In the course Laboratory Assignments in Operations Research II at Aalto (autumn 2026), a partner and I controlled a
+steam power plant. The course gave the plant as a Simulink model. A boiler feeds a high-pressure header. The turbine
+passes steam to a back-pressure header, and the consumers take their steam from there. A steam accumulator stores
+steam and gives it back.
+
+I tuned the PID controller of the fuel feed and a PI controller on the turbine valve, which holds the back pressure.
+Then I tuned the accumulator's controllers and tested the whole plant against changes in the consumption. My partner
+designed state-feedback controllers for the same plant.
+
+The models open below. Double-click a subsystem to go inside, rest the pointer on a block to read its parameters,
+and click a block to see what each parameter evaluates to. Ctrl and the scroll wheel zoom; on a phone, use two fingers. I drew
+them with slxkit, a tool I wrote to view, edit and simulate Simulink models without MATLAB.
+
+## The plant
+
+A copy of the course model that I made to study it: every block named in English, and the equations of each part
+in a note beside it.
+
+<iframe class="column-page" src="models/index.html#/m/plant_study/s/root" title="The power plant model, with names in English" loading="lazy" allow="fullscreen" style="display:block; justify-self:center; width:100%; max-width:1000px; aspect-ratio:16/10; min-height:420px; max-height:80vh; margin:0 0 1.25rem; border:1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius:8px;"></iframe>
+
+## Exercise 3: the fuel feed
+
+A PID controller sets the fuel feed so that the pressure of the high-pressure header stays at its reference.
+
+<iframe class="column-page" src="models/index.html#/m/plant_ex3/s/root" title="The Exercise 3 model: PID control of the fuel feed" loading="lazy" allow="fullscreen" style="display:block; justify-self:center; width:100%; max-width:1000px; aspect-ratio:16/10; min-height:420px; max-height:80vh; margin:0 0 1.25rem; border:1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius:8px;"></iframe>
+
+## Exercise 8: the turbine valve
+
+A PI controller moves the turbine valve to hold the back pressure when the consumption changes.
+
+<iframe class="column-page" src="models/index.html#/m/plant_ex8/s/root" title="The Exercise 8 model: PI control of the turbine valve" loading="lazy" allow="fullscreen" style="display:block; justify-self:center; width:100%; max-width:1000px; aspect-ratio:16/10; min-height:420px; max-height:80vh; margin:0 0 1.25rem; border:1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius:8px;"></iframe>
+
+## Exercise 9: the steam accumulator
+
+Two controllers charge the accumulator when the back pressure rises and discharge it when the pressure falls.
+
+<iframe class="column-page" src="models/index.html#/m/plant_ex9/s/root" title="The Exercise 9 model: control of the steam accumulator" loading="lazy" allow="fullscreen" style="display:block; justify-self:center; width:100%; max-width:1000px; aspect-ratio:16/10; min-height:420px; max-height:80vh; margin:0 0 1.25rem; border:1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius:8px;"></iframe>
+
+## Exercise 10: the whole plant
+
+All the controllers together, with slow and fast changes in the consumption, steps and ramps.
+
+<iframe class="column-page" src="models/index.html#/m/plant_ex10/s/root" title="The Exercise 10 model: the whole plant" loading="lazy" allow="fullscreen" style="display:block; justify-self:center; width:100%; max-width:1000px; aspect-ratio:16/10; min-height:420px; max-height:80vh; margin:0 0 1.25rem; border:1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius:8px;"></iframe>
