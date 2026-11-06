@@ -104,6 +104,39 @@ existing post. The older `Theory` then `Code demo` posts (`KL-divergence`,
 `em-algorithm`, `evidence-lower-bound`) predate this rule and were deliberately
 not retrofitted, so do not "fix" them.
 
+**Learning posts: the theory carries the post.** Since 2026-11-02 the owner writes
+some posts to learn an advanced topic for themselves (the owner says which; the
+industrial-analytics posts on `post/cable-extrusion` are the first). Claude writes
+them and the owner studies and improves them, so they get a different shape:
+
+1. **The job.** As above.
+2. **The problem, playable.** A short demo where the reader tries the obvious
+   approach and finds where it fails. Named after the concrete problem, as above.
+3. **The theory, as the main part.** One main result per post, grounded in that
+   post's own story, plus only what it takes to state it precisely and to see it
+   on the demo's numbers. A second formulation of the same problem, a neighbouring
+   theorem or a refinement is a second idea and gets its own post. Each step
+   starts on the demo's numbers, then states the general result. Results are
+   stated precisely, with the intuition for why they hold; proofs are cited, not
+   reproduced. A collapsible notation table heads the section.
+4. **Where the method fails**, uncollapsed, a few sentences per failure mode,
+   under a plain heading such as "Failure modes". Not "Where it breaks": the owner
+   reads it as AI voice.
+5. **Summary**, with a short list of what to read next.
+
+The checkable version: the demo still comes first, the theory section is the
+longest section, every result the post states cites a source, and the post reads
+in under 10 minutes on the usual counter (prose words over 240, about 2,000 words
+without code, display math and collapsed callouts). A subsection the main result
+does not need is cut, however good. The demo-longer-than-theory rule above applies
+to explainer posts only.
+
+**Writing rules: the `post-audit` skill.** `.claude/skills/post-audit/` holds the
+technical-writing rules for every post (numbers before the general result, terms
+defined at first use, a figure per mechanism, one telling of each thing, the read
+time), each tied to its research source. Follow it while drafting and run it as an
+audit before a post leaves draft, then the `ai-voice-pass` skill.
+
 **A photo of the real thing, where the text first names it.** When the job or the
 story names a physical thing the reader may not have seen (a grid battery, a city's
 street grid), one real photo of it goes there as a `#fig-` figure, so the caption

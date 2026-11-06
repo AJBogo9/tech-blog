@@ -80,6 +80,22 @@ carries a cold reader. `Kruskal-Wallis-test` is the closest existing post. The
 older `Theory` then `Code demo` posts (`KL-divergence`, `em-algorithm`,
 `evidence-lower-bound`) predate this rule and were deliberately left alone.
 
+## Learning posts: the theory carries the post
+
+Some posts the owner writes to learn an advanced topic (the owner says which).
+Claude writes them, the owner studies and improves them. They follow the repo's
+CLAUDE.md "Learning posts" shape instead of the one above: the job, a short
+playable problem where the obvious approach fails, then the theory as the longest
+section (one main result plus only what it takes to state it and see it on the
+demo's numbers, stated precisely with its intuition and a cited proof), failure
+modes uncollapsed under a plain heading such as "Failure modes", a few sentences
+each, and a summary with what to read next. A second formulation or a neighbouring
+theorem is a second post. Keep the read time under 10 minutes (about 2,000 words
+of prose). Lay down those five headings instead of the four above.
+
+For the writing inside either shape, follow the `post-audit` skill, and run it as
+an audit before the post leaves draft.
+
 ## Photos: the real thing, where the text first names it
 
 When the job or the story names a physical thing the reader may not have seen (a
