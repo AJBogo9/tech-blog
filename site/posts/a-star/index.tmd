@@ -43,6 +43,8 @@ $$
 
 The geometric interpretation of this is amount of grid cells that need to be navigated to go from one point to another without moving diagonally.
 
+![Manhattan from the International Space Station, with Central Park on the left. A taxi crossing this grid follows the streets and avenues and never cuts diagonally through a block, so its trip is the distance across plus the distance up. That is where the Manhattan distance gets its name. Photo: NASA/Scott Kelly (2015), public domain, cropped, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:ISS-43_New_York_City.jpg).](manhattan-grid.webp){#fig-manhattan-grid}
+
 ```{python}
 def heuristic(a: tuple[int, int], b: tuple[int, int]) -> int:
     return abs(a[0] - b[0]) + abs(a[1] - b[1])

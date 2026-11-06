@@ -21,6 +21,11 @@
     // sending a flag that says so. Zero requests leave this page.
     if (navigator.globalPrivacyControl === true) return;
 
+    // A document inside a frame belongs to the page around it (an embedded
+    // viewer, a demo) and is no page someone opened. Only the top window
+    // counts, so a page with three frames is one view, not four.
+    if (window.self !== window.top) return;
+
     function hex16() {
       var b = new Uint8Array(16);
       if (window.crypto && window.crypto.getRandomValues) {

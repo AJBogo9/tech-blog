@@ -1,0 +1,22 @@
+---
+title: "Chinese Character Stroke Order"
+date: "2025-12-20"
+description: "A web app that steps through the stroke order of a Chinese character, then checks each stroke as you draw it yourself."
+image: "thumbnail.png"
+image-alt: "The character 学 drawn twice in grey on a dark grid. On the left one stroke is blue. On the right four strokes are filled in, the rest are a faint outline, and a thin pen line traces the fifth."
+categories:
+  - TypeScript
+  - Web
+  - Language learning
+---
+
+<a href="https://ajbogo9.github.io/chinese-stroke-order/" class="btn btn-outline-secondary btn-sm">Open the app</a>
+<a href="https://github.com/AJBogo9/chinese-stroke-order" class="btn btn-outline-secondary btn-sm">GitHub</a>
+
+Every Chinese character is written with its strokes in a fixed order.
+
+<iframe src="https://ajbogo9.github.io/chinese-stroke-order/?embed" title="Chinese character stroke order app" loading="lazy" style="display:block; width:100%; height:730px; margin:0 0 1.25rem; border:0; border-radius:8px;"></iframe>
+
+The [Hanzi Writer](https://hanziwriter.org) library draws the characters and grades the quiz. Its strokes come from the [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) data set. The data stores each stroke as an outline to fill and as a center line through it. In the quiz, Hanzi Writer compares your line with the center line of the stroke you are on. It checks the average distance between them, where your line starts and ends, its direction, its shape and its length. If your line fits a later stroke better, the check gets stricter, since you have probably skipped a stroke. After one miss, the correct stroke flashes as a hint.
+
+The app loads each of the 9,574 characters in the data from a CDN when you pick it. For a character outside the data, the CDN can take tens of seconds to answer that the file does not exist. The app ships the list of covered characters, so it can tell you right away when it has no strokes for a character.

@@ -1,0 +1,33 @@
+---
+title: "Quiet Roads for Road Cycling"
+date: "2026-10-05"
+description: "A map of quiet, well-paved roads around Helsinki for road cycling, with the nearest train or metro station for each road."
+image: "thumbnail.png"
+image-alt: "A map of the Helsinki region and western Uusimaa with roads drawn in shades of blue and rail and metro stations marked as white circles."
+categories:
+  - Python
+  - Geospatial
+  - Open Data
+---
+
+<a href="https://ajbogo9.github.io/road-cycling-finland/" class="btn btn-outline-secondary btn-sm">Open the map</a>
+<a href="https://github.com/AJBogo9/road-cycling-finland" class="btn btn-outline-secondary btn-sm">GitHub</a>
+
+I wanted to find quiet countryside roads with good asphalt that I can reach from Espoo by train or metro. Väylävirasto, the Finnish Transport Infrastructure Agency, publishes open data on the roads the state maintains. I used it to pick out roads around Helsinki.
+
+<iframe src="https://ajbogo9.github.io/road-cycling-finland/?embed" title="Map of quiet roads for road cycling in Uusimaa" loading="lazy" allow="fullscreen" style="display:block; width:100%; height:480px; margin:0 0 1.25rem; border:0; border-radius:8px;"></iframe>
+
+A road is on the map if it meets all of these:
+
+| Data | Limit |
+|---|---|
+| Surface | asphalt, including soft asphalt |
+| Speed limit | 80 km/h or less |
+| Traffic | 1000 vehicles a day or fewer |
+| Pavement condition | class 3 or better, on a scale of 1 to 5 |
+
+Darker blue roads score higher. Traffic counts most in the score, then pavement condition. Click a road to see its values and the straight-line distance to the nearest station. On an iPhone, use the Open the map link at the top for a bigger map.
+
+Väylävirasto keeps each value as a stretch of road address: a road number, a road part and a distance along that part. Every point on the road lines carries its address too, so my Python pipeline cuts each road part wherever a value changes and gives each piece the values that cover it. If a piece gets two different values, for example one for each side of the road, it keeps the one that is worse for cycling.
+
+The rail stations come from Fintraffic's Digitraffic API. Its list includes some stations where no regular passenger train stops, such as Porvoo. I only count a station if a passenger train left it on the day of the weekly fetch. The metro stations come from HSL.

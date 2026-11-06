@@ -1,0 +1,48 @@
+---
+title: "Federated Wind Speed Forecasting in Finland"
+date: "2026-05-26"
+description: "Finnish weather stations train their own wind forecasts and share only model parameters with their neighbours in a graph. Neither of the two graphs I tried gave a practical improvement."
+image: "thumbnail.png"
+image-alt: "Two drawings of the same weather stations across Finland, each station a dot. Blue lines on the left link each station to its five nearest stations. On the right, orange lines link each station to the five stations whose wind speed correlates most with its own."
+categories:
+  - Python
+  - Federated Learning
+  - Time Series
+---
+
+<a href="https://github.com/AJBogo9/federated-wind-forecasting" class="btn btn-outline-secondary btn-sm">GitHub</a>
+<a href="federated-wind-forecasting-report.pdf" class="btn btn-outline-secondary btn-sm">Report (PDF)</a>
+
+The Finnish Meteorological Institute (FMI) publishes hourly observations from about 200 weather stations. My project for the Federated Learning course at Aalto (spring 2026) asked whether a station forecasts wind better if it learns together with similar stations without sharing its raw data.
+
+Each of 136 stations trains a linear model on its own 2024 data. The model forecasts the wind speed two hours past its newest reading, from the last three hourly wind speeds and the latest temperature, humidity and pressure. Training adds a penalty that pulls the parameters of stations linked in a graph towards each other. Each station sees only its own data and its neighbours' current parameters. I compared two ways to build the graph:
+
+::: {}
+| Graph | Each station is linked to |
+|---|---|
+| Geographic | its five nearest stations |
+| Correlation | the five stations whose wind speed correlates most with its own |
+:::
+
+I chose the strength of the penalty on a validation period and measured the error on the last 15% of the year:
+
+::: {}
+| System | Test error (MSE) |
+|---|---:|
+| Each station alone | 0.2638 |
+| Geographic graph | 0.2630 |
+| Correlation graph | 0.2628 |
+:::
+
+The error is on standardized wind speed and averaged over the stations. Both graphs lower it by less than half a percent. A station has thousands of hourly examples for a model with seven parameters, so it has little to learn from its neighbours. The report suggests trying a graph with more flexible models and with stations that have less data.
+
+After the course I went through the code again. The training loop looks up each station's neighbours in the wrong row of the graph, so most links join the wrong pair of stations. With the rows fixed, the result stays the same. The repository keeps the code as graded and lists this and two smaller issues in its README.
+
+## The report
+
+<object class="column-page" data="federated-wind-forecasting-report.pdf#navpanes=0&pagemode=none&view=FitH&zoom=page-width" type="application/pdf" title="The project report as submitted, five pages" style="display:block; justify-self:center; width:100%; max-width:1000px; height:85vh; min-height:480px; margin:0 0 1.25rem; border:0; border-radius:8px;">
+<p>Your browser cannot show the PDF on this page. <a href="federated-wind-forecasting-report.pdf">Open the report (PDF)</a>.</p>
+</object>
+
+<a href="federated-wind-forecasting-report.pdf" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Open in a new tab</a>
+<a href="federated-wind-forecasting-report.pdf" download="federated-wind-forecasting-report.pdf" class="btn btn-outline-secondary btn-sm">Download</a>
