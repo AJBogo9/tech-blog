@@ -20,8 +20,9 @@ resource "cloudflare_record" "www" {
 #   cf-terraforming generate --resource-type cloudflare_record --zone $ZONE_ID
 
 # t.andreasbogossian.com is NOT managed here. It is a CNAME to the readlog
-# tunnel (<TUNNEL_ID>.cfargotunnel.com), created by `cloudflared tunnel route
-# dns` because the tunnel id only exists after the tunnel is created. Terraform
+# tunnel (<TUNNEL_ID>.cfargotunnel.com), created by the tunnel's public
+# hostname in the Cloudflare dashboard, because the tunnel id only exists after
+# the tunnel is created. Terraform
 # does not manage records it does not know about, so this is drift-free, but it
 # does mean `terraform plan` will never mention it. See the readlog repo's
 # deploy/README.md.

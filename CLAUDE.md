@@ -90,19 +90,85 @@ intuition first and reach for rigor second. The order is fixed:
    notation. The reader forms a guess, pushes on it, and finds out where the
    guess was wrong. This section carries the post.
 3. **The theory, sized to the intuition.** Every equation has to be readable as a
-   sentence about the demo. Full derivations go in a collapsed callout, proofs
-   are cited rather than reproduced, and a property earns its bullet only if the
-   reader can watch it happen in the demo. Where the method breaks stays
-   uncollapsed: failure modes are intuition, not rigor.
+   sentence about the demo, or it is cut or cited. Full derivations go in a
+   collapsed callout, proofs are cited rather than reproduced, and a property earns
+   its bullet only if the reader can watch it happen in the demo. Where the method
+   breaks stays uncollapsed: failure modes are intuition, not rigor.
 4. **Summary.**
 
 The checkable version: the demo section is longer than the theory section, and a
 collapsible notation table sits at the head of the theory section, never at the
 top of the post. Section 2 is named after the concrete problem ("The pain
-trial"), never "Example" or "Code demo". `Kruskal-Wallis-test` is the closest
-existing post. The older `Theory` then `Code demo` posts (`KL-divergence`,
-`em-algorithm`, `evidence-lower-bound`) predate this rule and were deliberately
-not retrofitted, so do not "fix" them.
+trial"), never "Example", "Demo" or "Code demo". A concept whose behaviour
+cannot be shown before it is named makes a harder post, and its demo gets
+simplified until it carries a cold reader. The model is `spectral-embeddings`, on
+branch `post/spectral-embeddings` until it merges. The older `Theory` then `Code demo`
+posts (`KL-divergence`, `em-algorithm`, `evidence-lower-bound`) predate this rule
+and were deliberately not retrofitted, so do not "fix" them. `Kruskal-Wallis-test`
+predates it too, and it breaks two of the checks. Its notation table sits at the
+top of the post, and its theory has more prose than its demo. Do not copy its
+layout.
+
+**Learning posts: the theory carries the post.** Since 2026-11-02 the owner writes
+some posts to learn an advanced topic for themselves (the owner says which; the
+industrial-analytics posts on `post/cable-extrusion` are the first). Claude writes
+them and the owner studies and improves them, so they get a different shape:
+
+1. **The job.** As above.
+2. **The problem, playable.** A short demo where the reader tries the obvious
+   approach and finds where it fails. Named after the concrete problem, as above.
+3. **The theory, as the main part.** One main result per post, grounded in that
+   post's own story, plus only what it takes to state it precisely and to see it
+   on the demo's numbers. A second formulation of the same problem, a neighbouring
+   theorem or a refinement is a second idea and gets its own post. Each step
+   starts on the demo's numbers, then states the general result. Results are
+   stated precisely, with the intuition for why they hold; proofs are cited, not
+   reproduced. A collapsible notation table heads the section.
+4. **Where the method fails**, uncollapsed, a few sentences per failure mode,
+   under a plain heading such as "Failure modes". Not "Where it breaks": the owner
+   reads it as AI voice.
+5. **Summary**, with a short list of what to read next.
+
+The checkable version: the demo still comes first, the theory section is the
+longest section, every result the post states cites a source, and the post reads
+in under 10 minutes on the usual counter (prose words over 240, about 2,000 words
+without code, display math and collapsed callouts). A subsection the main result
+does not need is cut, however good. The demo-longer-than-theory rule above applies
+to explainer posts only. The model is `cusum`, on branch `post/cable-extrusion`
+until it merges.
+
+**Voice.** A sentence names the thing that acts (the line, the controller, the
+CUSUM, a theorem). Posts do not say "we" or "I", and the reader is "you" only in
+instructions at the demo and the figures ("Move the slider", "Before reading on,
+guess ..."). Older posts that say "we" stay as they are.
+
+**Writing rules: the `post-audit` skill.** `.claude/skills/post-audit/` holds the
+technical-writing rules for every post (numbers before the general result, terms
+defined at first use, every number traced to the post's code, a figure per
+mechanism, one telling of each thing, the read time), each tied to its source.
+Follow it while drafting and run it as an audit before a post leaves draft, then
+the `ai-voice-pass` skill.
+
+**A photo of the real thing, where the text first names it.** When the job or the
+story names a physical thing the reader may not have seen (a grid battery, a city's
+street grid), one real photo of it goes there as a `#fig-` figure, so the caption
+renders. The caption states a fact that ties the photo to the problem (a size, a
+constraint, where a name comes from) and ends with the credit: author, licence link,
+a link to the source page, and "cropped" if it was. Examples: `fleet-revenue-split`
+(a battery site) and `a-star` (Manhattan from the ISS, at the Manhattan distance).
+
+- Only the specific object the text names. No stock filler or mood shots (a
+  lightbulb, people at a dashboard, power lines at sunset): eyetracking studies find
+  readers skip them. No AI-generated images.
+- No photo for a topic with no physical object (`KL-divergence`,
+  `evidence-lower-bound`). A figure does that job.
+- One per post is the norm, two at most, and never one that pushes the demo off the
+  first screens.
+- Licence: our own photo, public domain, CC0, CC BY or CC BY-SA, usually from
+  Wikimedia Commons. Never an image taken from a search engine's image results.
+- Re-encode to WebP about 1200 px wide and under about 300 KB: Taliesin copies
+  images unchanged. ImageMagick 6 on this machine ignores `-quality` for WebP, so
+  encode with Pillow.
 
 Posts mix Markdown, `{python}` code cells (executed via Jupyter; numpy/matplotlib/
 scikit-learn/torch), math (`$…$`/`$$…$$`, KaTeX server-side), and native reactive
