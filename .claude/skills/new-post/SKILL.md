@@ -28,103 +28,21 @@ Rendered sources live under `site/`, so a post is `site/posts/<slug>/index.tmd`.
 
 4. **Create an empty `site/posts/<slug>/references.bib`** (BibTeX). IEEE is Taliesin's built-in style; there is no `csl:` key. Add entries as the post cites sources, and cite with `[@key]` (a bare `@key` renders as literal text).
 
-5. **Lay down the four section headings** from "Post shape" below, then write the body if the user gave enough to start. Otherwise leave the headings as the stub: an empty post in the right shape is more useful than prose in the wrong one. Mechanics:
+5. **Lay down the section headings** of the post's shape from the repo's CLAUDE.md: four for an explainer post ("Post shape"), five for a learning post ("Learning posts"). The owner says which. Then write the body if the user gave enough to start. Otherwise leave the headings as the stub: an empty post in the right shape is more useful than prose in the wrong one. Mechanics:
    - Math uses KaTeX: inline `$...$`, display `$$...$$`. Reference figures with `@fig-label`.
    - Python cells are ```` ```{python} ```` and execute via Jupyter (`echo: true`, so code shows). Interactive visuals use ```` ```{js} ```` cells with the vendored `Plot`/`d3` globals (or `import()` Three.js); a Python cell can bridge values to `{js}` with `define(name = value)`.
    - Collapsible notation tables use `::: {.callout-note collapse="true"}`. The same callout holds any full derivation.
 
-## Post shape: the demo comes before the theory
+## Shape, voice, writing and photos
 
-The point of a post is to buy applied experience cheaply: build a visual, playable
-version of a real problem, get the intuition by pushing on it, and only then go
-into the theory. Intuition is the scarce thing. Rigor comes later with experience,
-so a post that trades depth of derivation for depth of intuition is trading
-correctly.
-
-The order is fixed:
-
-1. **The job.** Two or three sentences naming a real task someone is paid to do.
-   Enough to make the demo legible, nothing more.
-2. **The interactive demo.** The real problem, visual and playable, *before any
-   notation*. The reader forms a guess, pushes on it, and finds out where the
-   guess was wrong. This section carries the post.
-3. **The theory, sized to the intuition.** Generalise what the reader just moved
-   with their own hands.
-4. **Summary.**
-
-Rules that make the shape stick:
-
-- **Name section 2 after the concrete problem** ("The pain trial", "Routing a
-  delivery van"), never "Example", "Demo" or "Code demo". A generic heading
-  re-announces the structure instead of the content.
-- **Every equation in section 3 has to be readable as a sentence about the demo**
-  ("this term is what spiked when I dragged the slider"). An equation that cannot
-  be said that way is decoration. Cut it or cite it.
-- **Full derivations go in a collapsed callout.** The rigor stays on the page for
-  a later reading, but it does not own the first pass. Proofs are cited, not
-  reproduced.
-- **A property earns its bullet only if the reader can watch it happen** in the
-  demo. "Asymmetric" earns its place if they can swap the two arguments and see
-  the number change; otherwise it is trivia.
-- **Where the method breaks stays uncollapsed.** Failure modes are intuition, not
-  rigor.
-- **The notation table goes at the head of section 3**, never at the top of the
-  post. Section 2 has to be playable with zero notation, so notation up top
-  contradicts the format.
-- **Checkable version: section 2 is longer than section 3.** If the theory
-  outweighs the demo, the post has drifted back into theory-first.
-
-This constrains topic choice, on purpose. A concept whose behaviour cannot be
-shown before it is named is a harder post, and the demo gets simplified until it
-carries a cold reader. `Kruskal-Wallis-test` is the closest existing post. The
-older `Theory` then `Code demo` posts (`KL-divergence`, `em-algorithm`,
-`evidence-lower-bound`) predate this rule and were deliberately left alone.
-
-## Learning posts: the theory carries the post
-
-Some posts the owner writes to learn an advanced topic (the owner says which).
-Claude writes them, the owner studies and improves them. They follow the repo's
-CLAUDE.md "Learning posts" shape instead of the one above: the job, a short
-playable problem where the obvious approach fails, then the theory as the longest
-section (one main result plus only what it takes to state it and see it on the
-demo's numbers, stated precisely with its intuition and a cited proof), failure
-modes uncollapsed under a plain heading such as "Failure modes", a few sentences
-each, and a summary with what to read next. A second formulation or a neighbouring
-theorem is a second post. Keep the read time under 10 minutes (about 2,000 words
-of prose). Lay down those five headings instead of the four above.
-
-For the writing inside either shape, follow the `post-audit` skill, and run it as
-an audit before the post leaves draft.
-
-## Photos: the real thing, where the text first names it
-
-When the job or the story names a physical thing the reader may not have seen (a
-grid battery, a city's street grid), one real photo of it helps the reader picture
-the problem before the demo abstracts it. Put it where the text first names the
-thing, as a `#fig-` figure so the caption renders:
+The repo's CLAUDE.md holds the post shapes, the voice and the photo rule, and the
+`post-audit` skill holds the writing rules. Follow both while drafting, and run
+`post-audit` as an audit before the post leaves draft. A photo goes where the text
+first names the thing, as a `#fig-` figure so the caption renders:
 
 ```
 ![<what it is, then a fact that ties it to the problem>. Photo: <author>, [<licence>](<licence url>), via [Wikimedia Commons](<file page url>).](photo.webp){#fig-<name>}
 ```
-
-- **The caption states a fact**, such as a size, a constraint or where a name comes
-  from. A label alone ("A battery") is not a caption. Add "cropped" to the credit if
-  the photo was cropped.
-- **Only the specific object the text names.** No stock filler or mood shots (a
-  lightbulb, people at a dashboard, power lines at sunset): eyetracking studies find
-  readers skip them. No AI-generated images.
-- **No photo for a topic with no physical object** (`KL-divergence`,
-  `evidence-lower-bound`). A figure does that job.
-- **One per post is the norm, two at most**, and never one that pushes the demo off
-  the first screens.
-- **Licence:** our own photo, public domain, CC0, CC BY or CC BY-SA, usually from
-  Wikimedia Commons. Never an image taken from a search engine's image results.
-- **Re-encode to WebP** about 1200 px wide and under about 300 KB, because Taliesin
-  copies images unchanged. ImageMagick 6 on this machine ignores `-quality` for
-  WebP, so encode with Pillow.
-
-`fleet-revenue-split` (a battery site) and `a-star` (Manhattan from the ISS, at the
-Manhattan distance) are the examples.
 
 ## House rules (do not violate)
 

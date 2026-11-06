@@ -8,7 +8,7 @@ description: Use when drafting, revising or auditing the prose, figures and equa
 The reader is an industry engineer who follows research, and a student should be
 able to follow too. CLAUDE.md sets a post's shape (demo first, then theory). These
 rules cover how the prose, figures and equations inside that shape are written.
-Each names the research it comes from (sources at the end).
+Each names its source: research (listed at the end) or a ruling of the owner.
 
 ## Rules
 
@@ -38,41 +38,53 @@ Each names the research it comes from (sources at the end).
    Pinker 2014, Hinds 1999). The notation table does not count. Usual misses:
    units (nats), field jargon (run length, ess sup, $o(1)$, "first order"), and
    terms left over from a section that was cut.
-7. **Each formula gets one sentence in the demo's terms**, for example "with
+7. **Teach each idea the main result needs**, on the demo's numbers or in a linked
+   post (the owner's aim for the posts; concreteness fading, Fyfe 2014). A
+   stopping time or a dual price that the text names and then uses is not taught.
+   Check: list those ideas and find where each one is shown.
+8. **Each formula gets one sentence in the demo's terms**, for example "with
    $\delta = 1$, an hour adds evidence when the residual is above half a standard
    deviation". Concrete text is understood and remembered better (Sadoski 1993).
-8. **Numbers that look inconsistent get connected** where the second one appears
+9. **Numbers that look inconsistent get connected** where the second one appears
    (a limit that catches the demo's wear in 86 h but needs 276 h for a step).
-9. **Every claim keeps its evidence.** After a cut, reread the sentences around it
-   for a claim whose number or reason went with the cut.
+10. **Every claim has its evidence.** A number comes from the post's code, as a
+    cell's output or from a script that prints the numbers the text uses
+    (`cusum`'s `_numbers.mjs`). Rerun the code after any change to the model. A
+    result cites a source, and a comparison holds by arithmetic. After a cut,
+    reread the sentences around it for a claim whose evidence went with the cut
+    (the owner's rule: evidence before claims).
 
 ### Layout and figures
 
-10. **A figure sits at or before the first sentence that points to it.** No forward
+11. **A figure sits at or before the first sentence that points to it.** No forward
     references across sections (spatial contiguity, Mayer).
-11. **Say each thing once** across the text, the captions and a demo's own text.
+12. **Say each thing once** across the text, the captions and a demo's own text.
     Do not retell numbers that a figure or readout shows, unless later text uses
     them (coherence, Mayer).
-12. **Name the parts before the demo, and only the parts the demo uses**
+13. **Name the parts before the demo, and only the parts the demo uses**
     (pre-training and coherence, Mayer).
+14. **One demo per post**, the one where the reader can be wrong and find out (the
+    owner's ruling; coherence, Mayer). A figure in the theory section may take one
+    control when moving it shows a result the text states, as `cusum`'s
+    `fig-ville` and `fig-delay` do. Such a figure is not a second demo.
 
 ### Sentences
 
-13. **Known information first, new information last.** "This", "such" and "it"
+15. **Known information first, new information last.** "This", "such" and "it"
     point to the nearest plausible referent, never back across a figure or demo
     (Gopen & Swan 1990).
-14. **Keep the verb close to its subject.** Split appositives and nested clauses
+16. **Keep the verb close to its subject.** Split appositives and nested clauses
     (Gopen & Swan 1990; Gibson 1998).
-15. **Never start a sentence with a symbol** (Knuth et al. 1989).
-16. **One name per thing.** A new word reads as a new thing.
-17. **Every number carries its unit**, so that one number never stands for two
+17. **Never start a sentence with a symbol** (Knuth et al. 1989).
+18. **One name per thing.** A new word reads as a new thing.
+19. **Every number carries its unit**, so that one number never stands for two
     quantities.
 
 ### Notation and typography
 
-18. **The notation table lists every symbol used more than once, and nothing
+20. **The notation table lists every symbol used more than once, and nothing
     unused.** Use words where a symbol is used once (Halmos 1970).
-19. **A non-breaking space joins a number and its unit** (8 mm, 13 %, 3 σ), and
+21. **A non-breaking space joins a number and its unit** (8 mm, 13 %, 3 σ), and
     display equations fit a phone-width column.
 
 ## How to audit
@@ -80,11 +92,15 @@ Each names the research it comes from (sources at the end).
 1. Read the source and the rendered page: `taliesin preview`, then screenshots in
    the shared Chrome. `taliesin build site --check-only --strict` skips drafts.
 2. Count prose words per section and estimate the read time (rule 4).
-3. Run `python3 -I ~/.claude/skills/ai-voice-pass/voice_lint.py site/posts/<slug>/index.tmd`.
-4. Report findings ranked by how much they help the reader, each with a line link,
+3. Check every claim (rule 10). Run the post's code, then list each number, cause,
+   comparison and result in the text, the captions and the demo's readouts. Mark
+   each one SUPPORTED, UNSUPPORTED or WRONG against the code's output, the cited
+   source or arithmetic. Wrong and unsupported claims go first in the report.
+4. Run `python3 -I ~/.claude/skills/ai-voice-pass/voice_lint.py site/posts/<slug>/index.tmd`.
+5. Report findings ranked by how much they help the reader, each with a line link,
    the rule number and a concrete fix. Mark findings that change the post's shape
    (a new figure, a moved section) for the owner to decide.
-5. After the fixes: the post's tests, the preview, then the `ai-voice-pass` skill.
+6. After the fixes: the post's tests, the preview, then the `ai-voice-pass` skill.
 
 ## Sources
 
