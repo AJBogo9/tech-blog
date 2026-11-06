@@ -1,7 +1,7 @@
-// tests for the simulated cable line: node --test site/posts/hidden-fault/_line-model.test.mjs
+// tests for the simulated cable line: node --test site/posts/cusum/_line-model.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
-import { simulateLine, limitAlarms, featureAlarm, outputPerTurn, standardize, pca3, physicsNormal, spe } from "./line-model.js";
+import { simulateLine, limitAlarms, featureAlarm, outputPerTurn, residual } from "./line-model.js";
 
 test("simulateLine is deterministic for a seed", () =>
   assert.deepEqual(simulateLine({ seed: 11 }), simulateLine({ seed: 11 })));
@@ -12,7 +12,7 @@ test("diameter stays within 8 ± 0.05 mm before the fast run", () => {
 });
 
 test("the worn screw saturates on the fast run and the diameter leaves spec", () => {
-  const fast = simulateLine().samples.filter((s) => s.t >= 690);
+  const fast = simulateLine().samples.filter((s) => s.t >= 1410);
   assert.ok(fast.filter((s) => s.saturated).length >= 20);
   assert.ok(Math.min(...fast.map((s) => s.diameter)) < 7.9);
 });
@@ -44,25 +44,26 @@ test("catching the wear with single-signal limits costs false alarms", () => {
   }
 });
 
-test("the physics feature alarms within 72 h of the wear and never before", () => {
+test("the output per turn alarms within 100 h of the wear at a 4 sd limit and never before", () => {
   const f = featureAlarm(data);
   assert.equal(f.falseAlarms, 0);
-  assert.ok(f.firstAlarm !== null && f.firstAlarm <= 72);
+  assert.ok(f.firstAlarm !== null && f.firstAlarm <= 100);
 });
 
-test("PCA's smallest component is the physics normal", () => {
-  const pts = standardize(data).filter((_, i) => data.samples[i].phase === "normal");
-  const m = pca3(pts), n = physicsNormal(data), c = m.components[2];
-  assert.ok(Math.abs(c[0] * n[0] + c[1] * n[1] + c[2] * n[2]) > 0.99);
+test("the residual is close to white noise in normal running", () => {
+  const y = residual(data), n = data.samples.filter((s) => s.phase === "normal").map((s) => y[s.t]);
+  const mean = n.reduce((a, b) => a + b, 0) / n.length;
+  const sd = Math.sqrt(n.reduce((a, b) => a + (b - mean) ** 2, 0) / n.length);
+  let r1 = 0; for (let i = 1; i < n.length; i++) r1 += n[i] * n[i - 1];
+  assert.ok(Math.abs(mean) < 1e-9 && Math.abs(sd - 1) < 1e-9);
+  assert.ok(Math.abs(r1 / (n.length - 1)) < 0.1, `lag-1 ${r1 / (n.length - 1)}`);
 });
 
-test("worn points leave the PCA plane", () => {
-  const pts = standardize(data);
-  const normalIdx = data.samples.filter((s) => s.phase === "normal").map((s) => s.t);
-  const model = pca3(normalIdx.map((i) => pts[i])), e = spe(pts, model);
-  const maxNormal = Math.max(...normalIdx.map((i) => e[i]));
-  const late = data.samples.filter((s) => s.phase === "wear" && s.t > 560).map((s) => e[s.t]);
-  assert.ok(late.every((x) => x > maxNormal));
+test("the residual's spread does not depend on the product", () => {
+  const y = residual(data), n = data.samples.filter((s) => s.phase === "normal");
+  const sdOf = (xs) => { const m = xs.reduce((a, b) => a + b, 0) / xs.length; return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length); };
+  const slow = sdOf(n.filter((s) => s.speed < 95).map((s) => y[s.t])), fast = sdOf(n.filter((s) => s.speed >= 95).map((s) => y[s.t]));
+  assert.ok(Math.abs(slow / fast - 1) < 0.15, `slow ${slow.toFixed(3)} fast ${fast.toFixed(3)}`);
 });
 
 test("output per screw turn keeps falling when the worn screw saturates", () => {
@@ -82,4 +83,6 @@ test("a healthy twin run shares every noise draw before the fast run", () => {
 
 test("an alarm that also rings on a healthy screw is not a catch", () => {
   for (const k of [1.5, 2]) assert.equal(limitAlarms(data, k).firstCatch, null, `k=${k}`);
+  const twin = simulateLine({ wearEnd: 0 });
+  assert.equal(featureAlarm(twin, 1).firstAlarm, null);
 });

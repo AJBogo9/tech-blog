@@ -1,0 +1,195 @@
+---
+title: "Quickest change detection and the CUSUM"
+description: "How soon an alarm can catch a change in a noisy signal at a fixed rate of false alarms, worked through on a worn extruder screw in a cable line."
+date: 2026-11-02
+image: "thumbnail.webp"
+image-alt: "A CUSUM line that stays near zero, starts to climb after an orange line marking the start of wear, and crosses a red dashed threshold at an orange circle"
+draft: true
+categories:
+  - Statistics
+  - Mathematics
+bibliography: references.bib
+---
+
+A process engineer at a cable plant watches the signals of the extrusion lines. The job is to catch a fault early, before it ruins cable, without so many false alarms that the operators start ignoring them. A worn extruder screw is hard to catch, because the controller that holds the cable's diameter makes up for the wear.
+
+# The worn screw
+
+One of the plant's lines coats a copper conductor in plastic to make an 8 mm cable. The conductor runs through a crosshead, where the extruder wraps molten plastic around it, and then past a diameter gauge. The extruder is a long screw turning in a heated barrel. It melts plastic pellets and pushes the melt forward, and the faster it turns, the more plastic comes out. A sensor at the end of the screw reads the melt pressure. The pressure rises with the plastic pushed through the crosshead each hour and falls when the melt runs hotter.
+
+![Two screws used for extruding polymers, out of their barrels. The ridges, called flights, push the melt forward. As their tips wear, a gap opens to the barrel wall, melt slips back through it, and each turn pushes out less. Photo: Iqmanuelnavarro, [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Husillos_de_extrusion.JPG), cropped.](extrusion-screws.webp){#fig-screws}
+
+A controller holds the diameter at its set point. When the gauge reads a thin cable, the controller turns the screw faster, and the other way round. The line speed depends on the product the plant is making and changes from one run to the next. A faster product takes more plastic each hour, so the screw turns faster too.
+
+The demo simulates two months of this line, one sample per hour. After 30 days of normal running the screw starts to wear, faster than a real screw does, and by the end each turn pushes out 13 % less plastic. The controller makes up for the wear by turning the screw faster, and the cable stays in spec. When the line runs its fastest product on the last day, the worn screw reaches its top speed and the diameter drops out of spec. A new screw would have kept up.
+
+Step 1 of the demo shows the line speed, the screw speed and the melt pressure. Each has alarm limits at its mean plus and minus a number of standard deviations, measured over the first 30 days. The diameter below them has its spec limits. Before you look at step 2, move the slider and try to find limits that catch the wear without false alarms.
+
+```{js}
+//| label: fig-worn-screw
+//| fig-cap: "Two months of a simulated cable line, one dot per hour. Move the alarm limits in both steps."
+const el = document.createElement("div");
+const m = await import("./line-model.js");
+const { mountDemo } = await import("./demo.js");
+mountDemo(el, m.simulateLine());
+return el;
+```
+
+At the same line speed, a worn screw turns faster than a new one. A new screw on a faster product turns faster still, so in step 1 the worn hours stay inside the range that normal running covers. Only limits at 1.2 σ or tighter catch the wear, and at 1 σ they ring in about 40 % of the hours of normal running.
+
+From the line speed and the measured diameter, step 2 computes the plastic the cable carries away each hour and divides it by the screw speed. This output per screw turn stays level when the product changes, because a faster product needs more plastic and more turns in the same proportion. Wear lowers it. With a single lower limit at 3.7 σ, false alarms come about once a year, and the limit rings 86 hours after the wear starts.
+
+The limit looks at each hour on its own. A rule that also uses the earlier hours can ring sooner at the same rate of false alarms. Before reading on, guess how many hours after the wear starts such a rule can ring, against the limit's 86.
+
+# Quickest change detection
+
+::: {.callout-note collapse="true"}
+## Notation used in this post
+
+| Symbol | Meaning |
+|--------|---------|
+| $\hat q_n$ | Output per screw turn measured in hour $n$ |
+| $\bar q$, $s$ | Mean and standard deviation of $\hat q_n$ over normal running |
+| $Y_n$ | The residual: $\hat q_n$ scaled to mean 0 and standard deviation 1 over normal running, signed so that wear raises it |
+| $\nu$ | The change time: the first hour with the changed distribution |
+| $f_0$, $f_1$ | Density of $Y_n$ before and after the change |
+| $\delta$ | Size of a step change, in standard deviations |
+| $T$ | A stopping time: the hour the alarm rings |
+| $T_k$, $k$ | The hour the limit rings, and the limit in standard deviations |
+| $\gamma$ | Required mean time between false alarms, $E_\infty[T] \ge \gamma$ |
+| $\mathrm{WADD}$ | Lorden's worst-case mean delay after the change |
+| $P_\infty$, $E_\infty$ | Probability and expectation when the change never comes |
+| $E_\nu$ | Expectation when the change comes at hour $\nu$ |
+| $s_n$, $S_n$ | Log-likelihood ratio of hour $n$, and its sum over hours $1$ to $n$ |
+| $\Lambda_n$ | Likelihood ratio $e^{S_n}$ |
+| $I$ | KL divergence $\mathrm{KL}(f_1 \,\Vert\, f_0)$: evidence per hour after the change, in nats |
+| $W_n$, $h$, $T_C$ | CUSUM statistic, its threshold, and the hour it rings |
+:::
+
+## The residual
+
+In the first 30 days, the output per screw turn of step 2 has mean $\bar q = 4.000$ kg/h per rpm and standard deviation $s = 0.027$ kg/h per rpm, about 0.7 % of the mean. The rules below watch the residual, the value $\hat q_n$ in hour $n$ scaled and signed so that wear raises it,
+
+$$Y_n = \frac{\bar q - \hat q_n}{s}.$$
+
+Before the wear, $Y_n$ has mean 0 and standard deviation 1, and its correlation with the hour before is 0.04. The theory treats $Y_1, Y_2, \dots$ as independent, with density $f_0 = \mathcal N(0, 1)$ before the change and $f_1$ after it. It takes the change to be a step, $f_1 = \mathcal N(\delta, 1)$. A step of $\delta = 1$ is a loss of about 0.7 % of the output per turn. The demo's wear is a ramp instead (see the failure modes).
+
+## Alarm rules as stopping times
+
+An alarm rule decides at every hour, from the hours seen so far, whether to ring. The hour it rings is then a stopping time $T$: the event $\{T = n\}$ depends only on $Y_1, \dots, Y_n$ [@williams1991]. The limit in step 2 is a stopping time, $T_k = \min\{n : Y_n > k\}$. Quality control calls it a Shewhart chart.
+
+A stopping time has a mean time to a false alarm when no change ever comes, $E_\infty[T]$. The plant in this post accepts one false alarm a year, $E_\infty[T] \ge \gamma = 8760$ hours. The delay after the change depends on when the change comes and, for a rule with memory, on the hours before it. Lorden's worst-case mean delay, $\mathrm{WADD}$, takes the worst over both [@lorden1971]:
+
+$$\mathrm{WADD}(T) = \sup_{\nu \ge 1}\ \operatorname{ess\,sup}\ E_\nu\!\left[(T - \nu + 1)^+ \,\middle|\, Y_1, \dots, Y_{\nu-1}\right].$$
+
+The term $(T - \nu + 1)^+$ counts the hours from the change to the alarm, both included, and is zero for an alarm before the change. The outer supremum takes the worst change time. For each change time, the essential supremum takes the worst history before it, leaving out histories of probability zero. The quickest detection problem is to minimise $\mathrm{WADD}(T)$ subject to $E_\infty[T] \ge \gamma$.
+
+The limit rings in each hour independently of the other hours, so the number of hours until it rings, its run length, has a geometric distribution [@montgomery2020]. One false alarm a year needs $k = 3.69$. After a step of one standard deviation, the limit then rings in each hour with probability 0.0036, and the mean delay is 276 hours, more than eleven days. The limit catches the demo's wear sooner, after 86 hours, because by then the ramp has raised $Y_n$ by about 2.3 standard deviations.
+
+::: {.callout-note collapse="true"}
+## The limit's run lengths
+
+$$E_\infty[T_k] = \frac{1}{1 - \Phi(k)}, \qquad \mathrm{WADD}(T_k) = \frac{1}{1 - \Phi(k - \delta)},$$
+
+with $\Phi$ the standard normal distribution function.
+:::
+
+## Evidence
+
+A rule that also uses the earlier hours adds up the evidence for the change that each hour brings, its log-likelihood ratio. For the Gaussian step,
+
+$$s_n = \log\frac{f_1(Y_n)}{f_0(Y_n)} = \delta Y_n - \frac{\delta^2}{2}.$$
+
+With $\delta = 1$ this is $s_n = Y_n - 1/2$. An hour adds evidence for the change when the residual is more than half a standard deviation above zero and takes evidence away otherwise. With the natural logarithm, evidence is measured in nats.
+
+Before the change the mean of $s_n$ is $-\delta^2/2 = -\mathrm{KL}(f_0 \,\Vert\, f_1)$, and after it $+\delta^2/2 = \mathrm{KL}(f_1 \,\Vert\, f_0)$. The [KL post](../KL-divergence/index.tmd) introduces these divergences. Write $I = \mathrm{KL}(f_1 \,\Vert\, f_0)$ for the evidence that one hour after the change brings on average. For $\delta = 1$ it is 0.5 nats per hour. The summed evidence $S_n = s_1 + \dots + s_n$, with $S_0 = 0$, is the log-likelihood ratio of "the change came at hour 1" against "no change yet". It is a random walk that drifts down in normal running and up after the change.
+
+In normal running, given the hours so far, the expected next value of the likelihood ratio $\Lambda_n = e^{S_n}$ is its current value. A process with this property is a martingale.
+
+::: {.callout-note collapse="true"}
+## Why the likelihood ratio is a martingale
+
+In normal running each new factor $e^{s_n} = f_1(Y_n)/f_0(Y_n)$ has mean one,
+
+$$E_\infty\!\left[\frac{f_1(Y_n)}{f_0(Y_n)}\right] = \int \frac{f_1(y)}{f_0(y)}\, f_0(y)\, dy = \int f_1(y)\, dy = 1,$$
+
+so $E_\infty[\Lambda_n \mid Y_1, \dots, Y_{n-1}] = \Lambda_{n-1}$. Ville's inequality below is Doob's maximal inequality applied to this martingale [@williams1991].
+:::
+
+Ville's inequality bounds how high a nonnegative martingale climbs when it starts at 1 [@williams1991]:
+
+$$P_\infty\Big(\sup_{n \ge 1} \Lambda_n \ge A\Big) \le \frac{1}{A}.$$
+
+For a change at one given hour, normal running produces $\log A$ nats of evidence with probability at most $1/A$, however long it runs. Move the level in @fig-ville and compare the share of simulated runs that reach it with $1/A$.
+
+```{js}
+//| label: fig-ville
+//| fig-cap: "The summed evidence for a change at hour 1, in 2,000 simulated runs of normal running. 200 runs are drawn, and those that reach the dashed level are orange. Move the level."
+const el = document.createElement("div");
+const fig = await import("./figures.js");
+fig.mountVille(el);
+return el;
+```
+
+## Page's CUSUM
+
+The change time is not known. Page's CUSUM (cumulative sum) treats every hour as a possible start and keeps track of all of them with one number [@page1954]:
+
+$$W_n = \max(0,\ W_{n-1} + s_n), \qquad W_0 = 0,$$
+
+and the alarm rings at $T_C = \min\{n : W_n \ge h\}$. In quality control this rule is the tabular CUSUM, with reference value $\delta/2$ [@montgomery2020].
+
+Unrolling the recursion gives
+
+$$W_n = S_n - \min_{0 \le k \le n} S_k, \qquad S_0 = 0,$$
+
+the height of the summed evidence above its lowest point so far, as @fig-evidence shows. Each difference $S_n - S_k$ is the log-likelihood ratio of "the change came at hour $k + 1$" against "no change yet", so $W_n$ is the largest of these over all candidate change times.
+
+```{js}
+//| label: fig-evidence
+//| fig-cap: "The demo's residual from day 25 to day 33, run through a CUSUM designed for a step of one standard deviation. Top: the summed evidence and its running minimum. Bottom: the gap between them (the CUSUM) and the threshold for one false alarm a year."
+const el = document.createElement("div");
+const m = await import("./line-model.js");
+const fig = await import("./figures.js");
+fig.drawEvidence(el, m.simulateLine());
+return el;
+```
+
+Each climb of $W$ from zero tests a new candidate change time, the hour the climb starts. During the climb, $W$ is the summed evidence for a change at that hour. By Ville's inequality, a climb reaches $h$ in normal running with probability at most $e^{-h}$. Lorden used this to prove $E_\infty[T_C] \ge e^h$ [@lorden1971], so $h = \log 8760 = 9.08$ nats guarantees at most one false alarm a year. At 9.08 nats the actual mean time between false alarms is about 56,000 hours, more than six years. @fig-evidence uses Siegmund's corrected threshold for exactly one false alarm a year, $h = 7.22$ nats [@siegmund1985].
+
+The worst case in Lorden's sense is a change that arrives while $W$ sits at zero, as far below $h$ as it gets, so the CUSUM's WADD is its mean delay started from $W_0 = 0$. After a step of one standard deviation, Siegmund's approximation gives 14.8 hours (simulation: 14.9), against 276 for the limit at the same rate of false alarms. On the demo's ramp the CUSUM rings 30 hours after the wear starts (@fig-evidence), and the limit after 86.
+
+## How soon any rule can ring
+
+A rule with one false alarm a year has to wait for evidence that normal running produces by chance once in 8760 hours. By Ville's inequality that is about $\log 8760 = 9.1$ nats. After a step of one standard deviation, evidence arrives at $I = 0.5$ nats per hour, so collecting it takes about 18 hours. Lorden proved that no rule can ring sooner than this, to first order.
+
+**Lorden's theorem** [@lorden1971]. For every stopping time with $E_\infty[T] \ge \gamma$,
+
+$$\mathrm{WADD}(T) \ge \frac{\log\gamma}{I}\,\big(1 + o(1)\big) \qquad \text{as } \gamma \to \infty,$$
+
+and the CUSUM with $h = \log\gamma$ reaches this bound. Lai proves the lower bound with a change of measure [@lai1998]. The factor ${1 + o(1)}$ tends to one as $\gamma$ grows and can be below one at a finite $\gamma$. At one false alarm a year the CUSUM rings after 14.8 hours, sooner than the bound's 18 hours.
+
+**Moustakides' theorem** [@moustakides1986]. The CUSUM is exactly optimal for every threshold. Among all stopping times with $E_\infty[T] \ge E_\infty[T_C]$, none has a smaller WADD.
+
+```{js}
+//| label: fig-delay
+//| fig-cap: "Delay after a step change against the mean time between false alarms, both on log scales. Move the size of the change. The CUSUM curve is the best any rule can do in Lorden's sense. It comes from Siegmund's approximation, within about 10 % of simulation over this range. The limit's curve is exact."
+const el = document.createElement("div");
+const fig = await import("./figures.js");
+fig.mountDelayCurves(el);
+return el;
+```
+
+Move the change in @fig-delay from 1 σ to 2 σ and the gap between the two curves shrinks, because a large step shows in a single hour.
+
+# Failure modes
+
+**A ramp instead of a step.** The theorems assume that the mean jumps at $\nu$ and then stays constant. The demo's wear raises $Y_n$ by 0.027 standard deviations per hour instead. Averaged over 200 simulated lines, the CUSUM still rang first, 36 hours after the wear started, and the limit set for one false alarm a year rang after 77. Neither the 14.8 nor the 18 hours describes a ramp. A rule built for a ramp would use the ramp's own log-likelihood ratio.
+
+**Correlated hours.** Real residuals carry slow swings from the melt temperature, the room and the raw material, so neighbouring hours are positively correlated. The false-alarm rate above assumes they are not. In a simulation where each hour has correlation 0.3 with the hour before, the CUSUM set for one false alarm a year rang every 665 hours, about once a month. Lai extended Lorden's bound to dependent data [@lai1998]. In practice the plant models the correlation and runs the CUSUM on that model's one-step prediction errors, because those are close to independent.
+
+**The reference period.** The mean $\bar q$ and standard deviation $s$ come from the first 30 days, 720 hours that the plant knows were healthy. With $s$ one standard error (2.6 %) too small, the mean time between false alarms drops from 8760 to about 6,200 hours. One standard error too large raises it to about 12,700 hours. A reference refitted every week learns the worn screw as normal.
+
+# Summary
+
+The controller moves a slow fault into the screw speed, where it stays inside the alarm limits. The output per screw turn shows the fault. The CUSUM sums the log-likelihood ratios of the hours and rings when the sum has climbed $h$ nats above its lowest point. By Ville's inequality, an alarm needs about $\log\gamma$ nats of evidence for one false alarm in $\gamma$ hours. A change supplies $I$ nats per hour, the KL divergence, so no rule can ring sooner than about $\log\gamma / I$ hours after the change (Lorden). The CUSUM has the smallest worst-case delay of all rules with the same rate of false alarms (Moustakides).

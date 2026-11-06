@@ -1,13 +1,13 @@
 // line-model.js
-// A simulated cable insulation line and the maths to monitor it.
+// A simulated cable insulation line and the residual the detectors watch.
 // Imported by the {js} cells in index.tmd via:
 //   const m = await import("./line-model.js");
 
 export const DEFAULTS = {
   seed: 11,
-  hours: 720,
-  faultStart: 480,
-  fastRunStart: 690,
+  hours: 1440,
+  faultStart: 720,
+  fastRunStart: 1410,
   rampHours: 4,
   wearEnd: 0.13,
   D0: 8.0, // cable diameter set point, mm
@@ -17,6 +17,7 @@ export const DEFAULTS = {
   nMax: 62, // screw top speed, rpm
   fastSpeed: 140, // the fastest product, m/min
   diameterSpec: [7.9, 8.1], // mm
+  screwNoise: 0.006, // screw speed reading error, share of the reading
 };
 
 // mulberry32
@@ -82,7 +83,7 @@ export function simulateLine(opts = {}) {
     const temp = 200 + 3 * Math.sin(t / 37) + g() * 0.5;
     // the insulation's cross-section scales with the plastic actually delivered
     const diameter = Math.sqrt(p.d * p.d + (p.D0 * p.D0 - p.d * p.d) * (actual / needed)) + g() * 0.008;
-    const screw = n + g() * 0.25;
+    const screw = n * (1 + g() * p.screwNoise);
     const pressure = 150 * Math.pow(actual / 170, 0.45) * Math.exp(-0.02 * (temp - 200)) + g() * 0.8;
     const phase = t >= p.fastRunStart - p.rampHours ? "fast" : t >= p.faultStart ? "wear" : "normal";
     return { t, speed, screw, pressure, diameter, wear, saturated, phase };
@@ -136,70 +137,27 @@ export function outputPerTurn(data) {
   return data.samples.map((s) => deliveredThroughput(s, data.params) / s.screw);
 }
 
-// lower alarm line on the output per screw turn, from normal running
-export function featureAlarm(data, kSigma = 4) {
+// mean and spread of the output per screw turn over normal running
+export function outputStats(data) {
   const f = outputPerTurn(data);
-  const { mean, sd } = meanSd(f.filter((_, i) => isNormal(data.samples[i])));
-  const limit = mean - kSigma * sd;
+  return meanSd(f.filter((_, i) => isNormal(data.samples[i])));
+}
+
+// the residual the detectors watch: output per screw turn, scaled so normal
+// running has mean 0 and sd 1, and signed so that wear pushes it up
+export function residual(data) {
+  const { mean, sd } = outputStats(data);
+  return outputPerTurn(data).map((x) => (mean - x) / sd);
+}
+
+// lower alarm line at k sd on the output per screw turn: false alarms in normal
+// running, and the first hour after the wear starts that rings because of the
+// wear, meaning the healthy twin's hour stays above the line
+export function featureAlarm(data, k = 4) {
+  const { mean, sd } = outputStats(data);
+  const limit = mean - k * sd;
+  const f = outputPerTurn(data), fTwin = outputPerTurn(healthyTwin(data));
   const falseAlarms = f.filter((x, i) => isNormal(data.samples[i]) && x < limit).length;
-  const first = data.samples.find((s) => !isNormal(s) && f[s.t] < limit);
-  return { limit, falseAlarms, firstAlarm: first ? first.t - data.params.faultStart : null };
-}
-
-// [speed, screw, pressure] as z-scores over normal running, divided by 3,
-// so the 3-sigma limits are the box ±1
-export function standardize(data) {
-  const st = normalStats(data);
-  return data.samples.map((s) => SIGNALS.map((k) => (s[k] - st[k].mean) / (3 * st[k].sd)));
-}
-
-// symmetric 3x3 eigen-decomposition by Jacobi rotations; eigenvectors are columns of V
-function jacobi3(M) {
-  const a = M.map((r) => r.slice()), V = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
-  for (let sweep = 0; sweep < 50; sweep++) {
-    if (Math.abs(a[0][1]) + Math.abs(a[0][2]) + Math.abs(a[1][2]) < 1e-15) break;
-    for (const [p, q] of [[0, 1], [0, 2], [1, 2]]) {
-      if (Math.abs(a[p][q]) < 1e-18) continue;
-      const theta = (a[q][q] - a[p][p]) / (2 * a[p][q]);
-      const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
-      const c = 1 / Math.sqrt(t * t + 1), s = t * c;
-      for (let k = 0; k < 3; k++) { const x = a[k][p], y = a[k][q]; a[k][p] = c * x - s * y; a[k][q] = s * x + c * y; }
-      for (let k = 0; k < 3; k++) { const x = a[p][k], y = a[q][k]; a[p][k] = c * x - s * y; a[q][k] = s * x + c * y; }
-      for (let k = 0; k < 3; k++) { const x = V[k][p], y = V[k][q]; V[k][p] = c * x - s * y; V[k][q] = s * x + c * y; }
-    }
-  }
-  return { values: [a[0][0], a[1][1], a[2][2]], V };
-}
-
-// principal components of 3D points, sorted by descending variance
-export function pca3(points) {
-  const n = points.length;
-  const mean = [0, 1, 2].map((j) => points.reduce((a, p) => a + p[j], 0) / n);
-  const cov = [0, 1, 2].map((i) =>
-    [0, 1, 2].map((j) => points.reduce((a, p) => a + (p[i] - mean[i]) * (p[j] - mean[j]), 0) / n));
-  const { values, V } = jacobi3(cov);
-  const order = [0, 1, 2].sort((i, j) => values[j] - values[i]);
-  return { mean, values: order.map((i) => values[i]), components: order.map((i) => [V[0][i], V[1][i], V[2][i]]) };
-}
-
-// unit normal of the sheet "screw speed proportional to line speed" in
-// standardize() coordinates, pointing the way wear moves the points
-export function physicsNormal(data) {
-  const st = normalStats(data);
-  const c = plannedThroughput(1, data.params) / data.params.q; // rpm per m/min for a new screw
-  const n = [-c * st.speed.sd, st.screw.sd, 0];
-  const len = Math.hypot(...n);
-  return n.map((x) => x / len);
-}
-
-// squared distance of each point from the plane of the first `keep` components
-export function spe(points, model, keep = 2) {
-  return points.map((p) => {
-    const r = p.map((x, j) => x - model.mean[j]);
-    for (const c of model.components.slice(0, keep)) {
-      const dot = r[0] * c[0] + r[1] * c[1] + r[2] * c[2];
-      for (let j = 0; j < 3; j++) r[j] -= dot * c[j];
-    }
-    return r[0] * r[0] + r[1] * r[1] + r[2] * r[2];
-  });
+  const caught = data.samples.find((s) => !isNormal(s) && f[s.t] < limit && fTwin[s.t] >= limit);
+  return { limit, falseAlarms, firstAlarm: caught ? caught.t - data.params.faultStart : null };
 }
