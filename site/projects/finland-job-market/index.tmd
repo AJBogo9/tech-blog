@@ -1,0 +1,133 @@
+---
+title: "The Finnish Job Market in 2026"
+date: "2026-11-07"
+description: "Finland has the highest unemployment rate in the EU. Four charts from public data, and an explorer over the full data set by country, region and occupation."
+# add thumbnail.png to this folder, then uncomment the two lines below
+# image: "thumbnail.png"
+# image-alt: "A line chart of unemployment rates from 2015 to 2026 in which Finland's line rises above Spain, Sweden and the EU average"
+draft: true
+categories:
+  - Python
+  - Open Data
+  - Statistics
+---
+
+I am applying for jobs in Finland, and the market feels hard. I wanted to know how hard: compared with earlier years, with other countries, and in my own field. This page collects the public numbers. The first part shows the four charts I found most telling, with what I read from them. Below them, the explorer holds the full data set, so you can look up a region, an occupation or a country yourself.
+
+The data runs to September 2026 and was fetched on 7 November 2026.
+
+```{python}
+#| code-fold: true
+#| code-summary: "The numbers quoted on this page"
+import json
+
+EU27 = "AT BE BG CY CZ DE DK EE EL ES FI FR HR HU IE IT LT LU LV MT NL PL PT RO SE SI SK".split()
+eu, lfs, reg, occ = (json.load(open(f"data/{n}.json")) for n in ("eu", "lfs", "regions", "occupations"))
+
+# EU ranking, latest month with a value for Finland
+T, Y, em = eu["series"]["TOTAL"], eu["series"]["Y_LT25"], eu["months"]
+last = max(i for i, v in enumerate(T["FI"]) if v is not None)
+rank = lambda S, i: sorted(((S[g][i], g) for g in EU27 if g in S and S[g][i] is not None), reverse=True)
+top = [em[i] for i in range(last - 11, last + 1) if rank(T, i)[0][1] == "FI"]
+print(f"{em[last]}: Finland {T['FI'][last]} %, EU {T['EU27_2020'][last]} %, top of the EU in {len(top)} of the last 12 months")
+print(f"under 25: Finland {Y['FI'][last]} %, EU {Y['EU27_2020'][last]} %, rank {[g for _, g in rank(Y, last)].index('FI') + 1}")
+i22 = em.index("2022-09")
+print(f"2022-09: Finland {T['FI'][i22]} %, rank {[g for _, g in rank(T, i22)].index('FI') + 1} of {len(rank(T, i22))}")
+
+# labour force survey, trend, September 2022 against September 2026
+s, lm = {k: v["values"] for k, v in lfs["series"].items()}, lfs["months"]
+a, b = lm.index("2022-09"), lm.index("2026-09")
+emp, une = s["tyolliset_trendi"], s["tyottomat_trendi"]
+print(f"employed {emp[a]}k -> {emp[b]}k, unemployed {une[a]}k -> {une[b]}k, labour force {emp[a] + une[a]}k -> {emp[b] + une[b]}k")
+print(f"unemployment rate {s['tyottaste_trendi'][a]} -> {s['tyottaste_trendi'][b]} %, under 25 {s['Tyottaste_15_24_trendi'][a]} -> {s['Tyottaste_15_24_trendi'][b]} %")
+
+# jobseekers per vacancy at the employment services, whole country, each September
+v, rm = reg["values"]["SSS"], reg["months"]
+for m in ("2009-09", "2015-09", "2022-09", "2026-09"):
+    i = rm.index(m)
+    print(f"{m}: {v['TYOTTOMATLOPUSSA'][i]:,} unemployed jobseekers, {v['AVPAIKATLOPUSSA'][i]:,} open vacancies, {v['TYOTTOMATLOPUSSA'][i] / v['AVPAIKATLOPUSSA'][i]:.1f} per vacancy")
+
+# software developers (occupation 2512)
+om = occ["months"]
+for area in ("SSS", "MK01"):
+    u, vac = occ["values"][area]["TYOTTOMATLOPUSSA"]["2512"], occ["values"][area]["AVPAIKATLOPUSSA"]["2512"]
+    print(f"{occ['areas'][area]}: software developers unemployed {u[om.index('2022-09')]} -> {u[om.index('2026-09')]}, open vacancies {vac[om.index('2026-09')]}")
+```
+
+## The highest unemployment rate in the EU
+
+```{js}
+//| label: fig-eu
+//| fig-cap: "Unemployment rate, seasonally adjusted, % of the labour force. Source: Eurostat (une_rt_m)."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { euRanking } = await import("./highlights.js");
+el.append(euRanking(el, await loadAll()));
+return el;
+```
+
+In September 2026, 11.0 % of Finland's labour force was unemployed, against 6.2 % in the EU as a whole. Finland had the highest rate of the 27 member states in 10 of the last 12 months. In September 2022 it was at 7.3 % and fourth. Young people have it worse: 25.2 % of under-25s in the labour force were unemployed, also the highest in the EU, where the average was 15.5 %.
+
+## More people looking for work, not many fewer jobs
+
+```{js}
+//| label: fig-force
+//| fig-cap: "Change since September 2022 in thousands of people aged 15 to 74, trend series. The labour force is the employed plus the unemployed. Source: Statistics Finland, Labour Force Survey (tyti/135z)."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { laborForce } = await import("./highlights.js");
+el.append(laborForce(el, await loadAll()));
+return el;
+```
+
+From September 2022 to September 2026 the number of unemployed rose from 197,000 to 308,000. The number of employed fell by only 35,000, to 2.59 million. The other 76,000 came from a larger labour force: that many more people were working or looking for work. The survey's tables by age and origin could show who they are, and this page does not include them yet. For a jobseeker it means more competition for about as many jobs as before.
+
+## Twelve jobseekers for every open vacancy
+
+```{js}
+//| label: fig-vacancy
+//| fig-cap: "Unemployed jobseekers per open vacancy at the public employment services, whole country, end of each month. Source: KEHA Centre, employment service statistics (tyonv/12r5)."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { perVacancy } = await import("./highlights.js");
+el.append(perVacancy(el, await loadAll()));
+return el;
+```
+
+At the end of September 2026 the employment services had 324,871 unemployed jobseekers and 26,758 open vacancies, 12.1 jobseekers per vacancy. In September 2022 the ratio was 2.8. It was last this high in the years after the financial crisis and in 2015, at 13.3 in September 2009 and 11.8 in September 2015. Employers list only part of their vacancies with the employment services, and the 2025 reform of the services may have changed how vacancies are recorded, so the level is uncertain.
+
+## Software developers
+
+```{js}
+//| label: fig-software
+//| fig-cap: "Unemployed jobseekers registered with the occupation software developer (2512), end of each month. Source: KEHA Centre, employment service statistics (tyonv/12ti)."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { softwareDevelopers } = await import("./highlights.js");
+el.append(softwareDevelopers(el, await loadAll()));
+return el;
+```
+
+At the end of September 2026, 3,613 software developers were registered as unemployed jobseekers, against 982 four years earlier. In Uusimaa the number went from 425 to 1,487. The employment services listed 65 open software developer vacancies in the whole country. Many tech employers advertise only on LinkedIn and private job boards, so that vacancy count says little about demand in the field.
+
+## Explore the data
+
+Pick a data set, then add or remove lines. The 12-month average removes the seasonal swing in the employment service data, and the index puts lines of different size on one scale. The CSV link under the chart downloads exactly what it shows.
+
+```{js}
+//| label: fig-explorer
+//| fig-cap: "The explorer. Hover over a line for the value in each month."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { mountExplorer } = await import("./explorer.js");
+await mountExplorer(el, await loadAll());
+return el;
+```
+
+## About the data
+
+**Two ways to count the unemployed.** The labour force survey asks a sample of people aged 15 to 74 whether they worked or looked for work. Its unemployment rate is the one Eurostat compares across countries. The employment service statistics count everyone registered as an unemployed jobseeker, which includes people the survey counts as outside the labour force, so its numbers are higher.
+
+**Breaks in the series.** The employment services moved from the state to the municipalities at the start of 2025, so comparisons across that change need care. Occupations follow the Finnish classification of occupations 2010, based on ISCO-08.
+
+**Sources.** Statistics Finland, Labour Force Survey, table [tyti/135z](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyti/statfin_tyti_pxt_135z.px/), CC BY 4.0. KEHA Centre, employment service statistics, tables [tyonv/12r5](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12r5.px/) and [tyonv/12ti](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12ti.px/), published through Statistics Finland. Eurostat, [une_rt_m](https://ec.europa.eu/eurostat/databrowser/view/une_rt_m/default/table). The script `_fetch.py` in this page's folder fetches everything again after each monthly release.
