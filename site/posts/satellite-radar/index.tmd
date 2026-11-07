@@ -1,0 +1,245 @@
+---
+title: "Mapping a flood through the clouds"
+description: "On 5 September 2023 clouds hid the flooded Thessaly plain from the camera satellites, and two days later a radar satellite mapped the water. What a radar pixel measures, why its noise multiplies the signal, and how the same before-and-after comparison grows into building damage assessment."
+date: 2026-11-07
+image: "thumbnail.webp"
+image-alt: "A cloud-covered photo of the Thessaly plain next to a radar image of the same plain in which the flood shows dark"
+draft: true
+categories:
+  - Statistics
+  - Machine Learning
+bibliography: references.bib
+---
+
+After a flood, insurers, rescue services and governments need a map of the water within hours: which roads are cut, which villages are cut off, which insured buildings stand in water. The map comes from satellite images, and the analyst who makes it has to work while the clouds that brought the rain are still overhead.
+
+# The Thessaly flood
+
+Storm Daniel rained on central Greece from 4 to 7 September 2023 [@storm]. The river Pineios burst its banks and flooded the Thessaly plain, the country's largest farming area. The demo shows a 6.4 km square of that plain about 15 km west of Larissa, seen by two satellites of the European Copernicus programme.
+
+Sentinel-2 is a camera. It records sunlight reflected from the ground, in pixels 10 m across. Sentinel-1 is a radar. It sends its own microwave pulses and records how much of each pulse the ground sends back, called the backscatter, also in 10 m pixels. Backscatter spans several powers of ten, so it is usually given in decibels (dB), 10 times its base-10 logarithm: −10 dB is a tenth, −20 dB a hundredth, and a change of −3 dB halves it.
+
+```{js}
+//| label: fig-flood
+//| fig-cap: "6.4 km of the Thessaly plain before and after Storm Daniel. Left: the scenes. Right: the pixels your threshold flags as flooded on 7 September. Contains modified Copernicus Sentinel data (2023); radar processed by Catalyst and hosted by the Microsoft Planetary Computer."
+const el = document.createElement("div");
+const { mountDemo } = await import("./demo.js");
+await mountDemo(el);
+return el;
+```
+
+Start with the photos. On 31 August the plain is dry: fields, the river coming in from the left, the village of Mandra at the top right and three white quarries. Click Photo 5 Sep, the camera's pass in the middle of the storm. The next clear photo came on 10 September.
+
+The radar flew over on 26 August and on 7 September, on the same orbit and at the same time of day. Click between Radar 26 Aug and Radar 7 Sep, and the flooded land turns dark.
+
+The map on the right is yours. A pixel turns blue or orange when its change from 26 August to 7 September falls below the threshold. Blue means the 10 September photo shows water there, and orange means it shows dry land, so orange marks false alarms. The flood kept spreading after 7 September, so a grey pixel on water is not necessarily a miss.
+
+The map starts with plain subtraction: the backscatter on 7 September minus the backscatter on 26 August. Move the threshold down until the flooded fields turn blue, and watch where orange appears first. Then switch the measure to the ratio in dB and do the same. Last, widen the smoothing window, which averages the backscatter over a square of pixels before the comparison, and look at the orange specks and at the edges of the water. The Change tab shows the measure itself.
+
+Inside the flood, the 7 September radar shows a checkerboard of dark and light fields, while the 10 September photo shows water on all of them.
+
+With the ratio and no smoothing, dry land comes out about 2 dB brighter on 7 September, and the pixels scatter widely around that. Before reading on, guess the standard deviation of that scatter in dB, and what sets it.
+
+# What a radar pixel measures
+
+::: {.callout-note collapse="true"}
+## Notation used in this post
+
+| Symbol | Meaning |
+|---|---|
+| $\sigma^0$ | backscatter of the ground: the share of the pulse's power that comes back, per square metre |
+| $I$ | the intensity a pixel records, $\sigma^0$ plus speckle |
+| $n$ | the speckle, a random factor with mean 1 |
+| $L$ | number of looks, the independent echo sums averaged into one pixel |
+| $D$ | the ratio of after to before, in dB |
+| $a$, $b$ | subscripts for after (7 September) and before (26 August) |
+:::
+
+## Microwaves and light
+
+On 5 September the camera saw the tops of the clouds. Sentinel-2 records sunlight in 13 bands with wavelengths from 0.44 µm to 2.2 µm [@sentinel2], and the water droplets in a cloud, a few micrometres to a few tens of micrometres across, scatter light of those wavelengths. Sentinel-1's pulses have a wavelength of 5.5 cm [@sentinel1], thousands of times larger than the droplets, and pass through cloud and smoke. The radar brings its own illumination, so it works at night too.
+
+What comes back depends on how rough the surface is at the scale of the wavelength. Calm water is smooth at 5.5 cm and reflects the pulse away like a mirror, so the flooded fields fell from around −10 dB to below −20 dB. A ploughed field scatters the pulse in all directions, and part of it returns. A wall and the street in front of it form a corner that sends the pulse straight back, called a double bounce, so Mandra is the brightest thing in the scene.
+
+A radar measures distance by the travel time of the echo, so it has to look sideways: looking straight down, two points at the same distance left and right of its track would echo at the same time. Looking sideways bends the geometry of anything tall. The roof of a building is closer to the radar than the foot of its wall, so the roof's echo arrives first and the building appears to lean toward the radar, called layover, and the ground behind it gets no pulse at all, called radar shadow (@fig-iceye).
+
+<!-- fig-iceye: ICEYE city crop, inserted when the image is ready -->
+
+Resolution and coverage trade against each other. Sentinel-1 in its standard mode images a strip 250 km wide at about 5 m by 20 m [@sentinel1]. In 2023 it passed over the same place every 12 days, since its twin Sentinel-1B had failed in December 2021. ICEYE's satellites use a shorter wavelength, 3.1 cm in the X band, and image a few kilometres at below 1 m [@iceye]. A constellation of such small satellites can revisit a site within hours, which is what the camera on 5 September could not offer.
+
+## Speckle
+
+```{python}
+#| code-fold: true
+#| code-summary: "Load the demo's radar scenes and measure the speckle"
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from scipy.ndimage import uniform_filter
+from scipy.special import polygamma
+from scipy import stats
+
+plt.rcParams.update({"axes.grid": True, "grid.linewidth": 0.5})
+
+LO, HI = -30.0, 10.0                      # dB range stored in the 8-bit PNGs
+def radar_db(name):
+    return LO + np.asarray(Image.open(name), dtype=float) / 255 * (HI - LO)
+
+before_db, after_db = radar_db("s1-before.png"), radar_db("s1-after.png")
+before, after = 10 ** (before_db / 10), 10 ** (after_db / 10)
+dry = np.asarray(Image.open("dry-mask.png")) > 0      # dry land on 10 September
+D = after_db - before_db                              # the ratio in dB
+
+# number of looks: mean squared over variance, in 15 x 15 windows of dry land
+inside = uniform_filter(dry.astype(float), 15) > 0.999
+def looks(img, k=15):
+    m = uniform_filter(img, k)
+    v = uniform_filter(img ** 2, k) - m ** 2
+    return np.median((m ** 2 / v)[inside])
+
+L = looks(before)
+sd_speckle = 10 / np.log(10) * np.sqrt(2 * polygamma(1, L))
+fields = dry & (before_db > -12) & (before_db < -8)   # ordinary fields
+bright = dry & (before_db > -4)                       # mostly Mandra's buildings
+
+print(f"looks L: {L:.1f}")
+print(f"ratio on dry land: median {np.median(D[dry]):.1f} dB, standard deviation {D[dry].std():.1f} dB")
+print(f"speckle alone predicts {sd_speckle:.1f} dB ({10 / np.log(10) * np.sqrt(2 * polygamma(1, 1)):.1f} dB for one look)")
+print(f"difference, standard deviation: fields {np.std((after - before)[fields]):.3f}, bright pixels {np.std((after - before)[bright]):.2f}")
+print(f"ratio, standard deviation: fields {D[fields].std():.1f} dB, bright pixels {D[bright].std():.1f} dB")
+for k in (1, 5):
+    b, a = (uniform_filter(before, k), uniform_filter(after, k)) if k > 1 else (before, after)
+    for name, score in (("difference", a - b), ("ratio", 10 * np.log10(a / b))):
+        t = np.quantile(score[dry], 0.01)             # flags 1 % of the dry land
+        print(f"{k} x {k}, {name}: threshold {t:.2f} flags {100 * (score[~dry] < t).mean():.0f} % of the water")
+print(f"looks after a 5 x 5 average: {looks(uniform_filter(before, 5)):.0f}")
+```
+
+On land that stayed dry, the ratio in the demo scatters with a standard deviation of 3.3 dB. Little of that is real change on the ground. Each 10 m pixel holds many small scatterers, such as clods, stalks and stones, and their echoes reach the radar with random phases. Added up, the echoes make a random walk in the complex plane, and the length of that walk, the intensity the pixel records, varies from pixel to pixel even where the ground is uniform. This noise is called speckle.
+
+For a single sum of echoes, the intensity $I$ is exponentially distributed around the true backscatter $\sigma^0$, with a standard deviation equal to its mean [@goodman1976]. The processor averages $L$ independent sums, called looks, which leaves
+
+$$I = \sigma^0 \, n, \qquad n \sim \operatorname{Gamma}\!\left(L, \tfrac{1}{L}\right),$$
+
+a noise factor with mean 1 and standard deviation $1/\sqrt{L}$ that multiplies the backscatter [@oliver2004]. A pixel twice as bright fluctuates twice as much (@fig-speckle). On the demo's dry land, $L$ is about 4.2.
+
+```{python}
+#| label: fig-speckle
+#| code-fold: true
+#| code-summary: "Plot the local spread against the local brightness"
+#| fig-cap: "Local mean and standard deviation in 7 × 7 windows of dry land on 26 August, for 2,500 windows. In linear backscatter the spread grows in proportion to the brightness. In dB it stays about the same at every brightness."
+k = 7
+ok = (uniform_filter(dry.astype(float), k) > 0.999)[::k, ::k].ravel()
+pick = np.random.default_rng(0).choice(np.flatnonzero(ok), 2500, replace=False)
+def local(img):
+    m = uniform_filter(img, k)
+    s = np.sqrt(np.maximum(uniform_filter(img ** 2, k) - m ** 2, 0))
+    return m[::k, ::k].ravel()[pick], s[::k, ::k].ravel()[pick]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 3.3))
+m, s = local(before)
+slope = (m @ s) / (m @ m)                    # least squares through the origin
+ax1.scatter(m, s, s=4, alpha=0.4, color="steelblue")
+ax1.plot([0, m.max()], [0, slope * m.max()], color="darkorange", lw=2, label=f"std = {slope:.2f} × mean")
+ax1.set(xlabel="local mean, linear", ylabel="local standard deviation", title="Linear backscatter")
+ax1.legend()
+m, s = local(before_db)
+ax2.scatter(m, s, s=4, alpha=0.4, color="steelblue")
+ax2.axhline(np.median(s), color="darkorange", lw=2, label=f"median {np.median(s):.1f} dB")
+ax2.set(xlabel="local mean, dB", ylabel="local standard deviation, dB", title="In dB")
+ax2.legend()
+fig.tight_layout()
+plt.show()
+```
+
+Subtraction inherits the multiplication. On unchanged ground $I_a - I_b$ has standard deviation $\sigma^0 \sqrt{2/L}$, so its noise grows with the brightness. In the demo the difference has a standard deviation of 0.115 on ordinary fields and 0.48 on the brightest pixels, most of them in Mandra. A field that floods drops from about −10 dB to −20 dB, from 0.1 to 0.01, a change of 0.09. That is less than the noise on the fields and a fifth of the noise in the village, so no threshold on the difference finds the flood without flagging the village first.
+
+The logarithm turns the product into a sum:
+
+$$D = 10 \log_{10} \frac{I_a}{I_b} = 10 \log_{10} \frac{\sigma^0_a}{\sigma^0_b} + 10 \log_{10} \frac{n_a}{n_b}.$$
+
+The first term is the real change, about −10 dB on a flooded field. The second is the speckle, and its spread does not depend on how bright the ground is: in the demo the ratio scatters by 2.4 dB on ordinary fields and by 2.5 dB in Mandra. One threshold then gives about the same rate of false alarms on dark fields and on bright roofs, which is why change detection on radar uses the ratio and not the difference [@rignot1993].
+
+The size of the speckle term follows from $L$ alone. The logarithm of a Gamma variable with shape $L$ has variance $\psi_1(L)$, the trigamma function, and the two dates add their variances, so
+
+$$\operatorname{sd}\!\left(10 \log_{10} \frac{n_a}{n_b}\right) = \frac{10}{\ln 10} \sqrt{2 \, \psi_1(L)}.$$
+
+With $L = 4.2$ this gives 3.2 dB, against the 3.3 dB measured on dry land (@fig-ratio). That answers the guess at the end of the demo: speckle sets the scatter, and the number of looks sets the speckle. With one look the same formula gives 7.9 dB.
+
+```{python}
+#| label: fig-ratio
+#| code-fold: true
+#| code-summary: "Plot the ratio's histogram against speckle theory"
+#| fig-cap: "The ratio of 7 September to 26 August per pixel, on land that is dry and on land that is water in the 10 September photo. The black curve is speckle alone for L = 4.2, centred on the dry land's median. The dashed line is the threshold that flags 1 % of the dry land. Part of the water was still dry on 7 September, which widens its histogram."
+step = 2 * (HI - LO) / 255                   # the ratio takes values on a grid of this step
+bins = np.arange(-20 - step / 2, 12, step)
+fig, ax = plt.subplots(figsize=(8, 3.3))
+ax.hist(D[dry], bins=bins, density=True, alpha=0.6, color="darkorange", label="dry land on 10 Sep")
+ax.hist(D[~dry], bins=bins, density=True, alpha=0.5, color="steelblue", label="water on 10 Sep")
+d = np.linspace(-20, 12, 400)
+r = 10 ** ((d - np.median(D[dry])) / 10)     # a ratio of two Gamma(L) factors is F(2L, 2L)
+ax.plot(d, stats.f(2 * L, 2 * L).pdf(r) * r * np.log(10) / 10, color="black", lw=1.5,
+        label=f"speckle alone, L = {L:.1f}")
+t = np.quantile(D[dry], 0.01)
+ax.axvline(t, color="black", ls="--", lw=1)
+ax.set(xlabel="after ÷ before, dB", ylabel="share of pixels per dB")
+ax.legend(loc="upper left")
+fig.tight_layout()
+plt.show()
+```
+
+Averaging a $k \times k$ window before taking the ratio adds looks. With independent pixels, a 5 × 5 window would multiply $L$ by 25. The demo's pixels are 10 m apart while the radar resolves about 20 m, so neighbours share echoes, and the fields themselves vary, so the looks rise only from 4.2 to about 12. That is enough to move the threshold that flags 1 % of the dry land from −5.3 dB to −3.3 dB, and the flagged water from 43 % to 50 % of the water seen on 10 September. The price is resolution: the window erases water narrower than itself.
+
+## From flooded pixels to damaged buildings
+
+The demo maps a flood pixel by pixel. Damage assessment asks the same question per building. The open benchmark is xBD [@gupta2019], pairs of before and after photos from 19 disasters with about 850,000 building outlines, each graded on a four-level scale from no damage to destroyed. BRIGHT [@chen2025] pairs a before photo with an after radar image from the Capella and Umbra constellations, for the days when clouds or darkness block the camera, and grades buildings as intact, damaged or destroyed.
+
+The usual model is a Siamese network: one encoder with shared weights reads the before and the after image, and a decoder compares the two feature maps and outputs a building mask and a damage class per pixel [@xview2first]. The ratio in the demo is a hand-made version of the same idea, comparing one place at two times and cancelling what did not change. The xView2 challenge on xBD scored the building mask and the damage classes with F1 scores weighted 0.3 and 0.7 [@xview2].
+
+ICEYE sells such maps to insurers: flood extent and depth for each building in a portfolio, and for wildfires a destroyed or undamaged label per building within 24 hours [@iceyeinsurance].
+
+## Failure modes
+
+**Water that brightens.** Water under a crop canopy or between buildings sends the pulse back by a double bounce, so flooded crops and flooded streets can get brighter, not darker. The checkerboard in the demo fits this, with bare fields gone dark and fields of standing crops staying light, but it also fits fields that were still dry on 7 September. One radar image cannot tell the two apart.
+
+**Real change on dry land.** The storm's rain wetted the soil, and wet soil returns more of the pulse, so the demo's dry land came out 2 dB brighter on 7 September. Harvests, ploughing and wind on open water change the backscatter as well, and a threshold set from speckle alone flags them as change.
+
+**A different viewing geometry.** The ratio cancels the ground's own brightness only when both images see it from the same angle. The demo's two images come from the same orbit track. An after image from another track has its layover and shadow in other places, and the ratio lights up every hillside and building.
+
+**No before image, few labels.** High-resolution commercial radar is usually ordered after the disaster, so a matching before image often does not exist, which is why BRIGHT pairs a before photo with an after radar image. Models trained on some disasters also do worse on a new one, so BRIGHT reports its baselines event by event [@chen2025].
+
+# Summary
+
+A camera satellite sees what sunlight shows, and clouds stop it. A radar satellite measures backscatter, the share of its own pulse that the ground returns: water is dark, rough land grey, buildings bright. Each radar pixel carries speckle, noise from echoes that add with random phases, which multiplies the backscatter by a factor with standard deviation $1/\sqrt{L}$. The ratio in dB turns that noise into an added term of the same size everywhere, 3.2 dB for the demo's 4.2 looks, so one threshold maps the flood. Damage assessment makes the same before-and-after comparison per building, with a Siamese network learning what the ratio does by hand.
+
+**Where to start with data.** Sentinel-1 and Sentinel-2 scenes are free in the Planetary Computer's catalogue, searchable with `pystac-client` and readable a window at a time with `rasterio` (the demo's code is below). ICEYE publishes several hundred high-resolution radar scenes under CC BY 4.0 [@iceyeopen]. xBD and BRIGHT hold building damage labels, Sen1Floods11 holds flood labels for Sentinel-1 [@bonafilia2020], and TorchGeo loads such datasets for PyTorch [@stewart2022].
+
+::: {.callout-note collapse="true"}
+## How the demo's scenes were fetched
+
+```python
+import numpy as np, planetary_computer as pc, pystac_client, rasterio
+from rasterio.transform import from_origin
+from rasterio.vrt import WarpedVRT
+
+cat = pystac_client.Client.open(
+    "https://planetarycomputer.microsoft.com/api/stac/v1", modifier=pc.sign_inplace)
+items = cat.search(collections=["sentinel-1-rtc"], bbox=[22.206, 39.575, 22.282, 39.632],
+                   datetime="2023-09-07").item_collection()
+item = [i for i in items if i.properties["sat:relative_orbit"] == 102][0]
+
+# a 6.4 km square on a 10 m grid in UTM zone 34N
+grid = dict(crs="EPSG:32634", transform=from_origin(603_620, 4_387_670, 10, 10),
+            width=640, height=640)
+with rasterio.open(item.assets["vv"].href) as src, WarpedVRT(src, **grid) as vrt:
+    vv = vrt.read(1)                       # linear backscatter
+vv_db = 10 * np.log10(vv)
+```
+:::
+
+**Read next.**
+
+- Moreira et al., "A tutorial on synthetic aperture radar" [@moreira2013]: how the synthetic aperture forms an image, and what interferometry adds.
+- The NASA SAR handbook [@flores2019]: hands-on chapters on flood mapping and change detection.
+- Oliver and Quegan, *Understanding Synthetic Aperture Radar Images* [@oliver2004]: speckle statistics in depth.
+- Gupta et al. on xBD [@gupta2019] and Chen et al. on BRIGHT [@chen2025]: the damage datasets and their baselines.
