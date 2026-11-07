@@ -1,0 +1,68 @@
+{
+ "scene_id": "ICEYE_W283CG_20260828T154757Z_10404509_X50_SLEDP",
+ "stac_item": "https://iceye-open-data-catalog.s3.amazonaws.com/stac-items/2026/08/ICEYE_W283CG_20260828T154757Z_10404509_X50_SLEDP.json",
+ "grd_cog": "https://iceye-open-data-catalog.s3.amazonaws.com/data/dwell-precise/ICEYE_W283CG_20260828T154757Z_10404509_X50_SLEDP/ICEYE_W283CG_20260828T154757Z_10404509_X50_SLEDP_GRD.tif",
+ "datetime_utc": "2026-08-28T15:48:06.505Z",
+ "start_end_utc": [
+  "2026-08-28T15:47:57.138Z",
+  "2026-08-28T15:48:15.872Z"
+ ],
+ "platform": "ICEYE-X50",
+ "instrument_mode": "spotlight",
+ "processing_mode": "SLEDP",
+ "polarization": [
+  "VV"
+ ],
+ "band_ghz": 9.8,
+ "resolution_range_m": 0.191879,
+ "resolution_azimuth_m": 0.25,
+ "pixel_spacing_m": [
+  0.125,
+  0.125
+ ],
+ "looks_range_azimuth": [
+  1,
+  3
+ ],
+ "incidence_deg": 40.617271,
+ "incidence_near_far_deg": [
+  40.449038,
+  40.784863
+ ],
+ "look_side": "left",
+ "orbit": "descending",
+ "view_azimuth_deg": 281.696868,
+ "shadow_angle_deg": 101.696868,
+ "orientation": "shadows-down",
+ "crop_centre_px": [
+  16700,
+  20416
+ ],
+ "crop_centre_latlon": [
+  3.135251197986928,
+  101.68659908152031
+ ],
+ "crop_corners_latlon": {
+  "top_left": [
+   3.1320913437102993,
+   101.68181337388837
+  ],
+  "top_right": [
+   3.140061223460357,
+   101.68345543747516
+  ],
+  "bottom_left": [
+   3.1304413222796366,
+   101.6897419151132
+  ],
+  "bottom_right": [
+   3.138411188855365,
+   101.69138404054306
+  ]
+ },
+ "crop_size_m": 900.0,
+ "output_px": 1200,
+ "metres_per_output_px": 0.75,
+ "image_up_bearing_deg": 281.773221503369,
+ "image_right_bearing_deg": 11.625080417257292
+}
