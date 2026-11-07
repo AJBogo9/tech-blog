@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-<style>svg { color: #007b7b; } @media (prefers-color-scheme: dark) { svg { color: #61bdba; } }</style>
-<g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
-<rect x="1.5" y="3.5" width="4" height="4" rx="0.5"/>
-<rect x="10.5" y="3.5" width="4" height="4" rx="0.5"/>
-<path d="M5.5 5.5H8.6M12.5 7.5V12.5H3.5V10.2"/>
-</g>
-<path fill="currentColor" d="M8.3 3.8L10.5 5.5L8.3 7.2ZM1.8 10.4L3.5 8.1L5.2 10.4Z"/>
-</svg>
