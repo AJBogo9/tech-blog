@@ -1,15 +1,13 @@
 // highlights.js
 // the four fixed charts at the top of the page
 
-import { lineChart, movingAverage, ratio, rows } from "./jobdata.js";
-
-const width = (el) => Math.max(320, Math.min(760, el.clientWidth || 640));
+import { COLORS, FAINT, lineChart, movingAverage, ratio, rows } from "./jobdata.js";
 
 // Finland, Spain, Sweden and the EU, unemployment rate, seasonally adjusted
 export function euRanking(el, { eu }) {
   const T = eu.series.TOTAL;
   const named = [["Finland", T.FI], ["Spain", T.ES], ["Sweden", T.SE], ["EU", T.EU27_2020]];
-  return lineChart(rows(eu.months, named, "2015-01"), { width: width(el), percent: true, yLabel: "% of labour force" });
+  return lineChart(rows(eu.months, named, "2015-01"), { percent: true, yLabel: "% of labour force" });
 }
 
 // change since September 2022 in the employed, the unemployed and the labour force, thousands, trend
@@ -21,7 +19,7 @@ export function laborForce(el, { lfs }) {
   const named = [["Unemployed", change(une)], ["Labour force", change(force)], ["Employed", change(emp)]];
   const Plot = globalThis.Plot;
   return lineChart(rows(lfs.months, named, "2021-01"), {
-    width: width(el), yLabel: "change since Sep 2022, thousands",
+    yLabel: "change since Sep 2022, thousands",
     marks: [Plot.ruleY([0], { stroke: "currentColor", strokeOpacity: 0.4 }), Plot.ruleX([new Date(Date.UTC(2022, 8, 1))], { stroke: "currentColor", strokeDasharray: "3,3", strokeOpacity: 0.5 })],
   });
 }
@@ -31,12 +29,12 @@ export function perVacancy(el, { regions }) {
   const v = regions.values.SSS;
   const r = ratio(v.TYOTTOMATLOPUSSA, v.AVPAIKATLOPUSSA);
   const named = [["12-month average", movingAverage(r, 12)], ["Monthly", r]];
-  return lineChart(rows(regions.months, named), { width: width(el), yLabel: "unemployed jobseekers per vacancy", colors: ["#c2410c", "#cbd5e1"] });
+  return lineChart(rows(regions.months, named), { yLabel: "unemployed jobseekers per vacancy", colors: [COLORS[0], FAINT] });
 }
 
 // unemployed jobseekers registered as software developers
 export function softwareDevelopers(el, { occupations }) {
   const o = occupations.values;
   const named = [["Whole country", o.SSS.TYOTTOMATLOPUSSA["2512"]], ["Uusimaa", o.MK01.TYOTTOMATLOPUSSA["2512"]]];
-  return lineChart(rows(occupations.months, named), { width: width(el), yLabel: "unemployed jobseekers" });
+  return lineChart(rows(occupations.months, named), { yLabel: "unemployed jobseekers" });
 }

@@ -2,9 +2,8 @@
 title: "The Finnish Job Market in 2026"
 date: "2026-11-07"
 description: "Finland has the highest unemployment rate in the EU. Four charts from public data, and an explorer over the full data set by country, region and occupation."
-# add thumbnail.png to this folder, then uncomment the two lines below
-# image: "thumbnail.png"
-# image-alt: "A line chart of unemployment rates from 2015 to 2026 in which Finland's line rises above Spain, Sweden and the EU average"
+image: "thumbnail.png"
+image-alt: "A line chart of unemployment rates from 2015 to 2026 in which Finland's line rises above Spain, Sweden and the EU average"
 draft: true
 categories:
   - Python
@@ -66,7 +65,7 @@ el.append(euRanking(el, await loadAll()));
 return el;
 ```
 
-In September 2026, 11.0 % of Finland's labour force was unemployed, against 6.2 % in the EU as a whole. Finland had the highest rate of the 27 member states in 10 of the last 12 months. In September 2022 it was at 7.3 % and fourth. Young people have it worse: 25.2 % of under-25s in the labour force were unemployed, also the highest in the EU, where the average was 15.5 %.
+In September 2026, 11.0 % of Finland's labour force was unemployed, against 6.2 % in the EU as a whole. That is Eurostat's seasonally adjusted figure, and a month earlier it was 9.9 %. Statistics Finland's trend series removes such monthly jumps and gave 10.5 % for September. Finland had the highest rate of the 27 member states in 10 of the last 12 months. In September 2022 it was at 7.3 % and fourth. Young people have it worse: 25.2 % of under-25s in the labour force were unemployed, also the highest in the EU, where the average was 15.5 %.
 
 ## More people looking for work, not many fewer jobs
 
@@ -94,7 +93,7 @@ el.append(perVacancy(el, await loadAll()));
 return el;
 ```
 
-At the end of September 2026 the employment services had 324,871 unemployed jobseekers and 26,758 open vacancies, 12.1 jobseekers per vacancy. In September 2022 the ratio was 2.8. It was last this high in the years after the financial crisis and in 2015, at 13.3 in September 2009 and 11.8 in September 2015. Employers list only part of their vacancies with the employment services, and the 2025 reform of the services may have changed how vacancies are recorded, so the level is uncertain.
+At the end of September 2026 the employment services had 324,871 unemployed jobseekers and 26,758 open vacancies, 12.1 jobseekers per vacancy. In September 2022 the ratio was 2.8. It was last this high in the years after the financial crisis and in 2015, at 13.3 in September 2009 and 11.8 in September 2015. The level of the ratio is uncertain. Employers list only part of their vacancies with the employment services, and a change of computer systems hid some open vacancies in 2024 and 2025 ([About the data](#about-the-data)).
 
 ## Software developers
 
@@ -112,22 +111,67 @@ At the end of September 2026, 3,613 software developers were registered as unemp
 
 ## Explore the data
 
-Pick a data set, then add or remove lines. The 12-month average removes the seasonal swing in the employment service data, and the index puts lines of different size on one scale. The CSV link under the chart downloads exactly what it shows.
+Pick a data set and a measure, then tick the lines to compare in the list next to the chart, or under it on a phone. The list shows each option's latest value, so you can sort it to find the highest. The 12-month average removes the seasonal swing in the employment service data, and the index puts lines of different size on one scale. The CSV link under the chart downloads exactly what it shows. The page address keeps the view, so a link to it opens the same chart.
 
+::: {.column-page}
 ```{js}
 //| label: fig-explorer
-//| fig-cap: "The explorer. Hover over a line for the value in each month."
+//| fig-cap: "The explorer. Hover over the chart, tap it or use the arrow keys for every line's value in that month. Hover over a ticked line in the list to pick it out."
 const el = document.createElement("div");
 const { loadAll } = await import("./jobdata.js");
 const { mountExplorer } = await import("./explorer.js");
 await mountExplorer(el, await loadAll());
 return el;
 ```
+:::
 
 ## About the data
 
-**Two ways to count the unemployed.** The labour force survey asks a sample of people aged 15 to 74 whether they worked or looked for work. Its unemployment rate is the one Eurostat compares across countries. The employment service statistics count everyone registered as an unemployed jobseeker, which includes people the survey counts as outside the labour force, so its numbers are higher.
+The charts come from three sources. Eurostat and Statistics Finland both publish the Labour Force Survey. The KEHA Centre, a state agency, counts the people registered with the public employment services. Their numbers for the same month differ, as the table shows for September 2026.
 
-**Breaks in the series.** The employment services moved from the state to the municipalities at the start of 2025, so comparisons across that change need care. Occupations follow the Finnish classification of occupations 2010, based on ISCO-08.
+::: {}
+| Source | Charts | Unemployed | Unemployment rate |
+|---|---|---|---|
+| Labour Force Survey, trend (Statistics Finland) | @fig-force, explorer | 308,000 | 10.5 % |
+| Labour Force Survey, seasonally adjusted (Statistics Finland) | explorer | not on this page | 10.9 % |
+| Labour Force Survey, seasonally adjusted (Eurostat) | @fig-eu, explorer | not on this page | 11.0 % |
+| Register of the employment services (KEHA Centre) | @fig-vacancy, @fig-software, explorer | 324,871 | 11.8 % |
+:::
 
-**Sources.** Statistics Finland, Labour Force Survey, table [tyti/135z](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyti/statfin_tyti_pxt_135z.px/), CC BY 4.0. KEHA Centre, employment service statistics, tables [tyonv/12r5](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12r5.px/) and [tyonv/12ti](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12ti.px/), published through Statistics Finland. Eurostat, [une_rt_m](https://ec.europa.eu/eurostat/databrowser/view/une_rt_m/default/table). The script `_fetch.py` in this page's folder fetches everything again after each monthly release.
+### Eurostat: the EU comparison
+
+Eurostat publishes a monthly unemployment rate for each country from that country's labour force survey. A person counts as unemployed if they are 15 to 74, had no work in the survey week, looked for work in the four weeks before and could start within two weeks. The definition is the International Labour Organization's and is the same in every country ([Eurostat metadata](https://ec.europa.eu/eurostat/cache/metadata/en/une_rt_m_esms.htm)), except that Spain and Italy count people from age 16 ([Eurostat](https://ec.europa.eu/eurostat/cache/metadata/en/lfsi_esms.htm)).
+
+Statistics Finland sends Eurostat the monthly Finnish figures together with their seasonally adjusted version ([Eurostat metadata](https://ec.europa.eu/eurostat/cache/metadata/en/une_rt_m_esms.htm)). The rate Eurostat publishes still differs a little from Statistics Finland's own seasonally adjusted rate. Eurostat's figures leave out conscripts. That matters most for people under 25 ([Statistics Finland](https://stat.fi/en/statistics/documentation/tyti)). Eurostat's rate is also put together from separately adjusted parts, while Statistics Finland adjusts its rate as a whole ([Statistics Finland, PDF](https://media.stat.fi/A7H6ohk0S8qafyCM4bfDaz/FhmBNx6ARQmbgcL4VG1I?dl=true)).
+
+Not every country runs a monthly survey. Spain's monthly figures are estimated from its quarterly survey and its register of unemployed jobseekers, and the latest months are forecasts. Estonia's are three-month moving averages, published under the middle month. Eurostat revises recent months as new survey data arrives and treats a month as final after six months ([Eurostat metadata](https://ec.europa.eu/eurostat/cache/metadata/en/une_rt_m_esms.htm)).
+
+### Statistics Finland: the Labour Force Survey
+
+Each month the survey interviews about 12,500 people, about one in 370 of those aged 15 to 89 living in Finland, by phone, in person or on the web. Each person is interviewed five times over 15 months, and about half of those asked take part (52 % in 2021). The monthly figures are published for ages 15 to 74 ([Statistics Finland](https://stat.fi/en/statistics/documentation/tyti)).
+
+Because the survey is a sample, every figure has a margin of error. For September 2026 it estimated 298,000 unemployed with a margin of error of ±24,000 at 95 % confidence ([release](https://stat.fi/en/publication/cmfp99vvraagp08urorj45p22), [method](https://stat.fi/en/statistics/documentation/tyti)). That estimate is before seasonal adjustment, so it differs from the trend figure in the table.
+
+@fig-force uses the trend series. The seasonally adjusted series removes the seasonal pattern, and the trend also removes the month-to-month noise. Its last few months are partly estimated by a statistical model and can change when new months come in ([table notes](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyti/statfin_tyti_pxt_135z.px/)). Values from six months back change only a little ([Statistics Finland, PDF](https://media.stat.fi/A7H6ohk0S8qafyCM4bfDaz/FhmBNx6ARQmbgcL4VG1I?dl=true)).
+
+### KEHA Centre: the employment service statistics
+
+These numbers are counts from the register of the public employment services, taken on the last weekday of each month. A registered jobseeker counts as unemployed if they have no job, do not work full time as an entrepreneur and are not a full-time student. People who are fully laid off count as unemployed, and people taking part in training or other services that the employment services arrange do not ([quality description, PDF](https://tyomarkkinatori.fi/en/dam/jcr:f9ec7648-9cf5-4ca2-9828-762474dd6472/Employment%20Service%20Statistics_quality%20description_102025.pdf)). The unemployment rate in this statistic divides the count by the workforce from Statistics Finland's register-based employment statistics. That workforce figure is usually about two years old ([table notes](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12r5.px/)).
+
+Open vacancies are only the jobs that employers reported to the employment services ([quality description, PDF](https://tyomarkkinatori.fi/en/dam/jcr:f9ec7648-9cf5-4ca2-9828-762474dd6472/Employment%20Service%20Statistics_quality%20description_102025.pdf)), so jobs that never reach them are missing ([KEHA Centre](https://tyomarkkinatori.fi/uutiset/tasmennys-avoimien-tyopaikkojen-maariin)). In 2015, 53 % of workplaces with open vacancies had used the employment services ([Statistics Finland](https://stat.fi/tietotrendit/artikkelit/2016/avoimien-tyopaikkojen-jaljilla)). Statistics Finland's quarterly job vacancy survey counts vacancies from every recruitment channel ([Statistics Finland](https://stat.fi/en/statistics/documentation/atp)), and this page does not use it yet.
+
+In 2024 and 2025 the employment services ran an old and a new client system side by side. During that time the statistics sometimes showed fewer open vacancies than there were, for example in June 2024. The problem ended when the new system replaced the old one in May 2025 ([KEHA Centre](https://tyomarkkinatori.fi/uutiset/tasmennys-avoimien-tyopaikkojen-maariin)). With too few vacancies counted, the number of jobseekers per vacancy in @fig-vacancy may be too high for parts of that period.
+
+In September 2026, 8,300 of the 26,758 open vacancies had a flexible or unknown location, and the regional table lists them as regions of their own ([table](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12r5.px/)). The explorer leaves them out, so its regional vacancies add up to less than the whole country's. Each region's jobseekers per vacancy is also higher than it would be with those jobs counted.
+
+Jobseekers are classified by the occupation recorded for them and vacancies by the occupation of the job. I could not find whether a jobseeker's occupation is the job they last held or the one they are looking for. The classification is the employment services' own ([Statistics Finland](https://stat.fi/en/statistics/documentation/tyonv)). It is based on Statistics Finland's classification of occupations ([description, PDF](https://tyomarkkinatori.fi/en/dam/jcr:3162300b-2341-4160-83fb-5a6ab472e554/Employment%20Service%20Statistics_description_102025.pdf)), and its four-digit codes follow the international ISCO-08. It also has codes that are not occupations, such as students and "no occupation". The explorer's family filter groups occupations by the first digit of their code and puts these other codes in a group of their own.
+
+In a reform at the start of 2025, the employment services moved from the state's TE Offices to employment areas run by the municipalities. The KEHA Centre took over the statistics on 1 March 2025 ([KEHA Centre](https://tyomarkkinatori.fi/en/news/tyonvalitystilasto-ja-tyollisyyskatsaus-keha-keskuksen-vastuulle)). An official announcement of the reform says it alters the recorded data considerably ([Finnish Government](https://valtioneuvosto.fi/-/1410877/tyollisyystilastointi-uudistuu)), so comparisons across 2025 need care.
+
+### Why the survey and the register disagree
+
+Some registered jobseekers do not meet the survey's definition of unemployed, and some of the people the survey counts as unemployed are not registered. In recent years the survey's yearly average has been 50,000 to 135,000 lower than the register's. The gap also moves with the season. Students looking for work count in the survey and not in the register, so in some spring months the survey's count has been the higher one ([Statistics Finland, PDF](https://media.stat.fi/A7H6ohk0S8qafyCM4bfDaz/cmpox6pyf9po307utwgmi5ut4?dl=true)).
+
+### Tables and licences
+
+Statistics Finland, Labour Force Survey, table [tyti/135z](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyti/statfin_tyti_pxt_135z.px/), CC BY 4.0. KEHA Centre, employment service statistics, tables [tyonv/12r5](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12r5.px/) and [tyonv/12ti](https://pxdata.stat.fi/PxWeb/pxweb/en/StatFin/StatFin__tyonv/statfin_tyonv_pxt_12ti.px/), published through Statistics Finland. Eurostat, [une_rt_m](https://ec.europa.eu/eurostat/databrowser/view/une_rt_m/default/table). The script `_fetch.py` in this page's folder fetches everything again after each monthly release.
