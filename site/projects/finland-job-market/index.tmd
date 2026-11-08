@@ -1,10 +1,9 @@
 ---
 title: "The Finnish Job Market in 2026"
-date: "2026-11-07"
+date: "2026-11-08"
 description: "Charts and an explorer over public data on the Finnish labour market. The data covers the EU comparison, the Labour Force Survey, and the employment services' jobseekers and vacancies by region and occupation."
 image: "thumbnail.png"
 image-alt: "A line chart of unemployment rates from 2015 to 2026 in which Finland's line rises above Spain, Sweden and the EU average"
-draft: true
 bibliography: references.bib
 categories:
   - Python
@@ -103,7 +102,7 @@ return el;
 
 ## About the data
 
-The charts come from three sources. Eurostat and Statistics Finland both publish the Labour Force Survey. The KEHA Centre, a state agency, counts the people registered with the public employment services. Their numbers for the same month differ, as the table shows for September 2026.
+The charts come from three sources. Eurostat and Statistics Finland both publish the Labour Force Survey. The KEHA Centre, a state agency, counts the people registered with the public employment services. The table compares their numbers for September 2026.
 
 ::: {}
 | Source | Charts | Unemployed | Unemployment rate |
@@ -114,7 +113,9 @@ The charts come from three sources. Eurostat and Statistics Finland both publish
 | Register of the employment services (KEHA Centre) | @fig-vacancy, @fig-ml-seekers, @fig-ml-vacancies, explorer | 324,871 | 11.8 % |
 :::
 
-The code below prints the latest values from the data files.
+Some registered jobseekers do not meet the survey's definition of unemployed, and some of the people the survey counts as unemployed are not registered. In recent years the survey's yearly average has been 50,000 to 135,000 lower than the register's. In some spring months the survey's count has been the higher one, because students looking for work count in the survey and not in the register [@sf_keha_comparison_2026].
+
+The code below prints the latest values from the data files, and running `_fetch.py` in this page's folder fetches every table again. Statistics Finland's and the KEHA Centre's tables are licensed under CC BY 4.0.
 
 ```{python}
 #| code-fold: true
@@ -167,40 +168,26 @@ for area in ("SSS", "MK01"):
 
 Eurostat publishes a monthly unemployment rate for each country from that country's labour force survey. A person counts as unemployed if they are 15 to 74, had no work in the survey week, looked for work in the four weeks before and could start within two weeks. The definition is the International Labour Organization's and is the same in every country [@eurostat_une_rt_m_meta], except that Spain and Italy count people from age 16 [@eurostat_lfsi_meta].
 
-Statistics Finland sends Eurostat the monthly Finnish figures together with their seasonally adjusted version [@eurostat_une_rt_m_meta]. The rate Eurostat publishes still differs a little from Statistics Finland's own seasonally adjusted rate. Eurostat's figures leave out conscripts. That matters most for people under 25 [@sf_tyti_doc]. Eurostat's rate is also put together from separately adjusted parts, while Statistics Finland adjusts its rate as a whole [@sf_tyti_trend_2023].
-
-Not every country runs a monthly survey. Spain's monthly figures are estimated from its quarterly survey and its register of unemployed jobseekers, and the latest months are forecasts. Estonia's are three-month moving averages, published under the middle month. Eurostat revises recent months as new survey data arrives and treats a month as final after six months [@eurostat_une_rt_m_meta].
+Eurostat's rate for Finland differs a little from Statistics Finland's own seasonally adjusted rate, because Eurostat leaves out conscripts [@sf_tyti_doc] and puts its rate together from separately adjusted parts [@sf_tyti_trend_2023]. Eurostat revises recent months as new data arrives, and Spain's latest months are forecasts [@eurostat_une_rt_m_meta].
 
 ### Statistics Finland: the Labour Force Survey
 
-Each month the survey interviews about 12,500 people, about one in 370 of those aged 15 to 89 living in Finland, by phone, in person or on the web. Each person is interviewed five times over 15 months, and about half of those asked take part (52 % in 2021). The monthly figures are published for ages 15 to 74 [@sf_tyti_doc].
+The survey interviews about 12,500 people a month, so every figure has a margin of error. For September 2026 it estimated 298,000 unemployed before seasonal adjustment, ±24,000 at 95 % confidence [@sf_release_2026_09; @sf_tyti_doc].
 
-Because the survey is a sample, every figure has a margin of error. For September 2026 it estimated 298,000 unemployed with a margin of error of ±24,000 at 95 % confidence [@sf_release_2026_09; @sf_tyti_doc]. That estimate is before seasonal adjustment, so it differs from the trend figure in the table.
-
-@fig-force uses the trend series. The seasonally adjusted series removes the seasonal pattern, and the trend also removes the month-to-month noise. Its last few months are partly estimated by a statistical model and can change when new months come in [@sf_tyti_135z]. Values from six months back change only a little [@sf_tyti_trend_2023].
+@fig-force uses the trend series, which removes both the seasonal pattern and the month-to-month noise. Its last few months are partly estimated by a statistical model and can change when new months come in [@sf_tyti_135z].
 
 ### KEHA Centre: the employment service statistics
 
-These numbers are counts from the register of the public employment services, taken on the last weekday of each month. A registered jobseeker counts as unemployed if they have no job, do not work full time as an entrepreneur and are not a full-time student. People who are fully laid off count as unemployed, and people taking part in training or other services that the employment services arrange do not [@keha_quality_2025]. The unemployment rate in this statistic divides the count by the workforce from Statistics Finland's register-based employment statistics. That workforce figure is usually about two years old [@keha_12r5].
+These numbers are counts from the register of the public employment services, taken on the last weekday of each month. A registered jobseeker counts as unemployed if they have no job, do not work full time as an entrepreneur and are not a full-time student [@keha_quality_2025]. The unemployment rate divides the count by a workforce figure from Statistics Finland's register-based employment statistics, usually about two years old [@keha_12r5].
 
-Open vacancies are only the jobs that employers reported to the employment services [@keha_quality_2025], so jobs that never reach them are missing [@keha_vacancies_2025]. In 2015, 53 % of workplaces with open vacancies had used the employment services [@sf_vacancies_2016]. Statistics Finland's quarterly job vacancy survey counts vacancies from every recruitment channel [@sf_atp_doc], and this page does not use it yet.
+Open vacancies are only the jobs that employers reported to the employment services [@keha_quality_2025; @keha_vacancies_2025]. In 2015, 53 % of workplaces with open vacancies had used the employment services [@sf_vacancies_2016].
 
-In 2024 and 2025 the employment services ran an old and a new client system side by side. During that time the statistics sometimes showed fewer open vacancies than there were, for example in June 2024. The problem ended when the new system replaced the old one in May 2025 [@keha_vacancies_2025]. With too few vacancies counted, the number of jobseekers per vacancy in @fig-vacancy may be too high for parts of that period.
+In 2024 and 2025 the employment services ran an old and a new client system side by side, and the statistics sometimes showed too few open vacancies, for example in June 2024. The new system replaced the old one in May 2025 [@keha_vacancies_2025]. For parts of that period @fig-vacancy may show too many jobseekers per vacancy.
 
-In September 2026, 8,300 of the 26,758 open vacancies had a flexible or unknown location, and the regional table lists them as regions of their own [@keha_12r5]. The explorer leaves them out, so its regional vacancies add up to less than the whole country's. Each region's jobseekers per vacancy is also higher than it would be with those jobs counted.
+The regional table lists vacancies with a flexible or unknown location as regions of their own, 8,300 of the 26,758 in September 2026 [@keha_12r5]. The explorer leaves them out, so each region shows more jobseekers per vacancy than it would with those jobs counted.
 
-Jobseekers are classified by the occupation recorded for them and vacancies by the occupation of the job. I could not find whether a jobseeker's occupation is the job they last held or the one they are looking for. The classification is the employment services' own [@sf_tyonv_doc]. It is based on Statistics Finland's classification of occupations [@keha_description_2025], and its four-digit codes follow the international ISCO-08. It also has codes that are not occupations, such as students and "no occupation". The explorer's family filter groups occupations by the first digit of their code and puts these other codes in a group of their own.
+Jobseekers are classified by the occupation recorded for them and vacancies by the occupation of the job [@sf_tyonv_doc]. The classification is based on Statistics Finland's classification of occupations [@keha_description_2025], and its four-digit codes follow the international ISCO-08. The documentation does not say whether a jobseeker's occupation is the job they last held or the one they are looking for, so people in machine learning, data and software jobs may also be counted under other codes.
 
-The codes for machine learning, data and software come from ESCO [@esco]. ESCO places each of its occupations under one ISCO-08 code. The occupation names in that section's table link to their ESCO pages. Työmarkkinatori's profile keywords come from FINESCO, a vocabulary largely based on ESCO [@tmt_finesco]. The statistics' documentation does not say how a jobseeker's occupation code is set, so people in these jobs may also be counted under other codes.
+The occupation table hides some counts for confidentiality [@keha_12ti], so small occupations have months without a value, most often in the vacancy counts.
 
-The occupation table hides some counts for confidentiality and marks them "... = Data is subject to secrecy" in its notes [@keha_12ti]. Small occupations have months without a value, most often in the vacancy counts.
-
-In a reform at the start of 2025, the employment services moved from the state's TE Offices to employment areas run by the municipalities. The KEHA Centre took over the statistics on 1 March 2025 [@keha_transfer_2025]. An official announcement of the reform says it alters the recorded data considerably [@vn_reform_2024], so comparisons across 2025 need care.
-
-### Why the survey and the register disagree
-
-Some registered jobseekers do not meet the survey's definition of unemployed, and some of the people the survey counts as unemployed are not registered. In recent years the survey's yearly average has been 50,000 to 135,000 lower than the register's. The gap also moves with the season. Students looking for work count in the survey and not in the register, so in some spring months the survey's count has been the higher one [@sf_keha_comparison_2026].
-
-### Tables and licences
-
-Statistics Finland's and the KEHA Centre's tables are licensed under CC BY 4.0. The script `_fetch.py` in this page's folder fetches every table again after each monthly release.
+At the start of 2025 the employment services moved from the state's TE Offices to employment areas run by the municipalities. The government's announcement of the reform says it alters the recorded data considerably [@vn_reform_2024], so comparisons across 2025 need care.
