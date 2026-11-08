@@ -1,0 +1,193 @@
+---
+title: "The Finnish Job Market in 2026"
+date: "2026-11-08"
+description: "Charts and an explorer over public data on the Finnish labour market. The data covers the EU comparison, the Labour Force Survey, and the employment services' jobseekers and vacancies by region and occupation."
+image: "thumbnail.png"
+image-alt: "A line chart of unemployment rates from 2015 to 2026 in which Finland's line rises above Spain, Sweden and the EU average"
+bibliography: references.bib
+categories:
+  - Python
+  - Open Data
+  - Statistics
+---
+
+The data runs to September 2026 and was fetched on 7 November 2026.
+
+## Unemployment rate in the EU
+
+```{js}
+//| label: fig-eu
+//| fig-cap: "Unemployment rate, seasonally adjusted, % of the labour force. Source: Eurostat [@eurostat_une_rt_m]."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { euRanking } = await import("./highlights.js");
+el.append(euRanking(el, await loadAll()));
+return el;
+```
+
+## Employed, unemployed and the labour force
+
+```{js}
+//| label: fig-force
+//| fig-cap: "Thousands of people aged 15 to 74, trend series. The labour force (top line) is the employed (bottom line) plus the unemployed (shaded band). The axis starts above zero, and the dashed line marks September 2022. Source: Statistics Finland, Labour Force Survey [@sf_tyti_135z]."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { laborForce } = await import("./highlights.js");
+el.append(laborForce(el, await loadAll()));
+return el;
+```
+
+## Jobseekers per open vacancy
+
+```{js}
+//| label: fig-vacancy
+//| fig-cap: "Unemployed jobseekers per open vacancy at the public employment services, whole country, end of each month. Source: KEHA Centre, employment service statistics [@keha_12r5]."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { perVacancy } = await import("./highlights.js");
+el.append(perVacancy(el, await loadAll()));
+return el;
+```
+
+## Machine learning, data and software occupations
+
+The statistics have no occupation called machine learning engineer or data scientist. The four codes below are where ESCO, the European Commission's classification of occupations [@esco], places these job titles ([About the data](#about-the-data)).
+
+| Job title | ESCO occupation | Occupation code |
+|---|---|---|
+| Data scientist, data engineer | [data scientist](https://data.europa.eu/esco/occupation/258e46f9-0075-4a2e-adae-1ff0477e0f30) | 2511 Systems analysts |
+| Machine learning or AI engineer | [ICT intelligent systems designer](https://data.europa.eu/esco/occupation/35553663-deab-4d9a-bf22-15c1625d28e8) ("machine learning systems designer") | 2511 Systems analysts |
+| Data and AI consultant | [ICT consultant](https://data.europa.eu/esco/occupation/b1c80369-067e-4041-84c8-dbe65640a5d8) | 2511 Systems analysts |
+| Software engineer | [software developer](https://data.europa.eu/esco/occupation/f2b15a0e-e65a-438a-affb-29b9d50b77d1) | 2512 Software developers |
+| Statistician | [statistician](https://data.europa.eu/esco/occupation/ac8b3cd1-a127-4e6a-8208-5cfcf7111955) | 2120 Mathematicians, actuaries and statisticians |
+| Financial analyst | [financial analyst](https://data.europa.eu/esco/occupation/8d586ee9-0ab1-4155-a3b0-2ca786c8e48c) | 2413 Financial analysts |
+
+```{js}
+//| label: fig-ml-seekers
+//| fig-cap: "Unemployed jobseekers registered with each occupation, 12-month average, whole country. Source: KEHA Centre, employment service statistics [@keha_12ti]."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { occupationLines } = await import("./highlights.js");
+el.append(occupationLines(el, await loadAll(), "TYOTTOMATLOPUSSA"));
+return el;
+```
+
+```{js}
+//| label: fig-ml-vacancies
+//| fig-cap: "Open vacancies reported to the employment services, 12-month average, whole country. Codes 2120 and 2413 are left out: their vacancy counts are hidden for confidentiality in 41 and 20 of the 141 months shown. Source: KEHA Centre, employment service statistics [@keha_12ti]."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { occupationLines } = await import("./highlights.js");
+el.append(occupationLines(el, await loadAll(), "AVPAIKATLOPUSSA", ["2511", "2512"]));
+return el;
+```
+
+The same codes in the explorer: [unemployed jobseekers in Uusimaa](?data=occupations&measure=TYOTTOMATLOPUSSA&area=MK01&lines=2511~2512~2120~2413&from=2015&avg=1#fig-explorer), [open vacancies in Uusimaa](?data=occupations&measure=AVPAIKATLOPUSSA&area=MK01&lines=2511~2512&from=2015&avg=1#fig-explorer), [jobseekers per open vacancy](?data=occupations&measure=PER_VACANCY&area=SSS&lines=2511~2512&from=2015&avg=1#fig-explorer).
+
+## Explore the data
+
+Pick a data set and a measure, then tick the lines to compare in the list next to the chart, or under it on a phone. The list shows each option's latest value, so you can sort it to find the highest. The 12-month average removes the seasonal swing in the employment service data, and the index puts lines of different size on one scale. The CSV link under the chart downloads exactly what it shows. The page address keeps the view, so a link to it opens the same chart.
+
+::: {.column-page}
+```{js}
+//| label: fig-explorer
+//| fig-cap: "The explorer. Hover over the chart, tap it or use the arrow keys for every line's value in that month. Hover over a ticked line in the list to pick it out."
+const el = document.createElement("div");
+const { loadAll } = await import("./jobdata.js");
+const { mountExplorer } = await import("./explorer.js");
+await mountExplorer(el, await loadAll());
+return el;
+```
+:::
+
+## About the data
+
+The charts come from three sources. Eurostat and Statistics Finland both publish the Labour Force Survey. The KEHA Centre, a state agency, counts the people registered with the public employment services. The table compares their numbers for September 2026.
+
+::: {}
+| Source | Charts | Unemployed | Unemployment rate |
+|---|---|---|---|
+| Labour Force Survey, trend (Statistics Finland) | @fig-force, explorer | 308,000 | 10.5 % |
+| Labour Force Survey, seasonally adjusted (Statistics Finland) | explorer | not on this page | 10.9 % |
+| Labour Force Survey, seasonally adjusted (Eurostat) | @fig-eu, explorer | not on this page | 11.0 % |
+| Register of the employment services (KEHA Centre) | @fig-vacancy, @fig-ml-seekers, @fig-ml-vacancies, explorer | 324,871 | 11.8 % |
+:::
+
+Some registered jobseekers do not meet the survey's definition of unemployed, and some of the people the survey counts as unemployed are not registered. In recent years the survey's yearly average has been 50,000 to 135,000 lower than the register's. In some spring months the survey's count has been the higher one, because students looking for work count in the survey and not in the register [@sf_keha_comparison_2026].
+
+The code below prints the latest values from the data files, and running `_fetch.py` in this page's folder fetches every table again. Statistics Finland's and the KEHA Centre's tables are licensed under CC BY 4.0.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Latest values computed from the data"
+import json
+
+EU27 = "AT BE BG CY CZ DE DK EE EL ES FI FR HR HU IE IT LT LU LV MT NL PL PT RO SE SI SK".split()
+eu, lfs, reg, occ = (json.load(open(f"data/{n}.json")) for n in ("eu", "lfs", "regions", "occupations"))
+
+# EU ranking, latest month with a value for Finland
+T, Y, em = eu["series"]["TOTAL"], eu["series"]["Y_LT25"], eu["months"]
+last = max(i for i, v in enumerate(T["FI"]) if v is not None)
+rank = lambda S, i: sorted(((S[g][i], g) for g in EU27 if g in S and S[g][i] is not None), reverse=True)
+top = [em[i] for i in range(last - 11, last + 1) if rank(T, i)[0][1] == "FI"]
+print(f"{em[last]}: Finland {T['FI'][last]} %, EU {T['EU27_2020'][last]} %, top of the EU in {len(top)} of the last 12 months")
+print(f"under 25: Finland {Y['FI'][last]} %, EU {Y['EU27_2020'][last]} %, rank {[g for _, g in rank(Y, last)].index('FI') + 1}")
+i22 = em.index("2022-09")
+print(f"2022-09: Finland {T['FI'][i22]} %, rank {[g for _, g in rank(T, i22)].index('FI') + 1} of {len(rank(T, i22))}")
+
+# labour force survey, trend, September 2022 against September 2026
+s, lm = {k: v["values"] for k, v in lfs["series"].items()}, lfs["months"]
+a, b = lm.index("2022-09"), lm.index("2026-09")
+emp, une = s["tyolliset_trendi"], s["tyottomat_trendi"]
+print(f"employed {emp[a]}k -> {emp[b]}k, unemployed {une[a]}k -> {une[b]}k, labour force {emp[a] + une[a]}k -> {emp[b] + une[b]}k")
+print(f"unemployment rate {s['tyottaste_trendi'][a]} -> {s['tyottaste_trendi'][b]} %, under 25 {s['Tyottaste_15_24_trendi'][a]} -> {s['Tyottaste_15_24_trendi'][b]} %")
+
+# jobseekers per vacancy at the employment services, whole country, each September
+v, rm = reg["values"]["SSS"], reg["months"]
+for m in ("2009-09", "2015-09", "2022-09", "2026-09"):
+    i = rm.index(m)
+    print(f"{m}: {v['TYOTTOMATLOPUSSA'][i]:,} unemployed jobseekers, {v['AVPAIKATLOPUSSA'][i]:,} open vacancies, {v['TYOTTOMATLOPUSSA'][i] / v['AVPAIKATLOPUSSA'][i]:.1f} per vacancy")
+
+# software developers (occupation 2512)
+om = occ["months"]
+for area in ("SSS", "MK01"):
+    u, vac = occ["values"][area]["TYOTTOMATLOPUSSA"]["2512"], occ["values"][area]["AVPAIKATLOPUSSA"]["2512"]
+    print(f"{occ['areas'][area]}: software developers unemployed {u[om.index('2022-09')]} -> {u[om.index('2026-09')]}, open vacancies {vac[om.index('2026-09')]}")
+
+# machine learning, data and software occupations: 12-month averages ending in September
+def avg12(s, end):
+    w = s[om.index(end) - 11:om.index(end) + 1]
+    return "hidden" if None in w else f"{sum(w) / 12:,.0f}"
+for area in ("SSS", "MK01"):
+    for code in ("2511", "2512", "2120", "2413"):
+        u, vac = (occ["values"][area][m][code] for m in ("TYOTTOMATLOPUSSA", "AVPAIKATLOPUSSA"))
+        print(f"{occ['areas'][area]}, {code} {occ['occupations'][code]}: unemployed {avg12(u, '2022-09')} -> {avg12(u, '2026-09')}, open vacancies {avg12(vac, '2022-09')} -> {avg12(vac, '2026-09')}")
+```
+
+### Eurostat: the EU comparison
+
+Eurostat publishes a monthly unemployment rate for each country from that country's labour force survey. A person counts as unemployed if they are 15 to 74, had no work in the survey week, looked for work in the four weeks before and could start within two weeks. The definition is the International Labour Organization's and is the same in every country [@eurostat_une_rt_m_meta], except that Spain and Italy count people from age 16 [@eurostat_lfsi_meta].
+
+Eurostat's rate for Finland differs a little from Statistics Finland's own seasonally adjusted rate, because Eurostat leaves out conscripts [@sf_tyti_doc] and puts its rate together from separately adjusted parts [@sf_tyti_trend_2023]. Eurostat revises recent months as new data arrives, and Spain's latest months are forecasts [@eurostat_une_rt_m_meta].
+
+### Statistics Finland: the Labour Force Survey
+
+The survey interviews about 12,500 people a month, so every figure has a margin of error. For September 2026 it estimated 298,000 unemployed before seasonal adjustment, ±24,000 at 95 % confidence [@sf_release_2026_09; @sf_tyti_doc].
+
+@fig-force uses the trend series, which removes both the seasonal pattern and the month-to-month noise. Its last few months are partly estimated by a statistical model and can change when new months come in [@sf_tyti_135z].
+
+### KEHA Centre: the employment service statistics
+
+These numbers are counts from the register of the public employment services, taken on the last weekday of each month. A registered jobseeker counts as unemployed if they have no job, do not work full time as an entrepreneur and are not a full-time student [@keha_quality_2025]. The unemployment rate divides the count by a workforce figure from Statistics Finland's register-based employment statistics, usually about two years old [@keha_12r5].
+
+Open vacancies are only the jobs that employers reported to the employment services [@keha_quality_2025; @keha_vacancies_2025]. In 2015, 53 % of workplaces with open vacancies had used the employment services [@sf_vacancies_2016].
+
+In 2024 and 2025 the employment services ran an old and a new client system side by side, and the statistics sometimes showed too few open vacancies, for example in June 2024. The new system replaced the old one in May 2025 [@keha_vacancies_2025]. For parts of that period @fig-vacancy may show too many jobseekers per vacancy.
+
+The regional table lists vacancies with a flexible or unknown location as regions of their own, 8,300 of the 26,758 in September 2026 [@keha_12r5]. The explorer leaves them out, so each region shows more jobseekers per vacancy than it would with those jobs counted.
+
+Jobseekers are classified by the occupation recorded for them and vacancies by the occupation of the job [@sf_tyonv_doc]. The classification is based on Statistics Finland's classification of occupations [@keha_description_2025], and its four-digit codes follow the international ISCO-08. The documentation does not say whether a jobseeker's occupation is the job they last held or the one they are looking for, so people in machine learning, data and software jobs may also be counted under other codes.
+
+The occupation table hides some counts for confidentiality [@keha_12ti], so small occupations have months without a value, most often in the vacancy counts.
+
+At the start of 2025 the employment services moved from the state's TE Offices to employment areas run by the municipalities. The government's announcement of the reform says it alters the recorded data considerably [@vn_reform_2024], so comparisons across 2025 need care.
