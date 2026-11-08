@@ -139,8 +139,9 @@ until it merges.
 
 **Voice.** A sentence names the thing that acts (the line, the controller, the
 CUSUM, a theorem). Posts do not say "we" or "I", and the reader is "you" only in
-instructions at the demo and the figures ("Move the slider", "Before reading on,
-guess ..."). Older posts that say "we" stay as they are.
+instructions at the demo and the figures ("Move the slider", "Tick the box").
+Posts do not ask the reader to guess before the theory (the owner's ruling,
+2026-11-08). Older posts that say "we" stay as they are.
 
 **Writing rules: the `post-audit` skill.** `.claude/skills/post-audit/` holds the
 technical-writing rules for every post (numbers before the general result, terms
