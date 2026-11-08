@@ -1,0 +1,354 @@
+---
+title: "Splitting a battery fleet's revenue with dual prices"
+description: "Two batteries sell more reserve capacity together than apart. The dual prices of the fleet's linear program split the sale so that no owner, and no group of owners, earns more by leaving."
+date: 2026-11-08
+image: "thumbnail.webp"
+image-alt: "Two white battery containers with a green stripe standing side by side on a concrete base"
+categories:
+  - Optimization
+  - Mathematics
+bibliography: references.bib
+---
+
+An energy company pools batteries from different owners into one fleet, a virtual power plant, and sells the fleet's capacity on the reserve market. On that market the grid operator pays for power kept ready to balance the grid, and it pays the fleet as a whole. Every month someone at the company splits the money between the owners and has to be able to explain the split to each of them.
+
+# The evening hour
+
+The fleet in this post has two batteries that each hold 1 MWh. Battery A sits at a solar park and is 90 % full after a sunny afternoon. At a factory, battery B has run down to 20 % after covering the factory's peak demand.
+
+![A battery storage system in two containers in Rheineck, Switzerland. Batteries A and B would sit in containers like these at the solar park and the factory, and 1 MWh fills only part of one container. Photo: Kecko, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Tesvolt_battery_energy_storage_system_Rheineck.jpg).](battery-site.webp){#fig-battery-site}
+
+In the evening the fleet sells FCR-N (Frequency Containment Reserve for Normal operation), a reserve that Fingrid, the Finnish grid operator, buys to keep the grid at 50 Hz. The fleet's bid is the number of MW it offers for the hour. FCR-N is symmetric: one bid sells both directions, and the market pays for being ready. Every MW of the bid has to be ready both to discharge into the grid when the frequency drops and to charge from it when the frequency rises. Nobody knows in advance which will come. The fleet has to be able to deliver the full bid for 60 minutes in either direction [@fingrid_fcr].
+
+Upward reserve means discharging, and downward reserve means charging. An hour at 1 MW takes 1 MWh of charge to discharge and 1 MWh of empty space to charge, so each MW of the bid needs both. A battery sells the smaller of the two. A full battery sells nothing, and a half-full one sells the most, 0.5 MW.
+
+In a fleet, the company's control system spreads each discharge over the charge of all the batteries and each charge over all their empty space. The fleet then sells the smaller of its total charge and its total space. Pooling adds no energy. It pairs one battery's spare charge with another's spare space. Here A can cover the drops and B most of the rises. @fig-pooling draws both rules on the evening hour's charges.
+
+```{js}
+//| label: fig-pooling
+//| fig-cap: "The evening hour. A battery's charge is what it can offer upwards and its empty space what it can offer downwards. The solid line marks what each sells, the smaller of its two bars. In the fleet the two batteries' charge and space add up, and the dashed line marks what A and B sell apart."
+
+// the evening hour, in MWh
+const batteries = [
+  { owner: "A", charge: 0.9, space: 0.1 },
+  { owner: "B", charge: 0.2, space: 0.8 },
+];
+// each battery's bars on its own, then both batteries stacked in the fleet's bars
+const bars = ["A", "B", "Fleet"].flatMap((who) =>
+  batteries
+    .filter((b) => who === "Fleet" || b.owner === who)
+    .flatMap((b) => [
+      { who, kind: "charge", owner: b.owner, value: b.charge },
+      { who, kind: "space", owner: b.owner, value: b.space },
+    ])
+);
+const sells = [
+  ...batteries.map((b) => ({ who: b.owner, sells: Math.min(b.charge, b.space) })),
+  {
+    who: "Fleet",
+    sells: Math.min(d3.sum(batteries, (b) => b.charge), d3.sum(batteries, (b) => b.space)),
+  },
+];
+const apart = [{ who: "Fleet", y: sells[0].sells + sells[1].sells }];
+
+return Plot.plot({
+  width: 640,
+  height: 260,
+  marginTop: 24,
+  marginRight: 88,
+  fx: {
+    domain: ["A", "B", "Fleet"],
+    label: null,
+    tickFormat: (d) => (d === "Fleet" ? "Fleet (A + B)" : `Battery ${d}`),
+  },
+  x: { domain: ["charge", "space"], label: null, tickFormat: (d) => (d === "charge" ? "charge ↑" : "space ↓") },
+  y: { domain: [0, 1.4], label: "MWh", grid: true },
+  color: {
+    domain: ["A", "B"],
+    range: ["steelblue", "darkorange"],
+    legend: true,
+    tickFormat: (d) => (d === "A" ? "A (solar park)" : "B (factory)"),
+  },
+  marks: [
+    Plot.barY(bars, { fx: "who", x: "kind", y: "value", fill: "owner", insetTop: 1 }),
+    Plot.ruleY(apart, { fx: "who", y: "y", stroke: "currentColor", strokeWidth: 1.5, strokeDasharray: "4,3" }),
+    Plot.text(apart, {
+      fx: "who",
+      y: "y",
+      text: (d) => `apart ${d.y.toFixed(2)} MW`,
+      frameAnchor: "right",
+      textAnchor: "start",
+      dx: 6,
+      fill: "currentColor",
+    }),
+    Plot.ruleY(sells, { fx: "who", y: "sells", stroke: "currentColor", strokeWidth: 2 }),
+    Plot.text(sells, {
+      fx: "who",
+      text: (d) => `sells ${d.sells.toFixed(2)} MW`,
+      frameAnchor: "top",
+      dy: 2,
+      fill: "currentColor",
+    }),
+  ],
+});
+```
+
+Fingrid allows this pooling. Before a battery may sell FCR-N, Fingrid tests and approves it, and batteries at different sites can be approved together as one providing group. The group as a whole has to meet the technical requirements, and no battery in it has to meet them on its own. In FCR-N every battery in the group must also have the same balance responsible party, the company that answers for the group's energy imbalances [@fingrid_fcr]. Here the company running the fleet takes that role. The post also assumes that the batteries charge and discharge fast enough that their energy in MWh is the limit and their power in MW never is.
+
+The market pays a price per MW for each hour, so splitting the money is the same as splitting the 0.9 MW. Every payment in this post is counted in MW of the sale. The month's split is the sum of its hours' splits. The question is who gets the extra 0.6 MW that neither battery could sell alone. The solar park's owner points at the fleet's charge bar, nearly all of it A's. The factory's owner answers that the fleet ran out of space before it ran out of charge, and nearly all of that space is B's.
+
+A natural first guess is a pro-rata split, which pays each battery in proportion to its charge, the energy it brings to the fleet. In the demo below, each row splits the fleet's sale between A, counted from the left, and B, counted from the right. The top row puts what each battery sells alone at its own end. A split keeps both owners in the fleet when neither gets less than that, and the green band between the two ends marks those splits. Set the charges with the first two sliders and your own split with the third, and watch where the pro-rata split falls as the charges change. Leave the box under the sliders unticked until the theory section.
+
+```{js}
+//| viewof: soc_a
+const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Battery A (solar park), charge % ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1"; input.value = "90";
+wrap.append(input);
+return wrap;
+```
+
+```{js}
+//| viewof: soc_b
+const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Battery B (factory), charge % ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1"; input.value = "20";
+wrap.append(input);
+return wrap;
+```
+
+```{js}
+//| viewof: share_a
+const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Your split: A's share of the fleet's sale % ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1"; input.value = "50";
+wrap.append(input);
+return wrap;
+```
+
+```{js}
+//| viewof: show_dual
+const wrap = document.createElement("label");
+wrap.className = "tali-input";
+const input = document.createElement("input");
+input.type = "checkbox";
+wrap.append(input, " Show the dual-price split");
+return wrap;
+```
+
+```{js}
+//| label: fig-evening-hour
+//| input: soc_a, soc_b, share_a, show_dual
+//| fig-cap: "Splits of the fleet's sale, A's share from the left and B's from the right, under what each battery sells alone. The green band holds the splits where neither owner would sell more alone."
+
+// slider values arrive as strings, or undefined before the inputs register
+const read = (name, fallback) => {
+  const x = Number(tali.value(name));
+  return Number.isFinite(x) ? x : fallback;
+};
+const pa = read("soc_a", 90);
+const pb = read("soc_b", 20);
+const share = read("share_a", 50) / 100;
+const showDual = tali.value("show_dual") === true;
+
+// whole percents, so a tie between charge and space is an exact comparison
+const fleetChargePct = pa + pb;
+const fleetSpacePct = 200 - pa - pb;
+const aloneA = Math.min(pa, 100 - pa) / 100;
+const aloneB = Math.min(pb, 100 - pb) / 100;
+const total = Math.min(fleetChargePct, fleetSpacePct) / 100;
+
+// pro rata: the sale in proportion to each battery's charge
+const proA = fleetChargePct === 0 ? 0 : (total * pa) / fleetChargePct;
+
+// dual prices: pay for the side that runs out; at a tie any mix of the two is optimal
+let dualLo, dualHi;
+if (fleetSpacePct < fleetChargePct) {
+  dualLo = dualHi = (100 - pa) / 100;
+} else if (fleetChargePct < fleetSpacePct) {
+  dualLo = dualHi = pa / 100;
+} else {
+  dualLo = Math.min(pa, 100 - pa) / 100;
+  dualHi = Math.max(pa, 100 - pa) / 100;
+}
+const yourA = share * total;
+const coreLo = aloneA;
+const coreHi = total - aloneB;
+
+// the splits against the core band; the top row leaves the extra between the two own sales empty
+const rows = [
+  ["Your split", yourA, yourA],
+  ["Pro rata", proA, proA],
+];
+if (showDual) rows.push(["Dual prices", dualLo, dualHi]);
+const segments = [
+  { row: "Sells alone", owner: "A", x1: 0, x2: aloneA },
+  { row: "Sells alone", owner: "B", x1: total - aloneB, x2: total },
+  ...rows.flatMap(([row, lo, hi]) => [
+    { row, owner: "A", x1: 0, x2: lo },
+    { row, owner: "A or B", x1: lo, x2: hi },
+    { row, owner: "B", x1: hi, x2: total },
+  ]),
+].filter((d) => d.x2 - d.x1 > 1e-9);
+rows.unshift(["Sells alone"]);
+const bottom = Plot.plot({
+  width: 640,
+  height: 70 + 33 * rows.length,
+  marginLeft: 90,
+  x: { domain: [0, Math.max(total, 0.05)], label: "MW credited →" },
+  y: { domain: rows.map((r) => r[0]), label: null },
+  color: { domain: ["A", "B", "A or B"], range: ["steelblue", "darkorange", "#9ca3af"], legend: true },
+  marks: [
+    Plot.rect([{ x1: coreLo, x2: coreHi }], { x1: "x1", x2: "x2", fill: "mediumseagreen", fillOpacity: 0.3 }),
+    Plot.barX(segments, { x1: "x1", x2: "x2", y: "row", fill: "owner", insetTop: 7, insetBottom: 7 }),
+    Plot.ruleX([coreLo, coreHi], { stroke: "mediumseagreen", strokeWidth: 2, strokeDasharray: "4,3" }),
+  ],
+});
+
+// readout in whole hundredths of a MW: B gets the rest of the rounded sale, so the printed shares add up
+const cents = (x) => Math.round(x * 100);
+const mw = (c) => (c / 100).toFixed(2);
+const totalC = cents(total);
+const verdict = (aC) =>
+  aC < cents(aloneA) ? "A's owner would leave" : totalC - aC < cents(aloneB) ? "B's owner would leave" : "both stay";
+const splitText = (a) => `A ${mw(cents(a))} MW, B ${mw(totalC - cents(a))} MW, ${verdict(cents(a))}`;
+let line = `A at ${pa} %, B at ${pb} %. `;
+if (totalC === 0) {
+  line += "The fleet sells nothing in this hour, so there is nothing to split.";
+} else {
+  line += `Your split: ${splitText(yourA)}. Pro rata: ${splitText(proA)}.`;
+  if (showDual) {
+    line += dualLo === dualHi
+      ? ` Dual prices: ${splitText(dualLo)}.`
+      : ` Dual prices: A anywhere from ${mw(cents(dualLo))} to ${mw(cents(dualHi))} MW.`;
+  }
+}
+const text = document.createElement("p");
+text.style.cssText = "font-size:0.9em;margin:0.4em 0 0;";
+text.textContent = line;
+
+const out = document.createElement("div");
+out.append(bottom, text);
+return out;
+```
+
+With the starting charges, pro rata gives A 0.74 MW and B 0.16 MW. B sells 0.2 MW on its own, so the factory's owner would take B out of the fleet. For A the band runs from the 0.1 MW it sells alone up to 0.7 MW, where B is left with its own 0.2 MW. A split by own sale, in proportion to what each battery sells alone, gives A 0.3 MW and B 0.6 MW, inside the band. With two batteries that rule always stays inside, because the pair never sells less than the two apart.
+
+# Dual prices
+
+::: {.callout-note collapse="true"}
+## Notation used in this post
+
+| Symbol | Meaning |
+|--------|---------|
+| $c_i$ | Charge of battery $i$ in MWh, also its upward capacity in MW |
+| $1 - c_i$ | Empty space of battery $i$ in MWh, its downward capacity in MW |
+| $S$ | A group of batteries |
+| $v(S)$ | MW the group $S$ sells on its own |
+| $x_i$ | MW of the fleet's sale credited to battery $i$ |
+| $b$ | The fleet's bid in MW |
+| $\lambda, \mu$ | Dual prices of one MWh of charge and one MWh of space, in MW of the sale |
+:::
+
+## The core
+
+Write $v(S)$ for the MW that a group $S$ of batteries sells on its own, such as the 0.9 MW of the evening hour's pair. With $c_i$ the charge of battery $i$ in MWh,
+
+$$v(S) = \min\Big(\sum_{i \in S} c_i,\; \sum_{i \in S} (1 - c_i)\Big),$$
+
+and the solid lines in @fig-pooling mark its values in the evening hour:
+
+$$\begin{aligned}
+v(\{A\}) &= 0.1, \\
+v(\{B\}) &= 0.2, \\
+v(\{A, B\}) &= 0.9.
+\end{aligned}$$
+
+Game theory calls a setting like this a cooperative game. The owners are the players, and $v(S)$ is what each group of them can get on its own. A split credits battery $i$ with $x_i$ MW of the fleet's sale, and the green band in the demo holds the splits with
+
+$$x_A \ge 0.1, \qquad x_B \ge 0.2, \qquad x_A + x_B = 0.9.$$
+
+These splits form the core of the game. With more batteries, a group of owners can also leave together and sell on its own. A split is in the core when every group gets at least what it sells on its own and the shares add up to the fleet's sale:
+
+$$\begin{aligned}
+\sum_{i \in S} x_i &\ge v(S) \quad \text{for every group } S, \\
+\sum_i x_i &= \text{the fleet's sale}.
+\end{aligned}$$
+
+## The fleet as a linear program
+
+In the evening hour the fleet chooses its bid $b$ in MW, limited by its total charge and its total space, the two fleet bars in @fig-pooling:
+
+$$\begin{aligned}
+\max_{b \ge 0} \quad & b \\
+\text{subject to} \quad & b \le 0.9 + 0.2 = 1.1, \\
+& b \le 0.1 + 0.8 = 0.9.
+\end{aligned}$$
+
+A linear objective maximised under linear limits is called a linear program. The best bid is 0.9 MW.
+
+## Prices for charge and space
+
+Every linear program has a second one, called its dual, with a price for each limit of the first. Here $\lambda$ is the price of a MWh of charge and $\mu$ the price of a MWh of space, both counted in MW of the sale:
+
+$$\begin{aligned}
+\min_{\lambda,\, \mu \ge 0} \quad & 1.1\,\lambda + 0.9\,\mu \\
+\text{subject to} \quad & \lambda + \mu \ge 1.
+\end{aligned}$$
+
+The objective is what the fleet's charge and space are worth at these prices. The limit says that the MWh of charge and the MWh of space behind one MW of the bid are worth at least that MW. Every pair of prices that meets the limit gives an upper bound on the bid. Strong duality says that the lowest bound equals the best bid [@bertsimas1997]. Here the cheapest prices are $\lambda = 0$ and $\mu = 1$, since
+
+$$1.1\,\lambda + 0.9\,\mu \;\ge\; 0.9\,(\lambda + \mu) \;\ge\; 0.9.$$
+
+The cheapest prices also say what a little more of each resource is worth. With 0.1 MWh more space the fleet could sell 0.1 MW more, until space reaches the 1.1 MWh of charge, a gain of $\mu = 1$ MW per MWh. More charge adds nothing while 0.2 MWh of it is spare, and $\lambda = 0$. Prices with this meaning are called shadow prices.
+
+## The dual split is in the core
+
+The dual split pays each battery for its own charge and space at the cheapest prices:
+
+$$x_i = \lambda c_i + \mu (1 - c_i).$$
+
+With $\lambda = 0$ and $\mu = 1$, each battery is paid for its space bar in @fig-pooling: 0.1 MW to A and 0.8 MW to B, together the 0.9 MW sale. A gets the 0.1 MW it sells alone and B more than its 0.2 MW, so the split is in the core, on the left edge of the band. Tick the box under the sliders of @fig-evening-hour to see it, then move the charges.
+
+For any charges the dual has the same limit, with the fleet's total charge and space in place of 1.1 and 0.9, so the cheapest prices add up to 1. A battery's pay is then a weighted average of its charge and its space. An average is never below the smaller of the two numbers, and the smaller one is what the battery sells alone. The same holds for any group of batteries. Strong duality makes the payments add up to the fleet's sale. Owen proved that this split is in the core for every linear production game [@owen1975]. In such a game, owners pool resources, and a group sells the most that its pooled resources allow under linear limits.
+
+A solver returns the prices together with the best bid. The cell below writes the evening hour's program in CVXPY, a Python optimisation library, reads $\lambda$ and $\mu$ from the solver, and pays each battery.
+
+```{python}
+import cvxpy as cp
+import numpy as np
+
+c = np.array([0.90, 0.20])  # charge of A and B, MWh
+
+b = cp.Variable(nonneg=True)  # the fleet's bid, MW
+charge_limit = b <= c.sum()
+space_limit = b <= (1 - c).sum()
+problem = cp.Problem(cp.Maximize(b), [charge_limit, space_limit])
+problem.solve()
+
+lam = charge_limit.dual_value  # price of a MWh of charge
+mu = space_limit.dual_value  # price of a MWh of space
+x = lam * c + mu * (1 - c)  # the dual split
+
+print(f"bid: {problem.value:.2f} MW")
+print(f"prices: charge {lam:.2f}, space {mu:.2f}")
+print(f"dual split: A {x[0]:.2f} MW, B {x[1]:.2f} MW")
+```
+
+With more limits, such as each battery's power or several hours in a row, there are more prices than $\lambda$ and $\mu$, and the solver finds them the same way.
+
+# Summary
+
+Two batteries sell more together than apart because one battery's charge pairs with the other's space. Pro rata can pay an owner less than its battery sells alone. The fleet's sale is a linear program. Its dual puts a price on each MWh of charge and space, equal to what a little more of it would add. Paying every battery for its own charge and space at those prices gives a split in the core (Owen).
+
+What to read next:
+
+- Owen [@owen1975], for the theorem and its proof.
+- Bertsimas and Tsitsiklis [@bertsimas1997], chapter 4, cover duality and shadow prices.
+- Shapley [@shapley1953] defines the best-known other split. It averages what each battery adds over every order in which the batteries could join.
