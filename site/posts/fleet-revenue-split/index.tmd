@@ -282,7 +282,7 @@ $$\begin{aligned}
 
 ## The fleet as a linear program
 
-In the evening hour the fleet chooses a bid $b$ and how much upward capacity $u_i$ and downward capacity $d_i$ each battery offers. A can offer at most 0.9 MW upwards and 0.1 MW downwards, B at most 0.2 MW and 0.8 MW, and the bid has to be covered in both directions. For any charges this is a linear program, a linear objective maximised under linear limits:
+In the evening hour the fleet chooses a bid $b$ and how much upward capacity $u_i$ and downward capacity $d_i$ each battery offers, up to its charge bar and its space bar in @fig-pooling. A can offer at most 0.9 MW upwards and 0.1 MW downwards, B at most 0.2 MW and 0.8 MW, and the bid has to be covered in both directions. For any charges this is a linear program, a linear objective maximised under linear limits:
 
 $$\begin{aligned}
 \max_{b,\, u,\, d \,\ge\, 0} \quad & b \\
@@ -429,7 +429,7 @@ Owen's theorem extends this to every linear production game [@owen1975]. In such
 
 The dual prices take the factory owner's side. A's 0.9 MWh of charge could cover the whole bid alone, and so could 0.7 MWh from A with B's 0.2 MWh, so no battery's charge limited the sale. Charge gets a price of zero, and A is paid only for its 0.1 MWh of space. Every split in the band keeps both owners, so this is the rule's choice among them.
 
-The cell below checks the theorem on three batteries, A at 95 %, B at 15 % and C at 60 %. It solves the linear program for every group with CVXPY, a Python optimisation library, and reads the fleet's dual prices from the solver. The table compares three splits with what each group sells on its own.
+The cell below checks the theorem on three batteries: A and B as in the evening hour, and a third battery C at 60 %. It solves the linear program for every group with CVXPY, a Python optimisation library, and reads the fleet's dual prices from the solver.
 
 ```{python}
 #| code-fold: true
@@ -439,7 +439,7 @@ import itertools
 import cvxpy as cp
 import numpy as np
 
-charge = np.array([0.95, 0.15, 0.60])  # MWh stored in three 1 MWh batteries
+charge = np.array([0.90, 0.20, 0.60])  # MWh stored in three 1 MWh batteries
 names = ["A", "B", "C"]
 n = len(charge)
 
@@ -474,17 +474,47 @@ by_own_sale = total * alone / alone.sum()
 # dual split: each battery's charge and space at the fleet's dual prices
 dual = price_charge * charge + price_space * (1 - charge)
 
-print("group   sells alone   pro rata   by own sale    dual")
-for g in groups:
-    members = sorted(g)
-    label = "+".join(names[i] for i in members)
-    p, a, d = pro_rata[members].sum(), by_own_sale[members].sum(), dual[members].sum()
-    short = [rule for rule, x in (("pro rata", p), ("by own sale", a)) if x < v[g] - 1e-6]
-    flag = "  <- would leave under " + " and ".join(short) if short else ""
-    print(f"{label:7} {v[g]:11.3f} {p:10.3f} {a:13.3f} {d:7.3f}{flag}")
+# one row per group and split for the figure below (define() is Taliesin's bridge to it)
+splits = (("pro rata", pro_rata), ("by own sale", by_own_sale), ("dual split", dual))
+rows = [
+    {"group": "+".join(names[i] for i in sorted(g)), "split": split,
+     "paid": float(pay[sorted(g)].sum()), "alone": float(v[g])}
+    for g in groups
+    if len(g) < n  # every split pays the whole fleet its full sale
+    for split, pay in splits
+]
+define(splits=rows)
 ```
 
-Pro rata gives B, and the pairs A+B and B+C, less than they sell on their own. The split by own sale keeps every single battery, but it gives the pair A+B 0.433 MW against the 0.9 MW the pair sells. The dual split gives every group at least what it sells. It needs only one solve of the whole fleet's program, and the cell solves the other groups only to check it.
+```{js}
+//| label: fig-splits
+//| fig-cap: "What each group of batteries is paid under three splits, with A and B as in the evening hour and C at 60 %. The tick in each row marks what the group sells on its own. A red bar stops short of its tick, and that group would leave the fleet. Every split pays the whole fleet A+B+C its full sale, so its row is left out."
+
+// one row per group and split, from the CVXPY cell above
+const rows = tali.value("splits");
+if (!Array.isArray(rows)) return document.createElement("div");
+const stays = (d) => d.paid >= d.alone - 1e-6;
+
+return Plot.plot({
+  width: 640,
+  height: 200,
+  marginLeft: 40,
+  fx: {
+    domain: ["pro rata", "by own sale", "dual split"],
+    label: null,
+    tickFormat: (d) => d[0].toUpperCase() + d.slice(1),
+  },
+  y: { domain: ["A", "B", "C", "A+B", "A+C", "B+C"], label: null },
+  x: { domain: [0, 1.25], ticks: [0, 0.5, 1], label: "MW", grid: true },
+  marks: [
+    Plot.barX(rows.filter(stays), { fx: "split", y: "group", x: "paid", fill: "mediumseagreen", fillOpacity: 0.5 }),
+    Plot.barX(rows.filter((d) => !stays(d)), { fx: "split", y: "group", x: "paid", fill: "firebrick" }),
+    Plot.tickX(rows, { fx: "split", y: "group", x: "alone", stroke: "currentColor", strokeWidth: 2 }),
+  ],
+});
+```
+
+In @fig-splits, B and the pairs A+B and B+C would leave under pro rata. The split by own sale keeps every single battery, but it gives the pair A+B less than the 0.9 MW the pair sells. The dual split gives every group at least what it sells. It needs only one solve of the whole fleet's program, and the cell solves the other groups only to check it.
 
 # Failure modes
 
