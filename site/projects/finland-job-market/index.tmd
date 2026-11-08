@@ -168,7 +168,7 @@ for area in ("SSS", "MK01"):
 
 Eurostat publishes a monthly unemployment rate for each country from that country's labour force survey. A person counts as unemployed if they are 15 to 74, had no work in the survey week, looked for work in the four weeks before and could start within two weeks. The definition is the International Labour Organization's and is the same in every country [@eurostat_une_rt_m_meta], except that Spain and Italy count people from age 16 [@eurostat_lfsi_meta].
 
-Eurostat's rate for Finland differs a little from Statistics Finland's own seasonally adjusted rate, because Eurostat leaves out conscripts [@sf_tyti_doc] and puts its rate together from separately adjusted parts [@sf_tyti_trend_2023]. Eurostat revises recent months as new data arrives, and Spain's latest months are forecasts [@eurostat_une_rt_m_meta].
+Eurostat's rate for Finland differs a little from Statistics Finland's own seasonally adjusted rate, because Eurostat leaves out conscripts [@sf_tyti_doc] and puts its rate together from separately adjusted parts [@sf_tyti_trend_2023]. Eurostat revises recent months as new data arrives. Spain's latest months are forecasts, and Estonia's figures are three-month moving averages [@eurostat_une_rt_m_meta].
 
 ### Statistics Finland: the Labour Force Survey
 
