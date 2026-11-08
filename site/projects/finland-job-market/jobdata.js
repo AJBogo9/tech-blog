@@ -105,8 +105,10 @@ export { ensureStyle };
 // using the arrow keys shows one tooltip with every line's value in that month.
 // `chart.highlight(name)` dims the other lines; `highlight(null)` undoes it.
 // `height` is a number of pixels, or a function of the chart's width. The first line is
-// drawn heavier unless `emphasizeFirst` is false.
-export function lineChart(data, { height: heightOf = 360, yLabel = "", colors = COLORS, domain, percent = false, marks = [], emphasizeFirst = true } = {}) {
+// drawn heavier unless `emphasizeFirst` is false. `band: { name, lower, upper }` draws the
+// series `name` as the shaded gap between the series `lower` and `upper` instead of as a
+// line. `zero` overrides whether the y axis includes zero.
+export function lineChart(data, { height: heightOf = 360, yLabel = "", colors = COLORS, domain, percent = false, marks = [], emphasizeFirst = true, band = null, zero } = {}) {
   ensureStyle("jm-chart-style", STYLE);
   const Plot = globalThis.Plot;
   const names = domain ?? [...new Set(data.map((d) => d.series))];
@@ -121,6 +123,14 @@ export function lineChart(data, { height: heightOf = 360, yLabel = "", colors = 
   }
   const months = [...byMonth.keys()].sort();
   const monthTimes = months.map((m) => +toDate(m));
+
+  // a band row sits halfway between its two edges, every other row at its value
+  const isBand = (d) => band != null && d.series === band.name;
+  const edge = (m, n) => byMonth.get(m).find((d) => d.series === n)?.value;
+  const yOf = (d) => (isBand(d) ? (edge(d.month, band.lower) + edge(d.month, band.upper)) / 2 : d.value);
+  const bandRows = band ? bySeries.get(band.name)
+    .map((d) => ({ ...d, lo: edge(d.month, band.lower), hi: edge(d.month, band.upper) }))
+    .filter((d) => d.lo != null && d.hi != null) : [];
 
   const wrap = document.createElement("div");
   wrap.className = "jm-chart";
@@ -153,11 +163,12 @@ export function lineChart(data, { height: heightOf = 360, yLabel = "", colors = 
       // plot fills its own tooltips with --plot-background, which it sets to white
       style: "--plot-background: var(--tali-bg, #fff)",
       x: { type: "utc", label: null },
-      y: { grid: true, label: yLabel, zero: !percent && data.every((d) => d.value >= 0) },
+      y: { grid: true, label: yLabel, zero: zero ?? (!percent && data.every((d) => d.value >= 0)) },
       color: { domain: names, range: colors },
       marks: [
         ...marks,
-        ...names.map((n, i) => Plot.lineY(bySeries.get(n), { x: "date", y: "value", stroke: "series", strokeWidth: emphasizeFirst && i === 0 ? 2.4 : 1.7, ariaDescription: n })),
+        ...(band ? [Plot.areaY(bandRows, { x: "date", y1: "lo", y2: "hi", fill: "series", fillOpacity: 0.3, ariaDescription: band.name })] : []),
+        ...names.filter((n) => n !== band?.name).map((n, i) => Plot.lineY(bySeries.get(n), { x: "date", y: "value", stroke: "series", strokeWidth: emphasizeFirst && i === 0 ? 2.4 : 1.7, ariaDescription: n })),
       ],
     });
     sx = plot.scale("x");
@@ -167,7 +178,7 @@ export function lineChart(data, { height: heightOf = 360, yLabel = "", colors = 
     const ends = names.map((n) => {
       const s = bySeries.get(n);
       const d = s[s.length - 1];
-      return d && { n, d, y: sy.apply(d.value) };
+      return d && { n, d, y: sy.apply(yOf(d)) };
     }).filter(Boolean).sort((a, b) => a.y - b.y);
     const gap = 13, top = M.top, bottom = height - M.bottom;
     ends.forEach((e, i) => { e.ly = Math.max(e.y, i ? ends[i - 1].ly + gap : top); });
@@ -220,12 +231,12 @@ export function lineChart(data, { height: heightOf = 360, yLabel = "", colors = 
     if (i < 0 || !months.length) return;
     shown = i;
     const m = months[i];
-    const at = byMonth.get(m).slice().sort((a, b) => b.value - a.value);
+    const at = byMonth.get(m).slice().sort((a, b) => yOf(b) - yOf(a));
     const x = sx.apply(toDate(m));
     hover.setAttribute("visibility", "visible");
     hover.firstChild.setAttribute("x1", x);
     hover.firstChild.setAttribute("x2", x);
-    hover.replaceChildren(hover.firstChild, ...at.map((d) => svgEl("circle", {
+    hover.replaceChildren(hover.firstChild, ...at.filter((d) => !isBand(d)).map((d) => svgEl("circle", {
       cx: x, cy: sy.apply(d.value), r: 3.5, fill: colorOf(d.series), stroke: "var(--tali-bg, #fff)", "stroke-width": 1.5, "data-series": d.series,
     })));
     const head = document.createElement("div");
