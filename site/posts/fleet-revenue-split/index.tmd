@@ -1,10 +1,9 @@
 ---
 title: "Splitting a battery fleet's revenue with dual prices"
 description: "Two batteries sell more reserve capacity together than apart. The dual prices of the fleet's linear program split the sale so that no owner, and no group of owners, earns more by leaving."
-date: 2026-10-19
+date: 2026-11-08
 image: "thumbnail.webp"
 image-alt: "Two white battery containers with a green stripe standing side by side on a concrete base"
-draft: true
 categories:
   - Optimization
   - Mathematics
@@ -254,10 +253,7 @@ With the starting charges, pro rata gives A 0.74 MW and B 0.16 MW. B sells 0.2
 | $v(S)$ | MW the group $S$ sells on its own |
 | $x_i$ | MW of the fleet's sale credited to battery $i$ |
 | $b$ | The fleet's bid in MW |
-| $u_i, d_i$ | Upward and downward capacity battery $i$ offers, in MW |
 | $\lambda, \mu$ | Dual prices of one MWh of charge and one MWh of space, in MW of the sale |
-| $\alpha, \beta$ | Prices on the two limits that cover the bid, in the derivation of the dual |
-| $z, p, A, r, y$ | A general linear program's variables, values, limits and prices, in the derivation of the dual |
 :::
 
 ## The core
@@ -268,7 +264,11 @@ $$v(S) = \min\Big(\sum_{i \in S} c_i,\; \sum_{i \in S} (1 - c_i)\Big),$$
 
 and the solid lines in @fig-pooling mark its values in the evening hour:
 
-$$v(\{A\}) = 0.1, \qquad v(\{B\}) = 0.2, \qquad v(\{A, B\}) = 0.9.$$
+$$\begin{aligned}
+v(\{A\}) &= 0.1, \\
+v(\{B\}) &= 0.2, \\
+v(\{A, B\}) &= 0.9.
+\end{aligned}$$
 
 Game theory calls a setting like this a cooperative game. The owners are the players, and $v(S)$ is what each group of them can get on its own. A split credits battery $i$ with $x_i$ MW of the fleet's sale, and the green band in the demo holds the splits with
 
@@ -283,67 +283,30 @@ $$\begin{aligned}
 
 ## The fleet as a linear program
 
-In the evening hour the fleet chooses a bid $b$ and how much upward capacity $u_i$ and downward capacity $d_i$ each battery offers, up to its charge bar and its space bar in @fig-pooling. A can offer at most 0.9 MW upwards and 0.1 MW downwards, B at most 0.2 MW and 0.8 MW, and the bid has to be covered in both directions. For any charges this is a linear program, a linear objective maximised under linear limits:
+In the evening hour the fleet chooses its bid $b$ in MW, limited by its total charge and its total space, the two fleet bars in @fig-pooling:
 
 $$\begin{aligned}
-\max_{b,\, u,\, d \,\ge\, 0} \quad & b \\
-\text{subject to} \quad & b \le \sum_i u_i, \quad b \le \sum_i d_i \\
-& u_i \le c_i, \quad d_i \le 1 - c_i
+\max_{b \ge 0} \quad & b \\
+\text{subject to} \quad & b \le 0.9 + 0.2 = 1.1, \\
+& b \le 0.1 + 0.8 = 0.9.
 \end{aligned}$$
 
-The best bid is 0.9 MW. It uses all of the fleet's space and leaves 0.2 MWh of charge spare.
+A linear objective maximised under linear limits is called a linear program. The best bid is 0.9 MW.
 
 ## Prices for charge and space
 
-Every linear program comes with a second one, called its dual, which puts a price on each limit. The original program is then called the primal. In the fleet's program the limits are the batteries' charge and space. A MWh of charge does the same job in any battery, and so does a MWh of space. The dual needs only two prices: $\lambda$ for a MWh of charge and $\mu$ for a MWh of space, both counted in MW of the sale.
-
-The dual reads as the problem of a buyer who wants to take over all of the fleet's charge and space for the hour. One MW of reserve uses one MWh of charge and one MWh of space. The buyer has to pay at least 1 MW for that pair, or the fleet would rather sell reserve. The dual asks for the cheapest such prices:
+Every linear program has a second one, called its dual, with a price for each limit of the first. Here $\lambda$ is the price of a MWh of charge and $\mu$ the price of a MWh of space, both counted in MW of the sale:
 
 $$\begin{aligned}
-\min_{\lambda,\, \mu \ge 0} \quad & \lambda \sum_i c_i + \mu \sum_i (1 - c_i) \\
-\text{subject to} \quad & \lambda + \mu \ge 1
+\min_{\lambda,\, \mu \ge 0} \quad & 1.1\,\lambda + 0.9\,\mu \\
+\text{subject to} \quad & \lambda + \mu \ge 1.
 \end{aligned}$$
 
-::: {.callout-note collapse="true"}
-## Writing the dual of a linear program
+The objective is what the fleet's charge and space are worth at these prices. The limit says that the MWh of charge and the MWh of space behind one MW of the bid are worth at least that MW. Every pair of prices that meets the limit gives an upper bound on the bid. Strong duality says that the lowest bound equals the best bid [@bertsimas1997]. Here the cheapest prices are $\lambda = 0$ and $\mu = 1$, since
 
-Write a linear program as
+$$1.1\,\lambda + 0.9\,\mu \;\ge\; 0.9\,(\lambda + \mu) \;\ge\; 0.9.$$
 
-$$\max_{z \ge 0} \; p^\top z \quad \text{subject to} \quad A z \le r,$$
-
-with variables $z$, a value $p$ for one unit of each variable, and one row of $A$ and one entry of $r$ for each limit. Give each limit a price $y_j \ge 0$. For any $z$ that meets the limits, $r - Az \ge 0$, so adding the priced slack can only raise the objective:
-
-$$\begin{aligned}
-p^\top z &\le p^\top z + y^\top (r - A z) \\
-&= (p - A^\top y)^\top z + r^\top y.
-\end{aligned}$$
-
-The sum in the middle is called the Lagrangian. If the prices meet $A^\top y \ge p$, the first term on the right is at most zero, because $z \ge 0$. Every allowed $z$ then earns at most $r^\top y$. This bound is weak duality. The dual looks for the tightest such bound:
-
-$$\min_{y \ge 0} \; r^\top y \quad \text{subject to} \quad A^\top y \ge p.$$
-
-Each limit of the primal gets a price, and each variable of the primal gives a limit of the dual. A variable's limit says that the prices in its column of $A$ pay at least what one unit of it earns. A limit written as an equality gets a price of either sign, and chapter 4 of Bertsimas and Tsitsiklis [@bertsimas1997] lists every case.
-
-In the fleet's program the variables are $b$, $u_i$ and $d_i$. Give the limit $b \le \sum_i u_i$ the price $\alpha$, the limit $b \le \sum_i d_i$ the price $\beta$, and battery $i$'s limits $u_i \le c_i$ and $d_i \le 1 - c_i$ the prices $\lambda_i$ and $\mu_i$. The column of $b$ gives $\alpha + \beta \ge 1$, the column of $u_i$ gives $\lambda_i - \alpha \ge 0$, and the column of $d_i$ gives $\mu_i - \beta \ge 0$. With every price at least zero, the dual is
-
-$$\begin{aligned}
-\min \quad & \textstyle\sum_i \big(\lambda_i c_i + \mu_i (1 - c_i)\big) \\
-\text{subject to} \quad & \alpha + \beta \ge 1, \\
-& \lambda_i \ge \alpha, \quad \mu_i \ge \beta.
-\end{aligned}$$
-
-Lowering $\lambda_i$ to $\alpha$ and $\mu_i$ to $\beta$ only lowers the payment, so the cheapest prices put one price $\lambda = \alpha$ on all charge and one price $\mu = \beta$ on all space. The result is the two-price dual above.
-:::
-
-In the evening hour the fleet holds 1.1 MWh of charge and 0.9 MWh of space. Any prices with $\lambda + \mu \ge 1$ pay at least
-
-$$1.1\,\lambda + 0.9\,\mu \;\ge\; 0.9\,(\lambda + \mu) \;\ge\; 0.9,$$
-
-and $\lambda = 0$, $\mu = 1$ pay exactly 0.9 MW. These are the cheapest prices: charge is free, and space carries the whole MW. The buyer's lowest payment equals the fleet's best bid.
-
-In every linear program, prices that meet the dual's limits pay at least the primal's best value. This is called weak duality, and the collapsed derivation above proves it. Strong duality says that the cheapest prices pay exactly that value, whenever the primal has an optimal solution [@bertsimas1997].
-
-The cheapest prices also say what a little more of each resource is worth. With 0.1 MWh more space the fleet could sell 0.1 MW more, a gain of $\mu = 1$ MW per MWh. The gain lasts until space catches up with the 1.1 MWh of charge. More charge adds nothing, since 0.2 MWh of it is spare, and $\lambda = 0$. Prices with this meaning are called shadow prices.
+The cheapest prices also say what a little more of each resource is worth. With 0.1 MWh more space the fleet could sell 0.1 MW more, until space reaches the 1.1 MWh of charge, a gain of $\mu = 1$ MW per MWh. More charge adds nothing while 0.2 MWh of it is spare, and $\lambda = 0$. Prices with this meaning are called shadow prices.
 
 ## The dual split is in the core
 
@@ -351,13 +314,11 @@ The dual split pays each battery for its own charge and space at the cheapest pr
 
 $$x_i = \lambda c_i + \mu (1 - c_i).$$
 
-In the evening hour, with $\lambda = 0$ and $\mu = 1$, each battery is paid for its space bar in @fig-pooling. The payments are 0.1 MW to A and 0.8 MW to B, together the 0.9 MW sale. A gets the 0.1 MW it sells alone and B more than its 0.2 MW, so the split is in the core, on the left edge of the band. Tick the box under the sliders of @fig-evening-hour to see it, then move the charges.
+With $\lambda = 0$ and $\mu = 1$, each battery is paid for its space bar in @fig-pooling: 0.1 MW to A and 0.8 MW to B, together the 0.9 MW sale. A gets the 0.1 MW it sells alone and B more than its 0.2 MW, so the split is in the core, on the left edge of the band. Tick the box under the sliders of @fig-evening-hour to see it, then move the charges.
 
-The cheapest prices add up to 1, so a battery's pay is a weighted average of its charge and its space. An average is never below the smaller of the two numbers, and the smaller one is what the battery sells alone. The same holds for any group of batteries, and strong duality makes the payments add up to the fleet's sale.
+For any charges the dual has the same limit, with the fleet's total charge and space in place of 1.1 and 0.9, so the cheapest prices add up to 1. A battery's pay is then a weighted average of its charge and its space. An average is never below the smaller of the two numbers, and the smaller one is what the battery sells alone. The same holds for any group of batteries. Strong duality makes the payments add up to the fleet's sale. Owen proved that this split is in the core for every linear production game [@owen1975]. In such a game, owners pool resources, and a group sells the most that its pooled resources allow under linear limits.
 
-Owen's theorem extends this to every linear production game [@owen1975]. In such a game each owner brings resources, here charge and space, and a group sells the most that its pooled resources allow under linear limits. Paying each owner for its resources at the cheapest prices of the whole fleet's dual gives a split in the core.
-
-A solver finds the same prices without the calculation by hand. The cell below writes the evening hour's program in CVXPY, a Python optimisation library, reads $\lambda$ and $\mu$ from the solver, and pays each battery $x_i = \lambda c_i + \mu (1 - c_i)$.
+A solver returns the prices together with the best bid. The cell below writes the evening hour's program in CVXPY, a Python optimisation library, reads $\lambda$ and $\mu$ from the solver, and pays each battery.
 
 ```{python}
 import cvxpy as cp
@@ -366,41 +327,25 @@ import numpy as np
 c = np.array([0.90, 0.20])  # charge of A and B, MWh
 
 b = cp.Variable(nonneg=True)  # the fleet's bid, MW
-u = cp.Variable(2, nonneg=True)  # upward capacity, MW
-d = cp.Variable(2, nonneg=True)  # downward capacity, MW
-charge_limit = u <= c
-space_limit = d <= 1 - c
-limits = [
-    b <= cp.sum(u),  # the bid is covered upwards
-    b <= cp.sum(d),  # and downwards
-    charge_limit,
-    space_limit,
-]
-problem = cp.Problem(cp.Maximize(b), limits)
+charge_limit = b <= c.sum()
+space_limit = b <= (1 - c).sum()
+problem = cp.Problem(cp.Maximize(b), [charge_limit, space_limit])
 problem.solve()
 
-# one price per battery's limit
-lam = charge_limit.dual_value
-mu = space_limit.dual_value
+lam = charge_limit.dual_value  # price of a MWh of charge
+mu = space_limit.dual_value  # price of a MWh of space
 x = lam * c + mu * (1 - c)  # the dual split
 
 print(f"bid: {problem.value:.2f} MW")
-print(f"price of charge: A {lam[0]:.2f}, B {lam[1]:.2f}")
-print(f"price of space:  A {mu[0]:.2f}, B {mu[1]:.2f}")
+print(f"prices: charge {lam:.2f}, space {mu:.2f}")
 print(f"dual split: A {x[0]:.2f} MW, B {x[1]:.2f} MW")
 ```
 
-The solver returns a price for each battery's charge and space, and both batteries get the prices found by hand. With more limits, such as each battery's power or several hours in a row, there are more prices than $\lambda$ and $\mu$, and finding them by hand gets hard. The solver finds them the same way, and as long as the program stays a linear production game, Owen's theorem keeps the split in the core.
-
-# Failure modes
-
-**Ties.** Set B's charge in @fig-evening-hour to 10 % and tick the box. The fleet then holds 1.0 MWh of charge and 1.0 MWh of space, and every pair of prices with $\lambda + \mu = 1$ costs the buyer the same 1.0 MW. The dual split depends on which prices the solver returns, and A can get anything from 0.1 to 0.9 MW. Grey marks the part of the dual row that could go to either owner. Near the tie the split jumps. With B at 9 % the fleet is short of charge and A is paid 0.9 MW. Two points higher, at 11 %, it is short of space and A is paid 0.1 MW.
-
-**The edge of the core.** The dual split pays only for the limit the fleet is short of. When space is short, every battery is paid for its space. A battery that is more than half full sells exactly its space on its own, so it gets none of the extra. In the evening hour A's owner gains nothing from the fleet, and a rival fleet paying slightly more would win A.
+With more limits, such as each battery's power or several hours in a row, there are more prices than $\lambda$ and $\mu$, and the solver finds them the same way.
 
 # Summary
 
-Two batteries sell more together than apart because one battery's charge pairs with the other's space. Pro rata can pay an owner less than its battery sells alone. The fleet's sale is a linear program. Its dual puts a price on each MWh of charge and space, equal to what a little more of it would add. Paying every battery for its own charge and space at those prices gives a split in the core (Owen). The split jumps where the fleet's charge equals its space, and when space is short, a battery more than half full gets none of the extra.
+Two batteries sell more together than apart because one battery's charge pairs with the other's space. Pro rata can pay an owner less than its battery sells alone. The fleet's sale is a linear program. Its dual puts a price on each MWh of charge and space, equal to what a little more of it would add. Paying every battery for its own charge and space at those prices gives a split in the core (Owen).
 
 What to read next:
 
