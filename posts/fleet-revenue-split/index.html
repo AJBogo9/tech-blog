@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  mmmmmmm        ""#      "                    "
+     #     mmm     #    mmm     mmm    mmm   mmm    m mm
+     #    "   #    #      #    #"  #  #   "    #    #"  #
+     #    m"""#    #      #    #""""   """m    #    #   #
+     #    "mm"#    "mm  mm#mm  "#mm"  "mmm"  mm#mm  #   #
+
+  Taliesin v1.1.0  -  https://github.com/AJBogo9/taliesin
+  Rendered from .tmd source, not a batch compiler: a warm, source-mapped,
+  block-modeled live HTML process.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content="Taliesin" />
+<title>Splitting a battery fleet's revenue with dual prices · Andreas Bogossian</title>
+<link rel="icon" type="image/svg+xml" href="../../bell-curve.svg" />
+<script>
+(function(){
+  // The reader's DEVICE decides the mode. DEVICE is a function (not a constant) so it
+  // re-reads the OS on every call — the dev toggle and the OS-change listener both see
+  // the live value. Falls back to light when the OS expresses no dark preference.
+  function DEVICE(){
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return "dark";
+    } catch(e) {}
+    return "light";
+  }
+  // The one stored override, written ONLY by the preview dev menu's quick toggle
+  // (web-client/client.js), which never ships in a build — so on a built page this is
+  // always absent and the device always wins. Absent or unrecognized reads as "auto",
+  // which is also why withdrawing a mode needs no migration step.
+  function choice(){
+    var v = null;
+    try { v = localStorage.getItem("tali-theme"); } catch(e) {}
+    return (v === "light" || v === "dark") ? v : "auto";
+  }
+  // The MODE that actually paints: never "auto".
+  function pref(){
+    var c = choice();
+    return c === "auto" ? DEVICE() : c;
+  }
+  var BG = { dark: '#14130f', light: '#ffffff' };
+  function apply(){
+    var mode = pref();
+    var el = document.documentElement;
+    el.setAttribute("data-theme", mode);
+    // Set color-scheme + background inline, right here in the pre-paint head
+    // script, so the browser's canvas is the theme colour from the very first
+    // frame. Without this the canvas stays white until the inline <style> parses,
+    // which shows as a white flash on every (cross-page) navigation in dark mode.
+    el.style.colorScheme = mode === "dark" ? "dark" : "light";
+    el.style.background = BG[mode] || '#ffffff';
+    // Keep the mobile browser-chrome tint (`<meta name="theme-color">`) in lockstep with the
+    // canvas, so a dark page no longer sits under a white status bar. Reuse the same BG map
+    // (single source, no duplicated hex) and follow the in-page toggle, not just the OS. The
+    // meta is created here rather than emitted statically so its value is never a stale literal.
+    try {
+      var head = document.head || document.getElementsByTagName("head")[0];
+      var mc = document.querySelector('meta[name="theme-color"]');
+      if (!mc && head) { mc = document.createElement("meta"); mc.setAttribute("name", "theme-color"); head.appendChild(mc); }
+      if (mc) mc.setAttribute("content", BG[mode] || '#ffffff');
+    } catch(e) {}
+    // Let theme-dependent renderers (e.g. mermaid, whose SVG colours are baked at
+    // render time) re-render when the mode changes. The detail carried a `choice` field
+    // until 2026-08-13, for the Settings picker's pressed state alone; no listener reads
+    // anything but `mode`.
+    try { window.dispatchEvent(new CustomEvent("tali:themechange", { detail: { mode: mode } })); } catch(e) {}
+  }
+  apply();
+  // Follow OS theme flips live. The listener is registered UNCONDITIONALLY: it used to
+  // be skipped whenever front matter forced a mode, and that state no longer exists, so
+  // a surviving guard would be a branch nothing can take. It still re-applies only while
+  // the choice is auto, so the dev toggle is not fought by the OS mid-preview. (Older
+  // Safari exposes addListener instead of addEventListener; guard for it the way the
+  // rest of the code guards matchMedia.)
+  try {
+    if (window.matchMedia) {
+      var osDark = window.matchMedia('(prefers-color-scheme: dark)');
+      var onOsChange = function(){ if (choice() === "auto") apply(); };
+      if (osDark.addEventListener) osDark.addEventListener('change', onOsChange);
+      else if (osDark.addListener) osDark.addListener(onOsChange);
+    }
+  } catch(e) {}
+  // Passing anything that is not "light"/"dark" REMOVES the key rather than storing it:
+  // "following the device" and "never touched the toggle" are the same state, and the
+  // OS listener above keys off exactly that.
+  window.taliSetTheme = function(p){
+    try {
+      if (p === "light" || p === "dark") localStorage.setItem("tali-theme", p);
+      else localStorage.removeItem("tali-theme");
+    } catch(e) {}
+    apply();
+  };
+  // Paper is white. dark.css recolours the syntax scopes with untokenised literals (a
+  // dark-mode string is #a5d6ff: 1.6:1 on paper), so the print stylesheet's token reset
+  // cannot reach them. (The diagnostic boxes are now token-derived, so the reset DOES reach
+  // them; the syntax scopes are what still force the swap.) Drop the whole document to the
+  // light theme for the duration of the print job and restore afterwards. `apply()`
+  // restores colour-scheme, canvas, and mermaid. A diagram cannot be re-rendered light in
+  // time (mermaid renders asynchronously), so `tali-print-from-dark` lets the print
+  // stylesheet lighten the dark render instead.
+  try {
+    window.addEventListener("beforeprint", function(){
+      var el = document.documentElement;
+      el.classList.toggle("tali-print-from-dark", el.getAttribute("data-theme") === "dark");
+      el.setAttribute("data-theme", "light");
+      el.style.colorScheme = "light";
+      el.style.background = BG.light;
+    });
+    window.addEventListener("afterprint", function(){
+      document.documentElement.classList.remove("tali-print-from-dark");
+      apply();
+    });
+  } catch(e) {}
+})();
+</script>
+<link rel="preload" as="font" type="font/woff2" href="../../_assets/literata-latin-wght-normal.7176a8389de9bbdb.woff2" crossorigin><link rel="stylesheet" href="../../_assets/app.e8573a8fd0d164fb.css">
+<link rel="stylesheet" href="../../_assets/katex.afd559a04e5cde0.css">
+<script src="../../_assets/jslibs.55501db62ead1d31.js" defer></script>
+<script>
+// --- Enhancer registry (the public extension hook) ---------------------------
+// An *enhancer* is `fn(root)` that decorates freshly-mounted DOM. An extension's
+// JS opts in with `window.taliEnhancers.register(fn)`; the registered fn then runs
+// after every (re)mount in the live preview, on DOMContentLoaded in the static
+// build, and once immediately if it registers after the page is already mounted
+// (an extension script loaded in `include-after-body`). Enhancers MUST be
+// idempotent — guard with a data-attribute — since they re-run on every change.
+// The built-in copy-button / etc. below (and mermaid, in its own
+// mermaid.js) register through the exact same API, so a third-party enhancer is
+// indistinguishable from core's.
+(function () {
+  if (window.taliEnhancers) return;
+  /** @type {Array<(root: ParentNode) => void>} */
+  var list = [];
+  var mounted = false;
+  /** @param {(root: ParentNode) => void} fn @param {ParentNode | null} [root] */
+  function run1(fn, root) {
+    try { fn(root || document); } catch (e) { console.error('[taliesin] enhancer failed', e); }
+  }
+  window.taliEnhancers = {
+    register: function (fn) {
+      if (typeof fn === 'function') {
+        list.push(fn);
+        if (mounted) run1(fn, document); // late registration: catch up on existing DOM
+      }
+      return this;
+    },
+    run: function (root) {
+      mounted = true;
+      for (var i = 0; i < list.length; i++) run1(list[i], root);
+    },
+  };
+  var enh = window.taliEnhancers; // captured non-undefined for the entry-point closure
+  // The single entry point every caller uses (live client, static build, reveal).
+  window.taliEnhanceCode = function (root) { enh.run(root); };
+})();
+
+// Shared clipboard helper: navigator.clipboard in a secure context, with a hidden-textarea
+// execCommand fallback for insecure contexts (file://, plain http). Never throws;
+// calls onOk on success, onFail (optional) on total failure.
+/** @param {string} text @param {() => void} onOk @param {() => void} [onFail] */
+function taliCopyText(text, onOk, onFail) {
+  function legacy() {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var done = document.execCommand('copy'); document.body.removeChild(ta);
+      return done;
+    } catch (e) { return false; }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onOk, function () { if (legacy()) onOk(); else if (onFail) onFail(); });
+  } else if (legacy()) { onOk(); }
+  else if (onFail) { onFail(); }
+}
+
+</script>
+
+<meta name="description" content="Two batteries sell more reserve capacity together than apart. The dual prices of the fleet's linear program split the sale so that no owner, and no group of owners, earns more by leaving.">
+<meta property="og:description" content="Two batteries sell more reserve capacity together than apart. The dual prices of the fleet's linear program split the sale so that no owner, and no group of owners, earns more by leaving.">
+<meta property="og:title" content="Splitting a battery fleet's revenue with dual prices">
+<meta property="og:url" content="https://andreasbogossian.com/posts/fleet-revenue-split/">
+<meta property="og:image" content="https://andreasbogossian.com/posts/fleet-revenue-split/thumbnail.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="citation_title" content="Splitting a battery fleet's revenue with dual prices">
+<meta name="citation_author" content="Andreas Bogossian">
+<meta name="citation_publication_date" content="2026/11/08">
+<meta name="citation_fulltext_html_url" content="https://andreasbogossian.com/posts/fleet-revenue-split/">
+<meta name="citation_language" content="en">
+<link rel="alternate" type="application/atom+xml" title="Blog · Andreas Bogossian" href="https://andreasbogossian.com/blog.xml">
+<link rel="alternate" type="application/atom+xml" title="Publications · Andreas Bogossian" href="https://andreasbogossian.com/publications.xml">
+<link rel="alternate" type="application/atom+xml" title="Projects · Andreas Bogossian" href="https://andreasbogossian.com/projects.xml">
+</head>
+<body class="tali-site">
+<a class="tali-skip" href="#tali-main">Skip to content</a>
+<a class="tali-skip tali-skip-toc" href="#TOC">Skip to table of contents</a>
+
+<header class="tali-site-nav" data-tali-src="_site.yml"><nav class="tali-nav-inner" aria-label="Primary"><a class="tali-nav-brand" href="../../index.html"><img class="tali-brand-logo" src="../../logo.svg" alt="Andreas Bogossian" /></a><button type="button" class="tali-nav-burger" id="tali-nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="tali-nav-links"><span></span><span></span><span></span></button><div class="tali-nav-links" id="tali-nav-links"><a class="tali-nav-link" href="../../blog.html" data-label="Blog">Blog</a><a class="tali-nav-link" href="../../publications.html" data-label="Publications">Publications</a><a class="tali-nav-link" href="../../projects.html" data-label="Projects">Projects</a><span class="tali-nav-spacer"></span></div></nav></header><script>(function(){var b=document.getElementById('tali-nav-toggle'),m=document.getElementById('tali-nav-links');if(!b||!m||b.dataset.navWired)return;b.dataset.navWired='1';document.documentElement.classList.add('tali-nav-wired');function set(o){b.setAttribute('aria-expanded',o?'true':'false');m.classList.toggle('tali-nav-open',o);}b.addEventListener('click',function(){set(b.getAttribute('aria-expanded')!=='true');});m.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&b.getAttribute('aria-expanded')==='true'){set(false);b.focus();}});var q=window.matchMedia('(max-width: 60rem)');function toc(){var t=document.getElementById('TOC');if(!t)return;var home=t.parentNode,after=t.nextSibling,lab=document.createElement('p');lab.className='tali-nav-toc-label';lab.textContent='On this page';function place(){if(q.matches===(t.parentNode===m))return;if(q.matches){m.appendChild(lab);m.appendChild(t);}else{if(lab.parentNode)lab.parentNode.removeChild(lab);home.insertBefore(t,after);}document.documentElement.classList.toggle('tali-toc-in-nav',q.matches);}place();q.addEventListener('change',place);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',toc);}else{toc();}})();</script>
+<div class="tali-site-main has-toc">
+<main id="tali-main" tabindex="-1">
+<article>
+<nav class="tali-listing-backnav" data-block-id="tali-backnav" aria-label="Back to listing"><a class="tali-back-link" href="../../blog.html"><span class="tali-back-glyph" aria-hidden="true">←</span> Blog</a></nav>
+<header class="tali-title-block" data-block-id="tali-title-block"><h1 class="title">Splitting a battery fleet's revenue with dual prices</h1><p class="description">Two batteries sell more reserve capacity together than apart. The dual prices of the fleet's linear program split the sale so that no owner, and no group of owners, earns more by leaving.</p><div class="tali-title-meta"><span class="tali-byline"><span class="tali-author">Andreas Bogossian</span></span><time datetime="2026-11-08">8 November 2026</time></div></header>
+<p data-block-id="b-89317d2d6679" data-sourcepos="13:1-13:390">An energy company pools batteries from different owners into one fleet, a virtual power plant, and sells the fleet’s capacity on the reserve market. On that market the grid operator pays for power kept ready to balance the grid, and it pays the fleet as a whole. Every month someone at the company splits the money between the owners and has to be able to explain the split to each of them.</p>
+<h2 id="the-evening-hour" data-block-id="b-b73a7820fbc8" data-sourcepos="15:1-15:18">The evening hour</h2>
+<p data-block-id="b-caaae37aba25" data-sourcepos="17:1-17:225">The fleet in this post has two batteries that each hold 1 MWh. Battery A sits at a solar park and is 90 % full after a sunny afternoon. At a factory, battery B has run down to 20 % after covering the factory’s peak demand.</p>
+<figure data-block-id="b-6ecec6280555" data-sourcepos="19:1-19:432" id="fig-battery-site" class="tali-figure tali-figure-center"><img src="battery-site.webp" alt="" width="1200" height="675" fetchpriority="high" /><figcaption><span class="tali-caption-label">Figure&nbsp;1</span>: A battery storage system in two containers in Rheineck, Switzerland. Batteries A and B would sit in containers like these at the solar park and the factory, and 1 MWh fills only part of one container. Photo: Kecko, <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Tesvolt_battery_energy_storage_system_Rheineck.jpg">Wikimedia Commons</a>.</figcaption></figure>
+<p data-block-id="b-0ee29e8c5340" data-sourcepos="21:1-21:604">In the evening the fleet sells FCR-N (Frequency Containment Reserve for Normal operation), a reserve that Fingrid, the Finnish grid operator, buys to keep the grid at 50 Hz. The fleet’s bid is the number of MW it offers for the hour. FCR-N is symmetric: one bid sells both directions, and the market pays for being ready. Every MW of the bid has to be ready both to discharge into the grid when the frequency drops and to charge from it when the frequency rises. Nobody knows in advance which will come. The fleet has to be able to deliver the full bid for 60 minutes in either direction [<a href="#ref-fingrid_fcr">1</a>].</p>
+<p data-block-id="b-282bad266f66" data-sourcepos="23:1-23:309">Upward reserve means discharging, and downward reserve means charging. An hour at 1 MW takes 1 MWh of charge to discharge and 1 MWh of empty space to charge, so each MW of the bid needs both. A battery sells the smaller of the two. A full battery sells nothing, and a half-full one sells the most, 0.5 MW.</p>
+<p data-block-id="b-fbd566243d9d" data-sourcepos="25:1-25:419">In a fleet, the company’s control system spreads each discharge over the charge of all the batteries and each charge over all their empty space. The fleet then sells the smaller of its total charge and its total space. Pooling adds no energy. It pairs one battery’s spare charge with another’s spare space. Here A can cover the drops and B most of the rises. <a href="#fig-pooling" class="tali-xref">Figure&nbsp;2</a> draws both rules on the evening hour’s charges.</p>
+<figure data-block-id="b-5becb8368cb8" data-sourcepos="27:1-94:3" id="fig-pooling" class="tali-figure tali-figure-center"><div class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-5becb8368cb8"></div><script type="application/tali-js" data-target="tali-js-b-5becb8368cb8">
+// the evening hour, in MWh
+const batteries = [
+  { owner: "A", charge: 0.9, space: 0.1 },
+  { owner: "B", charge: 0.2, space: 0.8 },
+];
+// each battery's bars on its own, then both batteries stacked in the fleet's bars
+const bars = ["A", "B", "Fleet"].flatMap((who) =>
+  batteries
+    .filter((b) => who === "Fleet" || b.owner === who)
+    .flatMap((b) => [
+      { who, kind: "charge", owner: b.owner, value: b.charge },
+      { who, kind: "space", owner: b.owner, value: b.space },
+    ])
+);
+const sells = [
+  ...batteries.map((b) => ({ who: b.owner, sells: Math.min(b.charge, b.space) })),
+  {
+    who: "Fleet",
+    sells: Math.min(d3.sum(batteries, (b) => b.charge), d3.sum(batteries, (b) => b.space)),
+  },
+];
+const apart = [{ who: "Fleet", y: sells[0].sells + sells[1].sells }];
+
+return Plot.plot({
+  width: 640,
+  height: 260,
+  marginTop: 24,
+  marginRight: 88,
+  fx: {
+    domain: ["A", "B", "Fleet"],
+    label: null,
+    tickFormat: (d) => (d === "Fleet" ? "Fleet (A + B)" : `Battery ${d}`),
+  },
+  x: { domain: ["charge", "space"], label: null, tickFormat: (d) => (d === "charge" ? "charge ↑" : "space ↓") },
+  y: { domain: [0, 1.4], label: "MWh", grid: true },
+  color: {
+    domain: ["A", "B"],
+    range: ["steelblue", "darkorange"],
+    legend: true,
+    tickFormat: (d) => (d === "A" ? "A (solar park)" : "B (factory)"),
+  },
+  marks: [
+    Plot.barY(bars, { fx: "who", x: "kind", y: "value", fill: "owner", insetTop: 1 }),
+    Plot.ruleY(apart, { fx: "who", y: "y", stroke: "currentColor", strokeWidth: 1.5, strokeDasharray: "4,3" }),
+    Plot.text(apart, {
+      fx: "who",
+      y: "y",
+      text: (d) => `apart ${d.y.toFixed(2)} MW`,
+      frameAnchor: "right",
+      textAnchor: "start",
+      dx: 6,
+      fill: "currentColor",
+    }),
+    Plot.ruleY(sells, { fx: "who", y: "sells", stroke: "currentColor", strokeWidth: 2 }),
+    Plot.text(sells, {
+      fx: "who",
+      text: (d) => `sells ${d.sells.toFixed(2)} MW`,
+      frameAnchor: "top",
+      dy: 2,
+      fill: "currentColor",
+    }),
+  ],
+});
+</script></div><figcaption><span class="tali-caption-label">Figure&nbsp;2</span>: The evening hour. A battery’s charge is what it can offer upwards and its empty space what it can offer downwards. The solid line marks what each sells, the smaller of its two bars. In the fleet the two batteries’ charge and space add up, and the dashed line marks what A and B sell apart.</figcaption></figure>
+<p data-block-id="b-82b179e7a88a" data-sourcepos="96:1-96:643">Fingrid allows this pooling. Before a battery may sell FCR-N, Fingrid tests and approves it, and batteries at different sites can be approved together as one providing group. The group as a whole has to meet the technical requirements, and no battery in it has to meet them on its own. In FCR-N every battery in the group must also have the same balance responsible party, the company that answers for the group’s energy imbalances [<a href="#ref-fingrid_fcr">1</a>]. Here the company running the fleet takes that role. The post also assumes that the batteries charge and discharge fast enough that their energy in MWh is the limit and their power in MW never is.</p>
+<p data-block-id="b-29f8a8efd534" data-sourcepos="98:1-98:501">The market pays a price per MW for each hour, so splitting the money is the same as splitting the 0.9 MW. Every payment in this post is counted in MW of the sale. The month’s split is the sum of its hours’ splits. The question is who gets the extra 0.6 MW that neither battery could sell alone. The solar park’s owner points at the fleet’s charge bar, nearly all of it A’s. The factory’s owner answers that the fleet ran out of space before it ran out of charge, and nearly all of that space is B’s.</p>
+<p data-block-id="b-b8d9ba9bac84" data-sourcepos="100:1-100:652">A natural first guess is a pro-rata split, which pays each battery in proportion to its charge, the energy it brings to the fleet. In the demo below, each row splits the fleet’s sale between A, counted from the left, and B, counted from the right. The top row puts what each battery sells alone at its own end. A split keeps both owners in the fleet when neither gets less than that, and the green band between the two ends marks those splits. Set the charges with the first two sliders and your own split with the third, and watch where the pro-rata split falls as the charges change. Leave the box under the sliders unticked until the theory section.</p>
+<div data-block-id="b-d618858db29e" data-sourcepos="102:1-111:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-d618858db29e"></div><script type="application/tali-js" data-target="tali-js-b-d618858db29e" data-viewof="soc_a">const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Battery A (solar park), charge % ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1"; input.value = "90";
+wrap.append(input);
+return wrap;
+</script></div>
+<div data-block-id="b-9e33fb251881" data-sourcepos="113:1-122:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-9e33fb251881"></div><script type="application/tali-js" data-target="tali-js-b-9e33fb251881" data-viewof="soc_b">const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Battery B (factory), charge % ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1"; input.value = "20";
+wrap.append(input);
+return wrap;
+</script></div>
+<div data-block-id="b-5c65b2cd7d9d" data-sourcepos="124:1-133:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-5c65b2cd7d9d"></div><script type="application/tali-js" data-target="tali-js-b-5c65b2cd7d9d" data-viewof="share_a">const wrap = document.createElement("label");
+wrap.className = "tali-input";
+wrap.append("Your split: A's share of the fleet's sale % ");
+const input = document.createElement("input");
+input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1"; input.value = "50";
+wrap.append(input);
+return wrap;
+</script></div>
+<div data-block-id="b-cabb303f90d7" data-sourcepos="135:1-143:3" class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-cabb303f90d7"></div><script type="application/tali-js" data-target="tali-js-b-cabb303f90d7" data-viewof="show_dual">const wrap = document.createElement("label");
+wrap.className = "tali-input";
+const input = document.createElement("input");
+input.type = "checkbox";
+wrap.append(input, " Show the dual-price split");
+return wrap;
+</script></div>
+<figure data-block-id="b-09891512a8d9" data-sourcepos="145:1-239:3" id="fig-evening-hour" class="tali-figure tali-figure-center"><div class="cell tali-js-cell"><div class="tali-js-out" id="tali-js-b-09891512a8d9"></div><script type="application/tali-js" data-target="tali-js-b-09891512a8d9" data-inputs="soc_a,soc_b,share_a,show_dual">
+// slider values arrive as strings, or undefined before the inputs register
+const read = (name, fallback) => {
+  const x = Number(tali.value(name));
+  return Number.isFinite(x) ? x : fallback;
+};
+const pa = read("soc_a", 90);
+const pb = read("soc_b", 20);
+const share = read("share_a", 50) / 100;
+const showDual = tali.value("show_dual") === true;
+
+// whole percents, so a tie between charge and space is an exact comparison
+const fleetChargePct = pa + pb;
+const fleetSpacePct = 200 - pa - pb;
+const aloneA = Math.min(pa, 100 - pa) / 100;
+const aloneB = Math.min(pb, 100 - pb) / 100;
+const total = Math.min(fleetChargePct, fleetSpacePct) / 100;
+
+// pro rata: the sale in proportion to each battery's charge
+const proA = fleetChargePct === 0 ? 0 : (total * pa) / fleetChargePct;
+
+// dual prices: pay for the side that runs out; at a tie any mix of the two is optimal
+let dualLo, dualHi;
+if (fleetSpacePct < fleetChargePct) {
+  dualLo = dualHi = (100 - pa) / 100;
+} else if (fleetChargePct < fleetSpacePct) {
+  dualLo = dualHi = pa / 100;
+} else {
+  dualLo = Math.min(pa, 100 - pa) / 100;
+  dualHi = Math.max(pa, 100 - pa) / 100;
+}
+const yourA = share * total;
+const coreLo = aloneA;
+const coreHi = total - aloneB;
+
+// the splits against the core band; the top row leaves the extra between the two own sales empty
+const rows = [
+  ["Your split", yourA, yourA],
+  ["Pro rata", proA, proA],
+];
+if (showDual) rows.push(["Dual prices", dualLo, dualHi]);
+const segments = [
+  { row: "Sells alone", owner: "A", x1: 0, x2: aloneA },
+  { row: "Sells alone", owner: "B", x1: total - aloneB, x2: total },
+  ...rows.flatMap(([row, lo, hi]) => [
+    { row, owner: "A", x1: 0, x2: lo },
+    { row, owner: "A or B", x1: lo, x2: hi },
+    { row, owner: "B", x1: hi, x2: total },
+  ]),
+].filter((d) => d.x2 - d.x1 > 1e-9);
+rows.unshift(["Sells alone"]);
+const bottom = Plot.plot({
+  width: 640,
+  height: 70 + 33 * rows.length,
+  marginLeft: 90,
+  x: { domain: [0, Math.max(total, 0.05)], label: "MW credited →" },
+  y: { domain: rows.map((r) => r[0]), label: null },
+  color: { domain: ["A", "B", "A or B"], range: ["steelblue", "darkorange", "#9ca3af"], legend: true },
+  marks: [
+    Plot.rect([{ x1: coreLo, x2: coreHi }], { x1: "x1", x2: "x2", fill: "mediumseagreen", fillOpacity: 0.3 }),
+    Plot.barX(segments, { x1: "x1", x2: "x2", y: "row", fill: "owner", insetTop: 7, insetBottom: 7 }),
+    Plot.ruleX([coreLo, coreHi], { stroke: "mediumseagreen", strokeWidth: 2, strokeDasharray: "4,3" }),
+  ],
+});
+
+// readout in whole hundredths of a MW: B gets the rest of the rounded sale, so the printed shares add up
+const cents = (x) => Math.round(x * 100);
+const mw = (c) => (c / 100).toFixed(2);
+const totalC = cents(total);
+const verdict = (aC) =>
+  aC < cents(aloneA) ? "A's owner would leave" : totalC - aC < cents(aloneB) ? "B's owner would leave" : "both stay";
+const splitText = (a) => `A ${mw(cents(a))} MW, B ${mw(totalC - cents(a))} MW, ${verdict(cents(a))}`;
+let line = `A at ${pa} %, B at ${pb} %. `;
+if (totalC === 0) {
+  line += "The fleet sells nothing in this hour, so there is nothing to split.";
+} else {
+  line += `Your split: ${splitText(yourA)}. Pro rata: ${splitText(proA)}.`;
+  if (showDual) {
+    line += dualLo === dualHi
+      ? ` Dual prices: ${splitText(dualLo)}.`
+      : ` Dual prices: A anywhere from ${mw(cents(dualLo))} to ${mw(cents(dualHi))} MW.`;
+  }
+}
+const text = document.createElement("p");
+text.style.cssText = "font-size:0.9em;margin:0.4em 0 0;";
+text.textContent = line;
+
+const out = document.createElement("div");
+out.append(bottom, text);
+return out;
+</script></div><figcaption><span class="tali-caption-label">Figure&nbsp;3</span>: Splits of the fleet’s sale, A’s share from the left and B’s from the right, under what each battery sells alone. The green band holds the splits where neither owner would sell more alone.</figcaption></figure>
+<p data-block-id="b-a29a378b91cb" data-sourcepos="241:1-241:476">With the starting charges, pro rata gives A 0.74 MW and B 0.16 MW. B sells 0.2 MW on its own, so the factory’s owner would take B out of the fleet. For A the band runs from the 0.1 MW it sells alone up to 0.7 MW, where B is left with its own 0.2 MW. A split by own sale, in proportion to what each battery sells alone, gives A 0.3 MW and B 0.6 MW, inside the band. With two batteries that rule always stays inside, because the pair never sells less than the two apart.</p>
+<h2 id="dual-prices" data-block-id="b-0fc3a2c12aaa" data-sourcepos="243:1-243:13">Dual prices</h2>
+<div class="callout callout-note callout-collapse" data-block-id="b-ce949e9deba5" data-sourcepos="245:1-257:3"><details><summary class="callout-title">Notation used in this post</summary><div class="callout-body"><table data-block-id="b-de02028c338a" data-sourcepos="248:1-256:93"><thead><tr><th scope="col">Symbol</th><th scope="col">Meaning</th></tr></thead><tbody><tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">c_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></td><td>Charge of battery <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> in MWh, also its upward capacity in MW</td></tr><tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msub><mi>c</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">1 - c_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></td><td>Empty space of battery <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> in MWh, its downward capacity in MW</td></tr><tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></td><td>A group of batteries</td></tr><tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi><mo stretchy="false">(</mo><mi>S</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">v(S)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mclose">)</span></span></span></span></td><td>MW the group <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span> sells on its own</td></tr><tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></td><td>MW of the fleet’s sale credited to battery <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span></td></tr><tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span></td><td>The fleet’s bid in MW</td></tr><tr><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo separator="true">,</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">\lambda, \mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">λ</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">μ</span></span></span></span></td><td>Dual prices of one MWh of charge and one MWh of space, in MW of the sale</td></tr></tbody></table></div></details></div>
+<h3 id="the-core" data-block-id="b-ffa75ab868eb" data-sourcepos="259:1-259:11">The core</h3>
+<p data-block-id="b-c9cb0bc99138" data-sourcepos="261:1-261:164">Write <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi><mo stretchy="false">(</mo><mi>S</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">v(S)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mclose">)</span></span></span></span> for the MW that a group <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span> of batteries sells on its own, such as the 0.9 MW of the evening hour’s pair. With <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">c_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> the charge of battery <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> in MWh,</p>
+<p data-block-id="b-3212213f135d" data-sourcepos="263:1-263:72"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>v</mi><mo stretchy="false">(</mo><mi>S</mi><mo stretchy="false">)</mo><mo>=</mo><mi>min</mi><mo>⁡</mo><mo fence="false" stretchy="true" minsize="1.8em" maxsize="1.8em">(</mo><munder><mo>∑</mo><mrow><mi>i</mi><mo>∈</mo><mi>S</mi></mrow></munder><msub><mi>c</mi><mi>i</mi></msub><mo separator="true">,</mo><mtext>  </mtext><munder><mo>∑</mo><mrow><mi>i</mi><mo>∈</mo><mi>S</mi></mrow></munder><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>c</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo fence="false" stretchy="true" minsize="1.8em" maxsize="1.8em">)</mo><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">v(S) = \min\Big(\sum_{i \in S} c_i,\; \sum_{i \in S} (1 - c_i)\Big),</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4717em;vertical-align:-1.3217em;"></span><span class="mop">min</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="delimsizing size2">(</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8557em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">∈</span><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.3217em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8557em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">∈</span><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.3217em;"><span></span></span></span></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.8em;vertical-align:-0.65em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord"><span class="delimsizing size2">)</span></span><span class="mpunct">,</span></span></span></span></span></p>
+<p data-block-id="b-bb293748b3d1" data-sourcepos="265:1-265:72">and the solid lines in <a href="#fig-pooling" class="tali-xref">Figure&nbsp;2</a> mark its values in the evening hour:</p>
+<p data-block-id="b-0ea94cf44f38" data-sourcepos="267:1-271:15"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>v</mi><mo stretchy="false">(</mo><mo stretchy="false">{</mo><mi>A</mi><mo stretchy="false">}</mo><mo stretchy="false">)</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mn>0.1</mn><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>v</mi><mo stretchy="false">(</mo><mo stretchy="false">{</mo><mi>B</mi><mo stretchy="false">}</mo><mo stretchy="false">)</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mn>0.2</mn><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>v</mi><mo stretchy="false">(</mo><mo stretchy="false">{</mo><mi>A</mi><mo separator="true">,</mo><mi>B</mi><mo stretchy="false">}</mo><mo stretchy="false">)</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mn>0.9.</mn></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+v(\{A\}) &amp;= 0.1, \\
+v(\{B\}) &amp;= 0.2, \\
+v(\{A, B\}) &amp;= 0.9.
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:4.5em;vertical-align:-2em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.5em;"><span style="top:-4.66em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">({</span><span class="mord mathnormal">A</span><span class="mclose">})</span></span></span><span style="top:-3.16em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">({</span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mclose">})</span></span></span><span style="top:-1.66em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">({</span><span class="mord mathnormal">A</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mclose">})</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.5em;"><span style="top:-4.66em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">0.1</span><span class="mpunct">,</span></span></span><span style="top:-3.16em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">0.2</span><span class="mpunct">,</span></span></span><span style="top:-1.66em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">0.9.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p data-block-id="b-1115e926e631" data-sourcepos="273:1-273:259">Game theory calls a setting like this a cooperative game. The owners are the players, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi><mo stretchy="false">(</mo><mi>S</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">v(S)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mclose">)</span></span></span></span> is what each group of them can get on its own. A split credits battery <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> MW of the fleet’s sale, and the green band in the demo holds the splits with</p>
+<p data-block-id="b-9da2e904e8f3" data-sourcepos="275:1-275:60"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>x</mi><mi>A</mi></msub><mo>≥</mo><mn>0.1</mn><mo separator="true">,</mo><mspace width="2em"/><msub><mi>x</mi><mi>B</mi></msub><mo>≥</mo><mn>0.2</mn><mo separator="true">,</mo><mspace width="2em"/><msub><mi>x</mi><mi>A</mi></msub><mo>+</mo><msub><mi>x</mi><mi>B</mi></msub><mo>=</mo><mn>0.9.</mn></mrow><annotation encoding="application/x-tex">x_A \ge 0.1, \qquad x_B \ge 0.2, \qquad x_A + x_B = 0.9.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.786em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">A</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">0.1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">0.2</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">A</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.9.</span></span></span></span></span></p>
+<p data-block-id="b-0554374b0983" data-sourcepos="277:1-277:245">These splits form the core of the game. With more batteries, a group of owners can also leave together and sell on its own. A split is in the core when every group gets at least what it sells on its own and the shares add up to the fleet’s sale:</p>
+<p data-block-id="b-7446d26902ca" data-sourcepos="279:1-282:15"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><munder><mo>∑</mo><mrow><mi>i</mi><mo>∈</mo><mi>S</mi></mrow></munder><msub><mi>x</mi><mi>i</mi></msub></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>≥</mo><mi>v</mi><mo stretchy="false">(</mo><mi>S</mi><mo stretchy="false">)</mo><mspace width="1em"/><mtext>for every group </mtext><mi>S</mi><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>x</mi><mi>i</mi></msub></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>the fleet’s sale</mtext><mi mathvariant="normal">.</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\sum_{i \in S} x_i &amp;\ge v(S) \quad \text{for every group } S, \\
+\sum_i x_i &amp;= \text{the fleet&#x27;s sale}.
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:5.2994em;vertical-align:-2.3997em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.8997em;"><span style="top:-4.8997em;"><span class="pstrut" style="height:3.05em;"></span><span class="mord"><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8557em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">∈</span><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.3217em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.228em;"><span class="pstrut" style="height:3.05em;"></span><span class="mord"><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.3997em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.8997em;"><span style="top:-4.8997em;"><span class="pstrut" style="height:3.05em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mclose">)</span><span class="mspace" style="margin-right:1em;"></span><span class="mord text"><span class="mord">for every group </span></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mpunct">,</span></span></span><span style="top:-2.228em;"><span class="pstrut" style="height:3.05em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord text"><span class="mord">the fleet’s sale</span></span><span class="mord">.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.3997em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<h3 id="the-fleet-as-a-linear-program" data-block-id="b-3101a330dc11" data-sourcepos="284:1-284:32">The fleet as a linear program</h3>
+<p data-block-id="b-6bcdc0b8208e" data-sourcepos="286:1-286:141">In the evening hour the fleet chooses its bid <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span> in MW, limited by its total charge and its total space, the two fleet bars in <a href="#fig-pooling" class="tali-xref">Figure&nbsp;2</a>:</p>
+<p data-block-id="b-d96929af3dc6" data-sourcepos="288:1-292:15"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mrow><mi>b</mi><mo>≥</mo><mn>0</mn></mrow></munder><mspace width="1em"/></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi>b</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>subject to</mtext><mspace width="1em"/></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi>b</mi><mo>≤</mo><mn>0.9</mn><mo>+</mo><mn>0.2</mn><mo>=</mo><mn>1.1</mn><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi>b</mi><mo>≤</mo><mn>0.1</mn><mo>+</mo><mn>0.8</mn><mo>=</mo><mn>0.9.</mn></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\max_{b \ge 0} \quad &amp; b \\
+\text{subject to} \quad &amp; b \le 0.9 + 0.2 = 1.1, \\
+&amp; b \le 0.1 + 0.8 = 0.9.
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:4.9873em;vertical-align:-2.2436em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.7436em;"><span style="top:-4.9036em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.4306em;"><span style="top:-2.3479em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="mrel mtight">≥</span><span class="mord mtight">0</span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">max</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8473em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:1em;"></span></span></span><span style="top:-2.9164em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">subject to</span></span><span class="mspace" style="margin-right:1em;"></span></span></span><span style="top:-1.4164em;"><span class="pstrut" style="height:3em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.2436em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.7436em;"><span style="top:-4.9036em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord mathnormal">b</span></span></span><span style="top:-2.9164em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">0.9</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">0.2</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">1.1</span><span class="mpunct">,</span></span></span><span style="top:-1.4164em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">0.1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">0.8</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">0.9.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.2436em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p data-block-id="b-fb8bda299b40" data-sourcepos="294:1-294:101">A linear objective maximised under linear limits is called a linear program. The best bid is 0.9 MW.</p>
+<h3 id="prices-for-charge-and-space" data-block-id="b-23d04896dfd9" data-sourcepos="296:1-296:30">Prices for charge and space</h3>
+<p data-block-id="b-986dd40f1671" data-sourcepos="298:1-298:215">Every linear program has a second one, called its dual, with a price for each limit of the first. Here <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span></span></span></span> is the price of a MWh of charge and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> the price of a MWh of space, both counted in MW of the sale:</p>
+<p data-block-id="b-a5dc8ec8dd94" data-sourcepos="300:1-303:15"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><munder><mrow><mi>min</mi><mo>⁡</mo></mrow><mrow><mi>λ</mi><mo separator="true">,</mo><mtext> </mtext><mi>μ</mi><mo>≥</mo><mn>0</mn></mrow></munder><mspace width="1em"/></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mn>1.1</mn><mtext> </mtext><mi>λ</mi><mo>+</mo><mn>0.9</mn><mtext> </mtext><mi>μ</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>subject to</mtext><mspace width="1em"/></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi>λ</mi><mo>+</mo><mi>μ</mi><mo>≥</mo><mn>1.</mn></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\min_{\lambda,\, \mu \ge 0} \quad &amp; 1.1\,\lambda + 0.9\,\mu \\
+\text{subject to} \quad &amp; \lambda + \mu \ge 1.
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3.5282em;vertical-align:-1.5141em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.0141em;"><span style="top:-4.1741em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6679em;"><span style="top:-2.3479em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">λ</span><span class="mpunct mtight">,</span><span class="mspace mtight" style="margin-right:0.1952em;"></span><span class="mord mathnormal mtight">μ</span><span class="mrel mtight">≥</span><span class="mord mtight">0</span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">min</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8882em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:1em;"></span></span></span><span style="top:-2.1459em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">subject to</span></span><span class="mspace" style="margin-right:1em;"></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.5141em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.0141em;"><span style="top:-4.1741em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord">1.1</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">0.9</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">μ</span></span></span><span style="top:-2.1459em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">1.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.5141em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p data-block-id="b-9c76e3b36626" data-sourcepos="305:1-305:408">The objective is what the fleet’s charge and space are worth at these prices. The limit says that the MWh of charge and the MWh of space behind one MW of the bid are worth at least that MW. Every pair of prices that meets the limit gives an upper bound on the bid. Strong duality says that the lowest bound equals the best bid [<a href="#ref-bertsimas1997">2</a>]. Here the cheapest prices are <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\lambda = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mu = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>, since</p>
+<p data-block-id="b-8c98d8265bab" data-sourcepos="307:1-307:69"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>1.1</mn><mtext> </mtext><mi>λ</mi><mo>+</mo><mn>0.9</mn><mtext> </mtext><mi>μ</mi><mtext>  </mtext><mo>≥</mo><mtext>  </mtext><mn>0.9</mn><mtext> </mtext><mo stretchy="false">(</mo><mi>λ</mi><mo>+</mo><mi>μ</mi><mo stretchy="false">)</mo><mtext>  </mtext><mo>≥</mo><mtext>  </mtext><mn>0.9.</mn></mrow><annotation encoding="application/x-tex">1.1\,\lambda + 0.9\,\mu \;\ge\; 0.9\,(\lambda + \mu) \;\ge\; 0.9.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord">1.1</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">0.9</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">0.9</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mopen">(</span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">μ</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.9.</span></span></span></span></span></p>
+<p data-block-id="b-ab1209c613d4" data-sourcepos="309:1-309:336">The cheapest prices also say what a little more of each resource is worth. With 0.1 MWh more space the fleet could sell 0.1 MW more, until space reaches the 1.1 MWh of charge, a gain of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mu = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> MW per MWh. More charge adds nothing while 0.2 MWh of it is spare, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\lambda = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>. Prices with this meaning are called shadow prices.</p>
+<h3 id="the-dual-split-is-in-the-core" data-block-id="b-f58d3afde855" data-sourcepos="311:1-311:32">The dual split is in the core</h3>
+<p data-block-id="b-87e25d5bd75b" data-sourcepos="313:1-313:85">The dual split pays each battery for its own charge and space at the cheapest prices:</p>
+<p data-block-id="b-5d61eb7655c4" data-sourcepos="315:1-315:38"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub><mo>=</mo><mi>λ</mi><msub><mi>c</mi><mi>i</mi></msub><mo>+</mo><mi>μ</mi><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>c</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">x_i = \lambda c_i + \mu (1 - c_i).</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord mathnormal">λ</span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">μ</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></p>
+<p data-block-id="b-db6096c0f9f1" data-sourcepos="317:1-317:355">With <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\lambda = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mu = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>, each battery is paid for its space bar in <a href="#fig-pooling" class="tali-xref">Figure&nbsp;2</a>: 0.1 MW to A and 0.8 MW to B, together the 0.9 MW sale. A gets the 0.1 MW it sells alone and B more than its 0.2 MW, so the split is in the core, on the left edge of the band. Tick the box under the sliders of <a href="#fig-evening-hour" class="tali-xref">Figure&nbsp;3</a> to see it, then move the charges.</p>
+<p data-block-id="b-f0739fedeee7" data-sourcepos="319:1-319:641">For any charges the dual has the same limit, with the fleet’s total charge and space in place of 1.1 and 0.9, so the cheapest prices add up to 1. A battery’s pay is then a weighted average of its charge and its space. An average is never below the smaller of the two numbers, and the smaller one is what the battery sells alone. The same holds for any group of batteries. Strong duality makes the payments add up to the fleet’s sale. Owen proved that this split is in the core for every linear production game [<a href="#ref-owen1975">3</a>]. In such a game, owners pool resources, and a group sells the most that its pooled resources allow under linear limits.</p>
+<p data-block-id="b-642b446bf6f2" data-sourcepos="321:1-321:211">A solver returns the prices together with the best bid. The cell below writes the evening hour’s program in CVXPY, a Python optimisation library, reads <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span> from the solver, and pays each battery.</p>
+<pre data-block-id="b-e0f4a0f800ae" data-sourcepos="323:1-342:3"><code class="language-python"><span class="tali-hl-source tali-hl-python"><span class="tali-hl-meta tali-hl-statement tali-hl-import tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-import tali-hl-python">import</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">cvxpy</span></span> <span class="tali-hl-keyword tali-hl-control tali-hl-import tali-hl-as tali-hl-python">as</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">cp</span></span></span>
+<span class="tali-hl-meta tali-hl-statement tali-hl-import tali-hl-python"><span class="tali-hl-keyword tali-hl-control tali-hl-import tali-hl-python">import</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">numpy</span></span> <span class="tali-hl-keyword tali-hl-control tali-hl-import tali-hl-as tali-hl-python">as</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">np</span></span></span>
+
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">c</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">np</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">array</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-constant tali-hl-numeric tali-hl-float tali-hl-python">0<span class="tali-hl-punctuation tali-hl-separator tali-hl-decimal tali-hl-python">.</span>90</span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-constant tali-hl-numeric tali-hl-float tali-hl-python">0<span class="tali-hl-punctuation tali-hl-separator tali-hl-decimal tali-hl-python">.</span>20</span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>  <span class="tali-hl-comment tali-hl-line tali-hl-number-sign tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-comment tali-hl-python">#</span> charge of A and B, MWh
+</span>
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">b</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">cp</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">Variable</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-variable tali-hl-parameter tali-hl-python">nonneg</span><span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span><span class="tali-hl-constant tali-hl-language tali-hl-python">True</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>  <span class="tali-hl-comment tali-hl-line tali-hl-number-sign tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-comment tali-hl-python">#</span> the fleet&#39;s bid, MW
+</span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">charge_limit</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">b</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">&lt;=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">c</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">sum</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">space_limit</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">b</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-comparison tali-hl-python">&lt;=</span> <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">-</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">c</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">sum</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">problem</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">cp</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">Problem</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">cp</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">Maximize</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">b</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-arguments tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-structure tali-hl-list tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-begin tali-hl-python">[</span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">charge_limit</span></span><span class="tali-hl-punctuation tali-hl-separator tali-hl-list tali-hl-python">,</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">space_limit</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-list tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+<span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">problem</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span></span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-variable tali-hl-function tali-hl-python">solve</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+
+<span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">lam</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">charge_limit</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">dual_value</span></span>  <span class="tali-hl-comment tali-hl-line tali-hl-number-sign tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-comment tali-hl-python">#</span> price of a MWh of charge
+</span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">mu</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">space_limit</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">dual_value</span></span>  <span class="tali-hl-comment tali-hl-line tali-hl-number-sign tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-comment tali-hl-python">#</span> price of a MWh of space
+</span><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">x</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-assignment tali-hl-python">=</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">lam</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">*</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">c</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">+</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">mu</span></span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">*</span> <span class="tali-hl-meta tali-hl-group tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-begin tali-hl-python">(</span><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span> <span class="tali-hl-keyword tali-hl-operator tali-hl-arithmetic tali-hl-python">-</span> <span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">c</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-group tali-hl-end tali-hl-python">)</span></span>  <span class="tali-hl-comment tali-hl-line tali-hl-number-sign tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-comment tali-hl-python">#</span> the dual split
+</span>
+<span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">print</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-storage tali-hl-type tali-hl-string tali-hl-python">f</span><span class="tali-hl-meta tali-hl-string tali-hl-interpolated tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-begin tali-hl-python">&quot;</span></span></span><span class="tali-hl-meta tali-hl-string tali-hl-interpolated tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python">bid: </span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-begin tali-hl-python">{</span><span class="tali-hl-source tali-hl-python tali-hl-embedded"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">problem</span><span class="tali-hl-punctuation tali-hl-accessor tali-hl-dot tali-hl-python">.</span><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">value</span></span></span><span class="tali-hl-meta tali-hl-format-spec tali-hl-python"><span class="tali-hl-constant tali-hl-other tali-hl-format-spec tali-hl-python">:.2f</span></span></span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-end tali-hl-python">}</span></span><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python"> MW<span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-end tali-hl-python">&quot;</span></span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+<span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">print</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-storage tali-hl-type tali-hl-string tali-hl-python">f</span><span class="tali-hl-meta tali-hl-string tali-hl-interpolated tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-begin tali-hl-python">&quot;</span></span></span><span class="tali-hl-meta tali-hl-string tali-hl-interpolated tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python">prices: charge </span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-begin tali-hl-python">{</span><span class="tali-hl-source tali-hl-python tali-hl-embedded"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">lam</span></span></span><span class="tali-hl-meta tali-hl-format-spec tali-hl-python"><span class="tali-hl-constant tali-hl-other tali-hl-format-spec tali-hl-python">:.2f</span></span></span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-end tali-hl-python">}</span></span><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python">, space </span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-begin tali-hl-python">{</span><span class="tali-hl-source tali-hl-python tali-hl-embedded"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">mu</span></span></span><span class="tali-hl-meta tali-hl-format-spec tali-hl-python"><span class="tali-hl-constant tali-hl-other tali-hl-format-spec tali-hl-python">:.2f</span></span></span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-end tali-hl-python">}</span></span><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-end tali-hl-python">&quot;</span></span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+<span class="tali-hl-meta tali-hl-function-call tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-support tali-hl-function tali-hl-builtin tali-hl-python">print</span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-begin tali-hl-python">(</span><span class="tali-hl-meta tali-hl-function-call tali-hl-arguments tali-hl-python"><span class="tali-hl-storage tali-hl-type tali-hl-string tali-hl-python">f</span><span class="tali-hl-meta tali-hl-string tali-hl-interpolated tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python"><span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-begin tali-hl-python">&quot;</span></span></span><span class="tali-hl-meta tali-hl-string tali-hl-interpolated tali-hl-python"><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python">dual split: A </span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-begin tali-hl-python">{</span><span class="tali-hl-source tali-hl-python tali-hl-embedded"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">x</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">0</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-format-spec tali-hl-python"><span class="tali-hl-constant tali-hl-other tali-hl-format-spec tali-hl-python">:.2f</span></span></span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-end tali-hl-python">}</span></span><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python"> MW, B </span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-begin tali-hl-python">{</span><span class="tali-hl-source tali-hl-python tali-hl-embedded"><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-meta tali-hl-qualified-name tali-hl-python"><span class="tali-hl-meta tali-hl-generic-name tali-hl-python">x</span></span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-begin tali-hl-python">[</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-arguments tali-hl-python"><span class="tali-hl-constant tali-hl-numeric tali-hl-integer tali-hl-decimal tali-hl-python">1</span></span><span class="tali-hl-meta tali-hl-item-access tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-brackets tali-hl-end tali-hl-python">]</span></span></span><span class="tali-hl-meta tali-hl-format-spec tali-hl-python"><span class="tali-hl-constant tali-hl-other tali-hl-format-spec tali-hl-python">:.2f</span></span></span><span class="tali-hl-meta tali-hl-interpolation tali-hl-python"><span class="tali-hl-punctuation tali-hl-section tali-hl-interpolation tali-hl-end tali-hl-python">}</span></span><span class="tali-hl-string tali-hl-quoted tali-hl-double tali-hl-python"> MW<span class="tali-hl-punctuation tali-hl-definition tali-hl-string tali-hl-end tali-hl-python">&quot;</span></span></span></span><span class="tali-hl-punctuation tali-hl-section tali-hl-arguments tali-hl-end tali-hl-python">)</span></span>
+</span></code></pre>
+<div class="tali-output" data-block-id="b-e0f4a0f800ae-out" data-sourcepos="323:1-342:3"><pre class="tali-stream">bid: 0.90 MW
+prices: charge 0.00, space 1.00
+dual split: A 0.10 MW, B 0.80 MW
+</pre></div>
+<p data-block-id="b-f7d3983be8c2" data-sourcepos="344:1-344:161">With more limits, such as each battery’s power or several hours in a row, there are more prices than <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span>, and the solver finds them the same way.</p>
+<h2 id="summary" data-block-id="b-93fec6ca2292" data-sourcepos="346:1-346:9">Summary</h2>
+<p data-block-id="b-ce105348d9ca" data-sourcepos="348:1-348:401">Two batteries sell more together than apart because one battery’s charge pairs with the other’s space. Pro rata can pay an owner less than its battery sells alone. The fleet’s sale is a linear program. Its dual puts a price on each MWh of charge and space, equal to what a little more of it would add. Paying every battery for its own charge and space at those prices gives a split in the core (Owen).</p>
+<p data-block-id="b-9caa402c01e7" data-sourcepos="350:1-350:18">What to read next:</p>
+<ul data-block-id="b-ad85859ee487" data-sourcepos="352:1-354:147"><li>Owen [<a href="#ref-owen1975">3</a>], for the theorem and its proof.</li><li>Bertsimas and Tsitsiklis [<a href="#ref-bertsimas1997">2</a>], chapter 4, cover duality and shadow prices.</li><li>Shapley [<a href="#ref-shapley1953">4</a>] defines the best-known other split. It averages what each battery adds over every order in which the batteries could join.</li></ul>
+<section class="tali-references" data-block-id="tali-references"><h2>References</h2><div id="ref-fingrid_fcr" class="csl-entry">[1] Fingrid, “The technical requirements and the prequalification process of Frequency Containment Reserves (FCR),” 2025. [Online]. Available: <a href="https://www.fingrid.fi/globalassets/dokumentit/en/electricity-market/reserves/the-technical-requirements-and-the-prequalification-process-of-frequency-containment-reserves-fcr-1.9.2025.pdf">https://www.fingrid.fi/globalassets/dokumentit/en/electricity-market/reserves/the-technical-requirements-and-the-prequalification-process-of-frequency-containment-reserves-fcr-1.9.2025.pdf</a>. Appendix 2 to the FCR market agreement, valid from 1.9.2025; the Finnish specifics on the opening pages (one Balance Responsible Party per FCR-N providing entity), the definitions of providing group and unit, section 3.5 (60 minutes of full FCR-N activation in both directions) and section 3.11 (aggregated resources). Accessed: 2026-11-06.</div><div id="ref-bertsimas1997" class="csl-entry">[2] D. Bertsimas and J. N. Tsitsiklis, <em>Introduction to Linear Optimization</em>. Belmont, MA: Athena Scientific, 1997.</div><div id="ref-owen1975" class="csl-entry">[3] G. Owen, “On the Core of Linear Production Games,” <em>Mathematical Programming</em>, vol. 9, no. 1, pp. 358–370, 1975.</div><div id="ref-shapley1953" class="csl-entry">[4] L. S. Shapley, “A Value for n-Person Games,” in <em>Contributions to the Theory of Games, Volume II</em>, Princeton University Press, 1953, pp. 307–317.</div></section>
+</article>
+</main>
+<nav id="TOC" tabindex="-1" aria-label="Table of contents" class="tali-toc" role="doc-toc"><ul><li><a href="#the-evening-hour">The evening hour</a></li><li><a href="#dual-prices">Dual prices</a><ul><li><a href="#the-core">The core</a></li><li><a href="#the-fleet-as-a-linear-program">The fleet as a linear program</a></li><li><a href="#prices-for-charge-and-space">Prices for charge and space</a></li><li><a href="#the-dual-split-is-in-the-core">The dual split is in the core</a></li></ul></li><li><a href="#summary">Summary</a></li></ul></nav>
+</div>
+<footer class="tali-site-footer" data-tali-src="_site.yml"><div class="tali-foot-inner"><div class="tali-foot-left"><span class="tali-foot-item">© 2026 Andreas Bogossian</span><a class="tali-foot-item" href="../../privacy.html">Privacy</a></div><div class="tali-foot-center"></div><div class="tali-foot-right"><a class="tali-foot-item" aria-label="linkedin" href="https://www.linkedin.com/in/andreas-bogossian/"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"/></svg></a><a class="tali-foot-item" aria-label="github" href="https://github.com/AJBogo9"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg></a><a class="tali-foot-item" aria-label="rss" href="../../blog.xml"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1m0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1"/></svg></a></div></div></footer>
+
+
+<script src="../../_assets/app.da79c6389a556f08.js" defer></script>
+<script>// Native interactive `{js}` cells — a tiny enhancer that replaces the vendored
+// 440 KB Observable runtime. Each `{js}` cell is emitted (render/mod.rs) as a
+// `<script type="application/tali-js">` carrying the author's JS plus a sibling
+// target `<div>`; this enhancer runs the source with a small scope and mounts a
+// returned DOM node into the target. Plot + d3 are vendored globals (window.Plot,
+// window.d3); Three.js is dynamically `import()`ed by the cell itself.
+//
+// The corpus's whole reactive surface is single-input fan-out (one input -> a few
+// sink cells; intermediate helpers are pure), so there is no dataflow engine here:
+// inputs are plain DOM elements and a sink re-runs when a named input fires. Cell
+// kinds (from `//|` options):
+//   //| viewof: NAME  -> returns a DOM input; registered as input NAME, mounted.
+//   //| name: NAME    -> return value stored in the shared scope as NAME.
+//   //| input: A, B   -> sink: re-runs when input/define A or B changes.
+//   (none)            -> one-shot: runs once; re-runs when a Python define lands.
+//
+// Cell scope: { get(n), set(n,v), value(n), defines, onInput(names,cb), container,
+// invalidation }. Registered through the same taliEnhancers registry as mermaid;
+// idempotent (a `data-tali-ran` guard) so it is safe to re-run after every mount.
+//
+// `publish` is deliberately absent from that list: it is a language-only hook, passed to a
+// language's `setup` as a fourth argument and never placed on the author-facing scope.
+//
+// The server names the cell in `render/client_lang.rs`: `is_client_lang` decides a fence is
+// a `{js}` cell, and its source rides in a `<script type="application/tali-js">`
+// (`JS_CELL_MIME`) inside a `.tali-js-cell` wrapper (`JS_CELL_CLASS`). `languages` below
+// maps that script type to the function that runs it, and `{js}` is its one entry.
+// Everything outside that function (mounting the returned node, publishing `//| name`,
+// registering `//| viewof`, the dependency graph, the live region, the error box, teardown)
+// is written once against the shared wrapper contract.
+(function () {
+  "use strict";
+  var AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+  /**
+   * A client-side cell language: given the cell's source, its scope api, its parsed
+   * `//|` options and the language-only hooks, return the thing that runs it. `run` is
+   * called once on mount and again on every scheduled re-run; `dispose` (optional) is
+   * called when the cell is torn down. A language never mounts the returned value itself —
+   * the shared wrapper does.
+   *
+   * `hooks` carries what a LANGUAGE may do and author source may not. It is a separate
+   * argument precisely because `api` is passed through to author cell source verbatim.
+   * @typedef {(src: string, api: any, opts: {name: string|null, viewof: string|null,
+   *   inputs: string[], kind: string}, hooks: {publish: (n: string, v: any) => Promise<void>})
+   *   => {run: () => any, dispose?: () => void}} TaliLangSetup
+   */
+  /** @type {Record<string, TaliLangSetup>} */
+  var languages = {};
+
+  /**
+   * @typedef {Object} TaliJsCell
+   * @property {string} kind
+   * @property {() => Promise<void>} run
+   * @property {string | null} defines
+   * @property {string[]} inputs
+   * @property {HTMLElement} container
+   * @property {() => void} dispose
+   * @property {{name: string, cb: () => void}[]} listeners
+   */
+  /**
+   * @typedef {Object} TaliJsGraph
+   * @property {Record<string, TaliJsCell[]>} consumers
+   * @property {TaliJsCell[]} order
+   * @property {TaliJsCell[]} cyclic
+   */
+  /**
+   * @typedef {Object} TaliJsRuntime
+   * @property {Record<string, any>} scope
+   * @property {Record<string, HTMLElement>} inputs
+   * @property {Record<string, any>} defines
+   * @property {Record<string, Set<() => void>>} listeners
+   * @property {TaliJsCell[]} cells
+   * @property {Record<string, Record<string, any>>} state
+   * @property {TaliJsGraph} [graph]
+   * @property {string[]} dropped names a teardown unpublished since the last mount
+   */
+
+  // Per-page singleton. Reset implicitly on navigation/reload; on a full re-mount
+  // the fresh DOM has no `data-tali-ran` guards, so every cell re-runs and rebuilds.
+  /** @returns {TaliJsRuntime} */
+  function rt() {
+    if (!window.__talijs) {
+      window.__talijs = {
+        scope: {}, inputs: {}, defines: {}, listeners: {}, cells: [], dropped: [],
+      };
+    }
+    return /** @type {TaliJsRuntime} */ (window.__talijs);
+  }
+
+  /** @param {any} el @returns {any} */
+  function readValue(el) {
+    if (!el) return undefined;
+    if (el.type === "checkbox") return el.checked;
+    if (el.type === "range" || el.type === "number") return el.valueAsNumber;
+    if (el.value !== undefined) return el.value;
+    return undefined;
+  }
+
+  // --- shareable control state in the URL fragment --------------------------
+  // `{{< input >}}` controls persist their values to the URL fragment as
+  // `name=value&...`, so a link captures the current view and reopening it (or a
+  // live-swap) restores every control + its downstream cells. A plain anchor
+  // fragment (`#heading`, no `=`) is left untouched, so heading / footnote / xref
+  // links still work; the first control change then replaces it with state.
+  function parseInputFragment() {
+    /** @type {Record<string, string>} */
+    var out = {};
+    var h = (location.hash || "").replace(/^#/, "");
+    var q = h;
+    if (q.indexOf("=") < 0) return out; // a plain anchor, not control state
+    q.split("&").forEach(function (kv) {
+      var i = kv.indexOf("=");
+      if (i < 0) return;
+      try {
+        out[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1));
+      } catch (e) {}
+    });
+    return out;
+  }
+  /** @param {any} el @param {string} val */
+  function applyInputValue(el, val) {
+    if (!el) return;
+    if (el.type === "checkbox") el.checked = val === "true" || val === "1" || val === "on";
+    else el.value = val;
+  }
+  function syncInputFragment() {
+    /** @type {string[]} */
+    var parts = [];
+    document.querySelectorAll("[data-tali-input]").forEach(function (el) {
+      var n = el.getAttribute("data-tali-input");
+      if (!n) return;
+      parts.push(encodeURIComponent(n) + "=" + encodeURIComponent(String(readValue(el))));
+    });
+    var url = "#" + parts.join("&");
+    // replaceState: change the URL without scrolling or spamming history on every tick.
+    try {
+      history.replaceState(null, "", url);
+    } catch (e) {
+      location.hash = url.replace(/^#/, "");
+    }
+  }
+
+  /** @param {TaliJsRuntime} r @param {string} name @param {HTMLElement | null} el */
+  function registerInput(r, name, el) {
+    if (!el) return;
+    r.inputs[name] = el;
+    el.addEventListener("input", function () {
+      // Re-run the transitive-downstream closure of this input, in dependency order
+      // (the cells that consume `name`, then whatever consumes their derived names).
+      scheduleFrom(r, name);
+      // Still fire any callbacks registered manually via the public `tali.onInput` API.
+      var set = r.listeners[name];
+      if (set) set.forEach(function (fn) { fn(); });
+    });
+  }
+
+  // Ingest `<script type="tali-define">` blobs (the Python `define` bridge): set
+  // the named values, then re-run every mounted cell: a define can land after
+  // the cells first ran (live preview executes Python after the page mounts). Returns
+  // that pass, or null when no define landed, so `enhance` can run its own passes after it.
+  /** @returns {Promise<void> | null} */
+  function bindDefines() {
+    var r = rt();
+    var changed = false;
+    document.querySelectorAll('script[type="tali-define"]:not([data-tali-bound])').forEach(function (s) {
+      s.setAttribute("data-tali-bound", "1");
+      try {
+        var obj = JSON.parse(s.textContent || "{}");
+        // The Python bridge emits Observable's `{contents:[{name,value}]}` shape;
+        // also accept a flat `{name: value}` map.
+        var pairs = /** @type {Array<{ name: string, value: any }>} */ (
+          Array.isArray(obj.contents)
+            ? obj.contents
+            : Object.keys(obj).map(function (k) { return { name: k, value: obj[k] }; })
+        );
+        pairs.forEach(function (p) { r.defines[p.name] = p.value; });
+        changed = true;
+      } catch (e) {
+        console.error("tali-js: malformed define blob", e);
+      }
+    });
+    // Defines usually land once (cold load) or on kernel restart; re-run every
+    // cell (sequentially, in dependency order) so inputs whose range depends on a define
+    // (e.g. a slider sized by history.length) and name-helpers reading defines
+    // rebuild before what reads them. It ran `r.cells` in MOUNT order, which a live edit
+    // reshuffles, so a sink could run before the producer it reads and keep the old
+    // product; graph order also leaves cyclic cells showing their diagnostic.
+    return changed ? runSequentially((r.graph || buildGraph(r)).order) : null;
+  }
+
+  /**
+   * `owned` is the calling cell's own registration list: every `onInput` callback is
+   * recorded on it as well as in the shared `r.listeners` map, so `teardownIn` can take
+   * the cell's callbacks back out again. Without that record the two are indistinguishable
+   * — a Set of anonymous closures says nothing about which cell put them there — and a
+   * torn-down cell's callback fired forever against detached DOM (one more copy per edit).
+   * @param {TaliJsRuntime} r @param {HTMLElement} container
+   * @param {() => (Promise<void> | null)} getInv
+   * @param {{name: string, cb: () => void}[]} owned
+   */
+  function makeApi(r, container, getInv, owned) {
+    return {
+      /** @param {string} n */
+      get: function (n) { return r.scope[n]; },
+      /** @param {string} n @param {any} v */
+      set: function (n, v) { r.scope[n] = v; },
+      /** @param {string} n */
+      value: function (n) {
+        return r.inputs[n] ? readValue(r.inputs[n]) : r.defines[n];
+      },
+      defines: r.defines,
+      /** @param {string | string[]} names @param {() => void} cb */
+      onInput: function (names, cb) {
+        (Array.isArray(names) ? names : [names]).forEach(function (n) {
+          (r.listeners[n] = r.listeners[n] || new Set()).add(cb);
+          owned.push({ name: n, cb: cb });
+        });
+      },
+      container: container,
+      get invalidation() { return getInv(); },
+    };
+  }
+
+  // AP7-2. A `//| input:` sink is a region of the document that rewrites itself as a
+  // consequence of the reader operating a control somewhere else on the page. Driving a
+  // slider from the keyboard changed six output regions on `corpus/reactive/inputs.tmd`
+  // with every live region on the page empty and no `.tali-js-out` carrying `aria-live`
+  // (7 of 7): a screen-reader user heard the slider value and was told nothing about the
+  // document that changed under it. This is the explorable-explanation feature, the most
+  // web-native thing the tool does, and it was silent.
+  //
+  // Marked from the FIRST run's output, so the region is already live before the reader
+  // can change anything, and only when that output is TEXT. A chart is the common sink and
+  // it has nothing useful to speak: re-reading an SVG's tick labels on every arrow-key tick
+  // is worse than silence, and a region that cries wolf gets turned off. (Measured on built
+  // `corpus/descent`: one of its three sink regions carries Plot's injected stylesheet as
+  // its text, so marking every sink live would announce raw CSS.) Text sinks are exactly
+  // the ones whose new content IS the answer the reader is looking for, so they are
+  // `atomic` — "k doubled (transitively) = 16" reads as one sentence, not as a diff.
+  //
+  // Idempotent, and never downgrades: a cell that painted text once keeps its live region
+  // even if a later run is empty (an empty region announces nothing anyway).
+  /** @param {Element | null} container */
+  function markLiveIfTextual(container) {
+    if (!container || container.getAttribute("aria-live")) return;
+    if (container.querySelector("svg, canvas, img, video, iframe")) return;
+    if (!(container.textContent || "").trim()) return;
+    container.setAttribute("aria-live", "polite");
+    container.setAttribute("aria-atomic", "true");
+  }
+
+  // Render a failure into the cell's output container. In the live preview (client.js
+  // defines taliOpenPageSource) show the full stack so the author can debug; in
+  // built/published output degrade to a terse themed message so a reader never sees a raw
+  // `TypeError ... at <anonymous>` leak. The full error always reaches console.error.
+  /** @param {HTMLElement} container @param {any} e */
+  function showCellError(container, e) {
+    var pre = document.createElement("pre");
+    pre.className = "tali-js-error";
+    pre.textContent = (typeof window.taliOpenPageSource === "function")
+      ? String((e && e.stack) || e)
+      : "This interactive element couldn't load.";
+    container.replaceChildren(pre);
+  }
+
+  /** @param {HTMLElement} script */
+  function setupCell(script) {
+    var r = rt();
+    // const so the null-guard below survives into the async run()/dispose closures.
+    const container = document.getElementById(script.getAttribute("data-target") || "");
+    if (!container) return;
+    var setup = languages[script.getAttribute("type") || ""];
+    if (!setup) return;
+    var src = script.textContent || "";
+    var name = script.getAttribute("data-name") || null;
+    var viewof = script.getAttribute("data-viewof") || null;
+    var inputs = (script.getAttribute("data-inputs") || "")
+      .split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    var kind = viewof ? "input" : (inputs.length ? "sink" : "once");
+
+    // Per-run invalidation: resolve the prior run's promise before re-running, so
+    // cells can tear down Three.js renderers / RAF loops / listeners on re-run.
+    // The same `resolveInv` is also fired by the cell's `dispose()` (below) when its
+    // block is edited away / unmounted, so DOM removal triggers author teardown too
+    // — not only a re-run does. Without that, editing a `{js}`/Three.js cell (which
+    // changes its content-hash block id, so the client replaces the node) would
+    // detach the old renderer with its `invalidation.then(...)` cleanup never run,
+    // leaking a WebGL context + RAF loop on every edit.
+    var resolveInv = /** @type {((value?: unknown) => void) | null} */ (null);
+    var currentInv = /** @type {Promise<any> | null} */ (null);
+    function freshInv() {
+      if (resolveInv) { resolveInv(); }
+      currentInv = new Promise(function (res) { resolveInv = res; });
+      return currentInv;
+    }
+    /** @type {{name: string, cb: () => void}[]} */
+    var listeners = [];
+    var api = makeApi(r, container, function () { return currentInv; }, listeners);
+    // Hand the source to the registered language. `setup` is where a language does its
+    // one-time work — compiling the author's JS into an AsyncFunction, linking a shader
+    // program — so it is the first thing that can fail, and a failure here used to escape
+    // `enhance`'s forEach and take the rest of the page's cells with it (a `{js}` cell with
+    // a SyntaxError never reached the run-time catch below, because the throw was at
+    // construction). Now a bad cell shows its own error box and its siblings still mount.
+    /** @type {{run: () => any, dispose?: () => void}} */
+    var impl;
+    try {
+      impl = setup(src, api, { name: name, viewof: viewof, inputs: inputs, kind: kind }, {
+        // Publish a value that arrived AFTER this cell's `run()` resolved, and re-run the
+        // cells that consume it. The shared wrapper publishes a cell's RETURN value and the
+        // scheduler orders everything, which is correct for a synchronous language; a
+        // language whose value is genuinely asynchronous (one that must boot a runtime
+        // before it can execute) has no such moment.
+        //
+        // A FOURTH ARGUMENT rather than a method on `api`, and that is the whole safety
+        // design: `api` is handed verbatim to author cell source as `tali` (see the
+        // `application/tali-js` registration below), so anything on it — or on its
+        // prototype — is author-reachable. A cell that could publish to a name it also
+        // declares as an `//| input:` would create a feedback edge `buildGraph` never saw
+        // and never cycle-checked, recursing without a guard: the reactive VM this project
+        // has refused three times. Passing the capability to the LANGUAGE instead means
+        // author source cannot reach it by any route, including a deliberate prototype
+        // walk. A masking shield on `api` was tried first and leaked through
+        // `Object.getPrototypeOf(tali).publish`.
+        publish: function (n, v) { r.scope[n] = v; return scheduleFrom(r, n); },
+      });
+    } catch (e) {
+      console.error("tali-js cell error:", e);
+      showCellError(container, e);
+      script.setAttribute("data-tali-done", "1");
+      return;
+    }
+
+    // `run` is async and AWAITED by the processing loops, so a `//| name:` helper's
+    // value is in the shared scope before a later cell reads it via tali.get() — the
+    // cross-cell contract OJS got from its module graph, without a reactive engine.
+    //
+    // `disposed` is set when the cell's block is edited away. A run still awaiting then
+    // must not publish: a slow first save's value used to land after the fast second
+    // save's and win the shared scope for good, and an async `viewof` registered a
+    // detached control, so the slider on screen drove nothing.
+    var disposed = false;
+    async function run() {
+      if (disposed) return;
+      freshInv();
+      try {
+        var node = await impl.run();
+        if (disposed) return;
+        // The returned value is arbitrary author output; `na` reads its duck-typed
+        // `.value` / `.querySelector` (an input control, a wrapper, or neither).
+        var na = /** @type {any} */ (node);
+        if (node instanceof Node) {
+          /** @type {HTMLElement} */ (container).replaceChildren(node);
+          if (viewof) {
+            // the cell may return the control itself or a labeled wrapper around it
+            var ctrl = na.value !== undefined ? node
+              : (na.querySelector ? na.querySelector("input, select, textarea") : null);
+            registerInput(r, viewof, ctrl);
+          }
+        }
+        if (name) {
+          r.scope[name] = (node instanceof Node && na.value !== undefined) ? na.value : node;
+        }
+        if (kind === "sink") { markLiveIfTextual(container); }
+      } catch (e) {
+        if (disposed) return;
+        console.error("tali-js cell error:", e);
+        showCellError(/** @type {HTMLElement} */ (container), e);
+      } finally {
+        // A finished run, whether or not it painted. `data-tali-ran` is stamped at
+        // registration (before the cell body runs), and a cell may legitimately emit
+        // no DOM (a `//| name:` value publisher, an `//| input:` effect), so neither
+        // that attribute nor "the output div has children" says the cell is done.
+        // This one does, which is what a screenshot harness has to wait on.
+        script.setAttribute("data-tali-done", "1");
+      }
+    }
+
+    // `defines` is the name this cell publishes (a `//| name` value or a `//| viewof`
+    // input); `inputs` are the names it consumes. The dependency graph (buildGraph) is
+    // built from these, so a `//| input:` sink re-runs through the graph, not a per-input
+    // listener — which is what makes transitive chains (n -> squared -> here) work.
+    var cell = {
+      kind: kind,
+      run: run,
+      defines: name || viewof,
+      inputs: inputs,
+      container: container,
+      // Every `tali.onInput` callback this cell registered, so teardown can take them
+      // back out of the shared `r.listeners` map (see `makeApi`).
+      listeners: listeners,
+      // Resolve the outstanding `invalidation` (running the author's
+      // `invalidation.then(() => renderer.dispose())` teardown) so the cell can be
+      // dropped, then let the LANGUAGE tear down whatever the author cannot see (a WebGL
+      // context held by an `import()`ed three.js renderer). Idempotent: nulls the resolver
+      // so a later dispose is a no-op.
+      dispose: function () {
+        disposed = true;
+        if (resolveInv) { resolveInv(); resolveInv = null; }
+        if (impl.dispose) impl.dispose();
+      },
+    };
+    // In DOCUMENT order, not mount order: a block re-mounted by an edit would otherwise
+    // move its cell to the end, and the graph's tie-break (authoring order wherever no
+    // edge decides) would drift from the page edit by edit.
+    var at = r.cells.findIndex(function (c) {
+      return !!c.container &&
+        !!(c.container.compareDocumentPosition(container) & Node.DOCUMENT_POSITION_PRECEDING);
+    });
+    if (at < 0) r.cells.push(cell);
+    else r.cells.splice(at, 0, cell);
+    return cell;
+  }
+
+  // Tear down + drop every cell whose container is inside (or is) `node`: resolve its
+  // `invalidation` so author cleanup runs (renderer.dispose / cancelAnimationFrame /
+  // removeEventListener), then splice it out of `r.cells` so the push-only list can't
+  // accumulate stale cells across edits. Also unregister any input the cell published,
+  // so a re-mount re-registers a live element rather than firing a detached one, and drop
+  // the `tali.onInput` callbacks it registered. Called by the client BEFORE it detaches an
+  // outgoing block (Update/Remove).
+  //
+  // The callbacks are the half that has no other owner. `r.cells` and `r.inputs` are both
+  // keyed by something teardown can find again; `r.listeners` is a name -> Set-of-closures
+  // map that nothing else indexes, so before the cell recorded its own registrations
+  // (`makeApi`) there was no way to tell which of them belonged to the block going away.
+  // Measured before this: three edits to a `{js}` cell that calls `tali.onInput` left
+  // `cells.length` correctly at 2 and `listeners.k.size` at 4, so one slider event ran the
+  // callback four times, three of them painting DOM that was no longer in the document.
+  // The cost was permanent for the session and grew with every edit.
+  /** @param {Node | null} node */
+  function teardownIn(node) {
+    if (!node || !window.__talijs) return;
+    var r = /** @type {TaliJsRuntime} */ (window.__talijs);
+    /** @type {TaliJsCell[]} */
+    var kept = [];
+    r.cells.forEach(function (c) {
+      var inside = c.container && (c.container === node || (node.contains && node.contains(c.container)));
+      if (inside) {
+        try { if (c.dispose) c.dispose(); } catch (e) { console.error("tali-js: cell teardown failed", e); }
+        (c.listeners || []).forEach(function (l) {
+          var set = r.listeners[l.name];
+          if (!set) return;
+          set.delete(l.cb);
+          // An emptied name would otherwise sit in the map forever, keyed by an input the
+          // edit may have deleted along with the cell.
+          if (!set.size) delete r.listeners[l.name];
+        });
+        if (c.defines && r.inputs[c.defines] && c.container.contains(r.inputs[c.defines])) {
+          delete r.inputs[c.defines];
+        }
+        if (c.defines) r.dropped.push(c.defines);
+      } else {
+        kept.push(c);
+      }
+    });
+    if (kept.length !== r.cells.length) {
+      r.cells = kept;
+      delete r.graph; // the dependency graph is stale once cells are removed
+    }
+    // A `{{< input >}}` control is not a cell, so the loop above never saw it: without this
+    // a deleted control stayed registered, detached, and its consumers kept its last value.
+    var el0 = /** @type {Element} */ (node);
+    var controls = el0.querySelectorAll ? [...el0.querySelectorAll("[data-tali-input]")] : [];
+    if (el0.matches && el0.matches("[data-tali-input]")) controls.push(el0);
+    controls.forEach(function (el) {
+      var n = el.getAttribute("data-tali-input");
+      if (n && r.inputs[n] === el) {
+        delete r.inputs[n];
+        r.dropped.push(n);
+      }
+    });
+  }
+
+  // Resolve EVERY outstanding invalidation and drop the whole runtime, so a
+  // `full_render` (which blows away `#tali-root` wholesale) doesn't leak the prior
+  // page's WebGL contexts / RAF loops and doesn't re-push duplicate cells onto a
+  // never-reset `r.cells`. The next `enhance()` lazily rebuilds a fresh `window.__talijs`.
+  function resetRuntime() {
+    var r = /** @type {TaliJsRuntime | null} */ (window.__talijs);
+    if (!r) return;
+    (r.cells || []).forEach(function (c) {
+      try { if (c.dispose) c.dispose(); } catch (e) { console.error("tali-js: cell teardown failed", e); }
+    });
+    window.__talijs = null;
+  }
+
+  // `{js}` itself: the author's source becomes an async function over the drawing globals.
+  //
+  // Author source receives `api` verbatim as `tali`. That is safe because the one
+  // capability author source must not have — `publish`, which SCHEDULES a downstream pass —
+  // is not on `api` at all; it is a language-only hook passed as `setup`'s fourth argument.
+  languages["application/tali-js"] = function (src, api) {
+    var fn = new AsyncFunction("tali", "Plot", "d3", "container", "invalidation", src);
+    return {
+      run: function () {
+        return fn(api, window.Plot, window.d3, api.container, api.invalidation);
+      },
+    };
+  };
+
+  // Public API for the live-preview client (web-client/client.js): two teardown hooks, one
+  // for a block about to be replaced/removed and one before a full re-mount.
+  window.taliJs = window.taliJs || {};
+  window.taliJs.teardown = teardownIn;
+  window.taliJs.reset = resetRuntime;
+
+  // Run a list of cells in document order, awaiting each — so `//| name:` outputs
+  // are stored before dependent cells run.
+  /** @param {TaliJsCell[]} cells */
+  async function runSequentially(cells) {
+    for (var i = 0; i < cells.length; i++) await cells[i].run();
+  }
+
+  // Build (and cache on `r`) the cell dependency graph: a name -> consumers map plus a
+  // global topological order via Kahn's algorithm over `producer.defines -> consumer`
+  // edges. Cells left over after Kahn's are in a dependency cycle -> diagnosed (and then
+  // excluded from scheduling). Rebuilt whenever fresh cells mount.
+  /** @param {TaliJsRuntime} r @returns {TaliJsGraph} */
+  function buildGraph(r) {
+    var cells = r.cells;
+    /** @type {Record<string, TaliJsCell[]>} */
+    var consumers = {}; // define-name -> [cells listing it in `inputs`]
+    cells.forEach(function (c) {
+      c.inputs.forEach(function (n) { (consumers[n] = consumers[n] || []).push(c); });
+    });
+    /** @type {Map<TaliJsCell, number>} */
+    var indeg = new Map();
+    cells.forEach(function (c) { indeg.set(c, 0); });
+    cells.forEach(function (c) {
+      if (c.defines) (consumers[c.defines] || []).forEach(function (cc) {
+        indeg.set(cc, (indeg.get(cc) || 0) + 1);
+      });
+    });
+    // Kahn's algorithm taking the EARLIEST ready cell each step (`r.cells` is in document
+    // order), so authoring order holds wherever no edge decides.
+    var queue = cells.filter(function (c) { return indeg.get(c) === 0; });
+    /** @type {TaliJsCell[]} */
+    var order = [];
+    while (queue.length) {
+      var c = /** @type {TaliJsCell} */ (queue.shift());
+      order.push(c);
+      if (c.defines) (consumers[c.defines] || []).forEach(function (cc) {
+        indeg.set(cc, (indeg.get(cc) || 0) - 1);
+        if (indeg.get(cc) === 0) {
+          queue.push(cc);
+          queue.sort(function (a, b) { return cells.indexOf(a) - cells.indexOf(b); });
+        }
+      });
+    }
+    var cyclic = cells.filter(function (c) { return order.indexOf(c) < 0; });
+    cyclic.forEach(function (c) {
+      console.error("tali-js: dependency cycle involving", c.defines || "(unnamed cell)");
+      if (c.container) {
+        var pre = document.createElement("pre");
+        pre.className = "tali-js-error";
+        pre.textContent = "tali-js: dependency cycle involving `" + (c.defines || "this cell") + "`";
+        c.container.replaceChildren(pre);
+      }
+    });
+    r.graph = { consumers: consumers, order: order, cyclic: cyclic };
+    return r.graph;
+  }
+
+  // The cells transitively downstream of one or more changed names, in topological order.
+  // BFS over the consumers map, following each hit cell's own `defines` (so n -> squared ->
+  // ... chains are followed). Cyclic cells are excluded (they never enter `order`, and show
+  // their diagnostic instead). Takes a LIST of seeds so a mount that republishes several
+  // names is one merged pass: a consumer fed by two of them must still run exactly once.
+  /** @param {TaliJsRuntime} r @param {string[]} seeds @returns {TaliJsCell[]} */
+  function downstreamInOrder(r, seeds) {
+    var g = r.graph || buildGraph(r);
+    /** @type {Set<TaliJsCell>} */
+    var hit = new Set();
+    var q = seeds.slice();
+    while (q.length) {
+      var n = /** @type {string} */ (q.shift());
+      (g.consumers[n] || []).forEach(function (c) {
+        if (!hit.has(c)) { hit.add(c); if (c.defines) q.push(c.defines); }
+      });
+    }
+    return g.order.filter(function (c) { return hit.has(c); });
+  }
+
+  // The cells a mount leaves STALE: everything downstream of a name the freshly-mounted
+  // cells publish, minus those cells themselves.
+  //
+  // A re-mount makes only the EDITED block fresh. So changing a `//| name:` producer's body
+  // (`** 2` -> `** 3`) re-ran that one cell and nothing else: it republished `squared` into
+  // the shared scope and its consumers went on painting the value the OLD code produced,
+  // until the reader happened to move a slider and `scheduleFrom` swept them up. A preview
+  // displaying a page that contradicts its own source.
+  //
+  // Excluding `mounted` is what keeps this from being a re-run of the whole graph on every
+  // mount: on a COLD load every cell is fresh, so the seeds' entire closure is the fresh set
+  // itself and this correctly returns nothing. (For the same reason it is one merged pass
+  // rather than a `scheduleFrom` per seed, which would re-run a shared consumer once per
+  // producer feeding it, repainting charts and rebuilding `import()`ed renderers for no
+  // change in what they display.)
+  //
+  // `names` are the other ways a mount changes what a name means without re-mounting its
+  // consumers: an `{{< input >}}` control bound fresh (its default or name was edited), and
+  // a name a teardown unpublished (a renamed `viewof`, a deleted control). Seeding only
+  // from re-mounted producers left `k = 3` under a slider now reading 8.
+  /**
+   * @param {TaliJsRuntime} r @param {TaliJsCell[]} mounted @param {string[]} [names]
+   * @returns {TaliJsCell[]}
+   */
+  function staleAfterMount(r, mounted, names) {
+    /** @type {string[]} */
+    var seeds = (names || []).slice();
+    mounted.forEach(function (c) { if (c.defines) seeds.push(c.defines); });
+    if (!seeds.length) return [];
+    /** @type {Set<TaliJsCell>} */
+    var already = new Set(mounted);
+    return downstreamInOrder(r, seeds).filter(function (c) { return !already.has(c); });
+  }
+
+  // What a mount runs, in order: the freshly mounted cells in DEPENDENCY order, then the
+  // cells the mount left stale. The fresh cells used to run in document order, so a
+  // consumer written above its producer read `undefined` on every load and in the built
+  // page, while the live preview (which re-runs consumers after a producer re-mounts)
+  // showed the right value. Cyclic cells are in no `order`, so they keep their diagnostic.
+  /**
+   * @param {TaliJsRuntime} r @param {TaliJsCell[]} fresh @param {string[]} names
+   * @returns {{fresh: TaliJsCell[], stale: TaliJsCell[]}}
+   */
+  function mountPlan(r, fresh, names) {
+    var g = r.graph || buildGraph(r);
+    var first = g.order.filter(function (c) { return fresh.indexOf(c) >= 0; });
+    return { fresh: first, stale: staleAfterMount(r, first, names) };
+  }
+
+  // Re-run exactly the closure downstream of `name`, once each, in dependency order — a
+  // single controlled pass (NOT cascading listener fires, which would be a reactive VM).
+  //
+  // Returns the pass's promise. Every caller ignores it, so an input change is
+  // fire-and-forget; it was awaited by the `animate` tick's frame pump, which was retired
+  // on 2026-08-03 along with the `pending` map that parked it.
+  /** @param {TaliJsRuntime} r @param {string} name @returns {Promise<void>} */
+  function scheduleFrom(r, name) {
+    var cells = downstreamInOrder(r, [name]);
+    return cells.length ? runSequentially(cells) : Promise.resolve();
+  }
+
+  /** @param {ParentNode | null} [root] */
+  function enhance(root) {
+    var defined = bindDefines(); // ingest any define blobs already present before running cells
+    var r = rt();
+    /** @type {string[]} */
+    var bound = [];
+    // Register declarative `{{< input >}}` controls (static HTML tagged data-tali-input) as
+    // named reactive inputs, BEFORE cells run so their value is available on first run.
+    // Reuses the same registerInput path as `//| viewof` cells; the change event fires the
+    // existing scheduleFrom (transitive-downstream re-run). Live-swap re-registers via the
+    // :not(...) guard. A sibling [data-tali-out] (the slider readout) tracks the value.
+    var frag = parseInputFragment();
+    /** @type {NodeListOf<HTMLElement>} */ (
+      (root || document).querySelectorAll("[data-tali-input]:not([data-tali-input-bound])")
+    ).forEach(function (el) {
+        el.setAttribute("data-tali-input-bound", "1");
+        var name = el.getAttribute("data-tali-input");
+        if (!name) return;
+        bound.push(name);
+        // Hydrate from the URL fragment BEFORE cells run, so a shared link restores the
+        // control (and its downstream cells) on first paint.
+        if (Object.prototype.hasOwnProperty.call(frag, name)) applyInputValue(el, frag[name]);
+        registerInput(r, name, el);
+        // Persist to the fragment on every change (shareable/deep-linkable state).
+        el.addEventListener("input", syncInputFragment);
+        // const so the null-guard survives into the `upd` input closure.
+        const out = el.parentNode && el.parentNode.querySelector("[data-tali-out]");
+        if (out) {
+          var upd = function () { out.textContent = String(readValue(el)); };
+          el.addEventListener("input", upd);
+          upd();
+        }
+      });
+    /** @type {TaliJsCell[]} */
+    var fresh = [];
+    // Every registered client-side language in ONE document-order pass, so a page mixing
+    // two languages still mounts its cells in the order they were authored (which is the
+    // producer-before-consumer convention the initial run relies on). Selecting per
+    // language would group by language instead, and a cell reading a `//| name:` published
+    // by a later-selected cell of another language would read undefined on first paint.
+    var selector = Object.keys(languages)
+      .map(function (m) { return 'script[type="' + m + '"]:not([data-tali-ran])'; })
+      .join(",");
+    /** @type {NodeListOf<HTMLElement>} */ (
+      (root || document).querySelectorAll(selector)
+    ).forEach(function (s) {
+      s.setAttribute("data-tali-ran", "1");
+      var c = setupCell(s);
+      if (c) fresh.push(c);
+    });
+    if (fresh.length) buildGraph(r); // (re)derive the graph + diagnose cycles
+    // Read off the graph we just built, BEFORE anything runs, so the closure is decided
+    // against one consistent snapshot rather than against whatever a mid-pass teardown
+    // leaves behind. Then the passes are chained: a stale consumer reads its producer's
+    // value out of the shared scope, so it must not start until that producer has resolved,
+    // and neither pass may interleave with a define's pass over the cells already mounted.
+    var plan = mountPlan(r, fresh, bound.concat(r.dropped.splice(0)));
+    Promise.resolve(defined)
+      .then(function () { return runSequentially(plan.fresh); })
+      .then(function () { return runSequentially(plan.stale); });
+  }
+
+  if (window.taliEnhancers && window.taliEnhancers.register) {
+    window.taliEnhancers.register(enhance);
+  } else {
+    document.addEventListener("DOMContentLoaded", function () { enhance(document); });
+  }
+})();
+</script>
+<script type="speculationrules">{"prefetch":[{"where":{"href_matches":"/*.html"},"eagerness":"moderate"}]}</script>
+<script>document.addEventListener('DOMContentLoaded',function(){window.taliEnhanceCode&&window.taliEnhanceCode(document.body);});</script>
+
+
+<script defer src="/b.js" data-site="andreasbogossian.com" data-endpoint="https://t.andreasbogossian.com/e"></script>
+</body>
+</html>
