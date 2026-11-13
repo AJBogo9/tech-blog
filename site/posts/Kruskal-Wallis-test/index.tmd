@@ -198,7 +198,7 @@ const rt_pts_pooled = rt_flat_pain.map((d, i) => ({
   group: pain_labels[d.group],
 }));
 
-return Plot.plot({
+const chart = Plot.plot({
   width: 680,
   height: 270,
   marginLeft: 145,
@@ -233,6 +233,12 @@ return Plot.plot({
     }),
   ],
 });
+// the dots are decorative: drop the "dot" label Plot puts on each group and hide them from screen readers
+for (const g of chart.querySelectorAll('g[aria-label="dot"]')) {
+  g.removeAttribute("aria-label");
+  g.setAttribute("aria-hidden", "true");
+}
+return chart;
 ```
 
 # Deriving the $H$ statistic
@@ -241,9 +247,7 @@ return Plot.plot({
 
 Abstracting from the medical example, let's say that we have $K$ groups with the number of observations in each group being $n_1, ..., n_K$. Then the total number of observations is $N = \sum_j n_j$. After combining the observations into one pool and ranking them (as shown in @fig-rank-transform), let $R_{ij}$ be the rank of the $i$-th observation in group $j$. 
 
-The goal is to test whether the groups share the same distribution with each other. Transforming this into a null hypothesis becomes 
-
-$$H_0: \text{the ranks } 1, 2, \ldots, N \text{ are randomly distributed across groups}$$
+The goal is to test whether the groups share the same distribution with each other. Transforming this into a null hypothesis becomes $H_0$: the ranks $1, 2, \ldots, N$ are randomly distributed across groups.
 
 So the next question to answer is: what does a large deviation from the random distribution look like and how can we measure the deviation?
 
@@ -251,7 +255,13 @@ So the next question to answer is: what does a large deviation from the random d
 
 Under $H_0$, every rank is equally likely to fall into any group. Then the expected value of a single rank $R$ drawn from the uniform set $\{1, \ldots, N\}$ is
 
-$$\mathbb{E}[R] = \frac{1}{N} \sum_{r=1}^{N} r = \frac{1}{N}\frac{N(N+1)}{2} = \frac{N+1}{2}$$ {#eq-expected-rank}
+$$
+\begin{aligned}
+\mathbb{E}[R] &= \frac{1}{N} \sum_{r=1}^{N} r \\
+&= \frac{1}{N}\frac{N(N+1)}{2} \\
+&= \frac{N+1}{2}
+\end{aligned}
+$$ {#eq-expected-rank}
 
 The expected mean rank in all groups is $\bar{R} = \frac{N+1}{2}$, regardless of the individual group sizes. The only thing that matters is the total sample size. If $H_0$ is true, all groups' mean ranks should hover around $\bar{R}$.
 
@@ -270,18 +280,23 @@ $$SS_{\text{between}} = \sum_{j=1}^{K} n_j \left(\bar{x}_j - \bar{x}\right)^2$$
 To turn $T$ from @eq-rank-ss into a statistic with a known null distribution, we need to normalize it by the variance of the ranks. With @eq-expected-rank, the variance for a discrete uniform distribution on $\{1, \dots, N\}$ is:
 
 $$\begin{align*}
-\text{Var}(R) = \sigma^2_R &= \mathbb{E}[R^2] - \left(\mathbb{E}[R]\right)^2 \\
-&= \frac{1}{N}\sum_{r=1}^{N} r^2 - \left(\frac{N+1}{2}\right)^2 \\
-&= \frac{(N+1)(2N+1)}{6} - \frac{(N+1)^2}{4} \\
-&= (N+1)\left[\frac{2(2N+1)}{12} - \frac{3(N+1)}{12}\right] \\
-&= (N+1) \cdot \frac{4N+2 - 3N-3}{12} \\
-&= \frac{(N+1)(N-1)}{12} \\
-&= \frac{N^2-1}{12}
+&\text{Var}(R) = \sigma^2_R = \mathbb{E}[R^2] - \left(\mathbb{E}[R]\right)^2 \\
+&\quad= \frac{1}{N}\sum_{r=1}^{N} r^2 - \left(\frac{N+1}{2}\right)^2 \\
+&\quad= \frac{(N+1)(2N+1)}{6} - \frac{(N+1)^2}{4} \\
+&\quad= (N+1)\left[\frac{2(2N+1)}{12} - \frac{3(N+1)}{12}\right] \\
+&\quad= (N+1) \cdot \frac{4N+2 - 3N-3}{12} \\
+&\quad= \frac{(N+1)(N-1)}{12} \\
+&\quad= \frac{N^2-1}{12}
 \end{align*}$$
 
 By analogy with the ANOVA F-statistic, we normalise $T$ by $SS_{\text{total}}/(N-1)$, where the total rank sum-of-squares for the complete set of ranks $\{1,\dots,N\}$ is $SS_{\text{total}} = N\sigma^2_R = \frac{N(N^2-1)}{12}$:
 
-$$H = (N-1)\cdot\frac{T}{SS_{\text{total}}} = \frac{12}{N(N+1)} \sum_{j=1}^{K} n_j \left(\bar{R}_j - \frac{N+1}{2}\right)^2$$
+$$
+\begin{aligned}
+H &= (N-1)\cdot\frac{T}{SS_{\text{total}}} \\
+&= \frac{12}{N(N+1)} \sum_{j=1}^{K} n_j \left(\bar{R}_j - \frac{N+1}{2}\right)^2
+\end{aligned}
+$$
 
 The factor $12/[N(N+1)]$ scales $H$ so that its expected value under $H_0$ equals $K-1$, which is exactly the degrees-of-freedom parameter of a chi-square distribution. For large $N$, $H \xrightarrow{d} \chi^2(K-1)$ under $H_0$.
 
@@ -341,7 +356,7 @@ test_rows = (
 )
 
 display(HTML(f"""
-<p style="font-size:0.85em;color:#aaa;margin-bottom:4px;">
+<p style="font-size:0.85em;color:var(--tali-muted);margin-bottom:4px;">
   Grand mean rank (null expectation): {grand_mean_rank:.1f}
 </p>
 <table style="border-collapse:collapse;font-size:0.9em;margin-bottom:1.2em;">
