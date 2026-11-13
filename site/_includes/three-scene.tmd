@@ -158,6 +158,32 @@ return async function makeScene3D(buildScene, invalidation, opts = {}) {
     ctrl.dampingFactor = 0.06;
     ctrl.minDistance   = minDistance;
     ctrl.maxDistance   = maxDistance;
+    // The mouse wheel scrolls the page, not the scene: with zoom on, a reader scrolling past
+    // the figure got stuck zooming it. Fullscreen turns zoom back on (onFSChange below),
+    // since there is no page to scroll there.
+    ctrl.enableZoom    = false;
+
+    // OrbitControls sets `touch-action: none` on the canvas, and on a phone the canvas fills
+    // the column, so a swipe meant to scroll the page rotated the scene instead (UX audit,
+    // 2026-11-13: 0 px of scroll over the canvas). On a touch-first device a transparent
+    // layer covers the canvas and keeps the browser's own touch handling, so swipes over it
+    // scroll the page. A tap lifts it and hands touches to OrbitControls; a touch anywhere
+    // outside the figure puts it back.
+    const touchFirst = window.matchMedia("(pointer: coarse)").matches;
+    const gate = document.createElement("button");
+    gate.style.cssText =
+      "position:absolute;inset:0;z-index:5;margin:0;padding:0;border:0;background:transparent;";
+    const gateLabel = document.createElement("span");
+    gateLabel.textContent = "Tap to rotate";
+    gateLabel.style.cssText = "position:absolute;top:8px;left:8px;" + btnStyle;
+    gate.appendChild(gateLabel);
+    const setGate = (closed) => { gate.style.display = closed ? "" : "none"; };
+    gate.addEventListener("click", () => setGate(false));
+    const onPagePointerDown = (e) => { if (!container.contains(e.target)) setGate(true); };
+    if (touchFirst) {
+      container.appendChild(gate);
+      document.addEventListener("pointerdown", onPagePointerDown, true);
+    }
 
     buildScene(scene, THREE, { O, spriteLabel, ctrl, makeButton });
 
@@ -178,7 +204,9 @@ return async function makeScene3D(buildScene, invalidation, opts = {}) {
       if (!document.fullscreenElement) container.requestFullscreen();
       else document.exitFullscreen();
     });
-    container.appendChild(fsBtn);
+    // iPhone Safari and the in-app browsers on iOS have no element fullscreen, so the button
+    // only shows where the API exists.
+    if (document.fullscreenEnabled) container.appendChild(fsBtn);
 
     function onFSChange() {
       if (document.fullscreenElement === container) {
@@ -189,12 +217,16 @@ return async function makeScene3D(buildScene, invalidation, opts = {}) {
         camera.aspect = screen.width / screen.height;
         camera.updateProjectionMatrix();
         fsBtn.textContent = "Exit fullscreen";
+        ctrl.enableZoom = true;
+        setGate(false);
       } else {
         container.style.background = "";
         renderer.setSize(width, height);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
         fsBtn.textContent = "Fullscreen";
+        ctrl.enableZoom = false;
+        setGate(true);
       }
     }
     document.addEventListener("fullscreenchange", onFSChange);
@@ -209,6 +241,7 @@ return async function makeScene3D(buildScene, invalidation, opts = {}) {
         ctrl.dispose();
         renderer.dispose();
         document.removeEventListener("fullscreenchange", onFSChange);
+        document.removeEventListener("pointerdown", onPagePointerDown, true);
         window.removeEventListener("tali:themechange", onThemeChange);
       },
     };

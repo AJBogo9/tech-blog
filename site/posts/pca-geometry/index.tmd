@@ -100,7 +100,7 @@ define(
 
 ```{js}
 //| label: fig-data-3d
-//| fig-cap: "The 220 players in their original centimetres. Drag to rotate, scroll to zoom. The toggle rescales the axes to standard deviations in place, without moving the camera: height stretches a little, standing reach squeezes, and the elongation the scout cares about comes through both untouched. In centimetre mode all three axes share one scale, so +2 on any axis is the same step in cm."
+//| fig-cap: "The 220 players in their original centimetres. Drag to rotate. The toggle rescales the axes to standard deviations in place, without moving the camera: height stretches a little, standing reach squeezes, and the elongation the scout cares about comes through both untouched. In centimetre mode all three axes share one scale, so +2 on any axis is the same step in cm."
 
 const raw_pts = tali.defines.raw_pts; if (!raw_pts) return;
 const { std_pts, raw_ticks, std_ticks } = tali.defines;
@@ -281,7 +281,7 @@ define(
 
 ```{js}
 //| label: fig-3d-pca
-//| fig-cap: "Three-dimensional point cloud of standardised player measurements. Arrows show the three principal components scaled by their standard deviation √λ. Colour: PC1 (orange) explains the most variance, PC2 (green) the next, PC3 (blue) the least. The translucent plane is the PC1-PC2 subspace. Drag to rotate, scroll to zoom."
+//| fig-cap: "Three-dimensional point cloud of standardised player measurements. Arrows show the three principal components scaled by their standard deviation √λ. Colour: PC1 (orange) explains the most variance, PC2 (green) the next, PC3 (blue) the least. The translucent plane is the PC1-PC2 subspace. Drag to rotate."
 
 const pts = tali.defines.pts; if (!pts) return;
 const { pcs, evr, eigs } = tali.defines;
