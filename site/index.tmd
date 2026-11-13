@@ -1,5 +1,6 @@
 ---
 title: "Andreas Bogossian"
+title-block-style: none
 listing:
   id: recent
   contents: posts
@@ -13,7 +14,7 @@ listing:
 I'm a final-year M.Sc. student in machine learning at Aalto University and a research
 assistant there, writing two first-author papers on forecasting and model evaluation. I
 write about machine learning and statistics, worked out from first principles and built
-up from running code.
+up from running code. Each post is built around an interactive demo.
 
 I built [Taliesin](projects/taliesin/index.tmd), the Rust tool this site is made with,
 using AI coding tools.
