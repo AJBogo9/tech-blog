@@ -23,6 +23,16 @@ rm -rf infra _infra _beacon publish.sh requirements.txt .venv
 # them for 4 hours and then makes a returning reader revalidate each one.
 printf '/_assets/*\n  Cache-Control: public, max-age=31536000, immutable\n' > _headers
 
+# Addresses Google still had indexed from the Quarto site (Search Console, May to
+# September 2026) and that now 404. Taliesin skips files whose names start with an
+# underscore, so the redirect list is written here like _headers.
+printf '%s\n' \
+  '/posts/2026-03-KL-divergence/ /posts/KL-divergence/ 301' \
+  '/posts/2026-03-KL-divergence /posts/KL-divergence/ 301' \
+  '/cv / 301' \
+  '/cv.html / 301' \
+  '/cv.pdf / 301' > _redirects
+
 git init
 git remote add origin $(git -C ../.. remote get-url origin)
 git checkout -b cf-pages
