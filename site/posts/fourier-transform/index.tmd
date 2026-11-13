@@ -1,6 +1,6 @@
 ---
 title: "The Fourier Transform"
-description: "How a machine finds which notes are hidden in a chord."
+description: "How the Fourier transform finds which notes are hidden in a chord."
 date: 2026-05-15
 image: "thumbnail.webp"
 image-alt: "Circular Fourier series visualisation showing harmonic frequency components traced as an orbital path"
