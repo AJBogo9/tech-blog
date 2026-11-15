@@ -3,7 +3,7 @@ title: "Splitting a battery fleet's revenue with dual prices"
 description: "Two batteries sell more reserve capacity together than apart. The dual prices of the fleet's linear program split the sale so that no owner, and no group of owners, earns more by leaving."
 date: 2026-11-08
 image: "thumbnail.webp"
-image-alt: "Two white battery containers with a green stripe standing side by side on a concrete base"
+image-alt: "Bar chart of one evening hour: a nearly full battery sells 0.1 MW and a nearly empty one 0.2 MW on their own, while the fleet that pools them sells 0.9 MW, against 0.3 MW for the two apart"
 categories:
   - Optimization
   - Mathematics
