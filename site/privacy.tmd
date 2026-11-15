@@ -2,21 +2,34 @@
 title: Privacy
 ---
 
-This site counts readers. Here is exactly what that means, in plain language.
-
-## Nothing is stored on your device
-
-No cookies. No local storage. No session storage. Nothing this site does
-leaves anything behind on your machine.
+This site counts page requests. It measures how you read a post only if you
+press the line that asks.
 
 ## What is recorded
 
-When a page loads, the site records the page you opened, its title, where you
-came from if the referring site chose to say, the campaign parameters in the
-link if it had any, your screen and window size, your time zone, your
-language, whether you prefer dark mode and reduced motion, a rough
-connection type, your browser's user-agent string, and the country your
-connection comes from, as Cloudflare reports it.
+Cloudflare hosts this site. When your browser asks for a page, a small
+program at Cloudflare counts the request and sends a record of it to my
+collector. Nothing runs on your device for this. The record holds what your
+browser sends with any page request, and what Cloudflare looks up from your
+connection:
+
+- the page you opened, and the campaign parameters in the link
+  (`utm_source` and the like) if it had any
+- the page you came from, if your browser says
+- your browser's user-agent string, and the browser version, operating system
+  and phone flag that some browsers send with every request
+- the headers that say what kind of request it was, such as whether you
+  followed a link from another site
+- the country, the network's number and the Cloudflare data centre your
+  connection comes through, as Cloudflare reports them. I keep the number
+  only, never the network's name, so the data cannot say which company or
+  school you read from
+
+The headers and the network number help me tell people from bots. Images, scripts
+and other files are not counted. A page your browser fetches ahead of a
+click, for example while the pointer rests on its link, is recorded and
+marked as fetched ahead. It counts as a view even if you never open it. If
+you open it within five minutes, it counts once.
 
 ## How visitors are counted without identifying anyone
 
@@ -25,18 +38,85 @@ server combines your IP address, your browser's user agent and a secret that
 changes every day, and keeps only the resulting hash. Your IP address is
 discarded immediately and never written down. The daily secret is deleted
 after three days, and once it is gone the stored hashes cannot be traced back
-to anyone, including by me.
+to anyone, including by me. I cannot tell whether you visited on an earlier
+day, on this device or any other.
 
-The cost of doing it this way is real: I cannot tell whether you have visited
-before, on this device or any other, and I never will. That is the trade, and
-I would rather have it this way.
+## Reading, only if you ask
+
+Each post has one line under its title: "Help me improve this post: share how
+you read it." A small script draws that line. Until you press it, the script
+sends nothing.
+
+Pressing it starts a reading script for that page only. It runs while the
+page is open, until you press Stop. The next post asks again. While it runs, it
+records:
+
+- how long you read actively, meaning the tab is visible and in focus and you
+  scrolled, tapped, typed or moved the pointer in the last five seconds
+- how long the page was visible but not in focus
+- for each part of the post, how long it was on screen while you read, and
+  when and how often it came into view
+- the furthest part you reached, where you were last, and whether you reached
+  the end
+- how often you used the interactive demos, and how long one was on screen
+  while you read
+- the links you followed: whether each led to another page here, a reference
+  or another site, which site, and where in the post the link was
+- the page you came from
+
+It also sends the post's outline (its parts, their headings and word counts),
+which says nothing about you. It does not record what you type or where the
+pointer is. It sends what it has every 15 seconds and when you hide or leave
+the page. Each report reaches my collector with your user-agent string and
+your IP address, which are handled as described above.
+
+## Why there is no consent banner
+
+The count happens at Cloudflare, on the request your browser sends for any
+page, and runs nothing on your device. The reading script does run in your
+browser, so it waits until you press the line on a post, and it covers that
+post only. The site asks there instead of with a banner on every page.
+
+## Legal basis
+
+The count rests on my legitimate interest in knowing how the site is used
+(GDPR Art. 6(1)(f)). You can object to it by writing to the address below.
+The reading measurement rests on your consent, which you give by pressing the
+line on a post (Art. 6(1)(a)).
+
+## What is stored on your device
+
+Nothing, unless you ask for the one cookie that turns counting off (below).
+No local storage. No session storage.
 
 ## If you have Global Privacy Control turned on
 
-Nothing is sent at all. Not a reduced record, not an anonymous ping. The
-script checks and stops.
+Your page requests are not counted: the counter at Cloudflare sees the
+signal and sends nothing.
+Posts do not show the line that asks, and the reading script does not start.
+
+## Turning counting off for one browser
+
+Open
+[andreasbogossian.com/_readlog/ignore](https://andreasbogossian.com/_readlog/ignore)
+in a browser to stop counting it. That sets one cookie, `rl_ignore`, which
+says only "do not count" and lasts about 400 days. Open
+[andreasbogossian.com/_readlog/count](https://andreasbogossian.com/_readlog/count)
+to remove it.
 
 ## Who sees this
 
-Nobody but me. The data sits on a machine in my home, not with an analytics
-company. It is not sold, shared or fed to anything.
+Cloudflare processes your page requests and carries the reports to my
+collector, on my behalf. Apart from that, nobody sees the data but me. It sits
+on a machine in my home, not with an analytics company. It is not sold, shared or fed to anything.
+
+## How long it is kept
+
+Records of visits and reads are deleted after 25 months.
+
+## Questions and complaints
+
+Write to [contact@andreasbogossian.com](mailto:contact@andreasbogossian.com)
+with any question, or to object to any of this. You also have the right to
+complain to the Finnish Data Protection Ombudsman at
+[tietosuoja.fi/en](https://tietosuoja.fi/en).
