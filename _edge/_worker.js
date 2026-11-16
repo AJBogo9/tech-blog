@@ -32,7 +32,6 @@ export function shouldCount(request, response) {
     if (!type.toLowerCase().startsWith("text/html")) return false;
   }
   if (request.headers.get("sec-gpc") === "1") return false;
-  if (purposeOf(request).includes("prerender")) return false;
   if (mode === null && dest === null) return true;
   return explicitNav;
 }

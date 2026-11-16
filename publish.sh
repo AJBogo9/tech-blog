@@ -32,6 +32,14 @@ rm -rf infra _infra _beacon _edge publish.sh requirements.txt .venv
 # them for 4 hours and then makes a returning reader revalidate each one.
 printf '/_assets/*\n  Cache-Control: public, max-age=31536000, immutable\n' > _headers
 
+# Chrome fetches top Google results ahead of a click through Google's prefetch
+# proxy, and the edge count cannot tell such a fetch from a click. This file
+# turns the proxy away, so a reader from Google arrives as an ordinary page
+# request and counts once.
+mkdir -p .well-known
+printf '[{"user_agent":"prefetch-proxy","disallow":true}]\n' > .well-known/traffic-advice
+printf '/.well-known/traffic-advice\n  Content-Type: application/trafficadvice+json\n' >> _headers
+
 # Addresses Google still had indexed from the Quarto site (Search Console, May to
 # September 2026) and that now 404. Taliesin skips files whose names start with an
 # underscore, so the redirect list is written here like _headers.
