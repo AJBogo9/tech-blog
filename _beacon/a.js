@@ -1,5 +1,5 @@
 /*! readlog ask: one line on a post; a press loads r.js for this page view.
- *  es5 like b.js; before the press it reads nothing from the device and sends nothing;
+ *  es5; before the press it reads nothing from the device and sends nothing;
  *  every path wrapped so the page never breaks.
  */
 (function () {

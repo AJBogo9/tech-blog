@@ -1,5 +1,5 @@
 /*! readlog reader: how one post is read, loaded by the ask (a.js) after a press.
- *  es5 like b.js; nothing stored on the device; cumulative records, one row per read id;
+ *  es5; nothing stored on the device; cumulative records, one row per read id;
  *  every path wrapped so the page never breaks.
  */
 (function () {

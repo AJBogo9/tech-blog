@@ -13,7 +13,7 @@ taliesin build site
 # to the collector's /r.
 ./_beacon/inject-beacon.sh site/_site \
   --site andreasbogossian.com \
-  --endpoint https://t.andreasbogossian.com/e \
+  --endpoint https://t.andreasbogossian.com/r \
   --ask _beacon/a.js \
   --reader _beacon/r.js
 
